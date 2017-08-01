@@ -38,6 +38,19 @@ where
 {
 }
 
+impl<L, R> Default for BiHashMap<L, R>
+where
+    L: Eq + Hash,
+    R: Eq + Hash,
+{
+    fn default() -> BiHashMap<L, R> {
+        BiHashMap {
+            left2right: HashMap::default(),
+            right2left: HashMap::default(),
+        }
+    }
+}
+
 impl<L, R> BiHashMap<L, R> {}
 
 #[cfg(test)]
