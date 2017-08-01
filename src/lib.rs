@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::hash::Hash;
 use std::rc::Rc;
 
 /// A bijective map backed by `std::collections::HashMap`.
@@ -15,6 +16,14 @@ impl<L, R> Clone for BiHashMap<L, R> where L: Clone, R: Clone {
         }
     }
 }
+
+impl<L, R> PartialEq for BiHashMap<L, R> where L: Eq + Hash, R: Eq + Hash {
+    fn eq(&self, other: &BiHashMap<L, R>) -> bool {
+        self.left2right == other.left2right && self.right2left == other.right2left
+    }
+}
+
+impl<L, R> Eq for BiHashMap<L, R> where L: Eq + Hash, R: Eq + Hash {}
 
 impl<L, R> BiHashMap<L, R> {}
 
