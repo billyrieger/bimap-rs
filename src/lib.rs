@@ -52,7 +52,7 @@ where
     }
 }
 
-impl<L, R> BiHashMap<L, R> 
+impl<L, R> BiHashMap<L, R>
 where
     L: Eq + Hash,
     R: Eq + Hash,
