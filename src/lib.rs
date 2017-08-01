@@ -8,7 +8,11 @@ struct BiHashMap<L, R> {
     right2left: HashMap<Rc<R>, Rc<L>>,
 }
 
-impl<L, R> Clone for BiHashMap<L, R> where L: Clone, R: Clone {
+impl<L, R> Clone for BiHashMap<L, R>
+where
+    L: Clone,
+    R: Clone,
+{
     fn clone(&self) -> BiHashMap<L, R> {
         BiHashMap {
             left2right: self.left2right.clone(),
@@ -17,13 +21,22 @@ impl<L, R> Clone for BiHashMap<L, R> where L: Clone, R: Clone {
     }
 }
 
-impl<L, R> PartialEq for BiHashMap<L, R> where L: Eq + Hash, R: Eq + Hash {
+impl<L, R> PartialEq for BiHashMap<L, R>
+where
+    L: Eq + Hash,
+    R: Eq + Hash,
+{
     fn eq(&self, other: &BiHashMap<L, R>) -> bool {
         self.left2right == other.left2right && self.right2left == other.right2left
     }
 }
 
-impl<L, R> Eq for BiHashMap<L, R> where L: Eq + Hash, R: Eq + Hash {}
+impl<L, R> Eq for BiHashMap<L, R>
+where
+    L: Eq + Hash,
+    R: Eq + Hash,
+{
+}
 
 impl<L, R> BiHashMap<L, R> {}
 
