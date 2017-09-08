@@ -233,13 +233,12 @@ where
     R: Eq + Hash + fmt::Debug,
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        for (left, right) in self.left2right.iter() {
-            write!(f, "{:?} <-> {:?},", left, right)?;
+        write!(f, "{{")?;
+        for (i, (left, right)) in self.left2right.iter().enumerate() {
+            let comma = if i == 0 { "" } else { ", " };
+            write!(f, "{}{:?} <-> {:?}", comma, left, right)?;
         }
-        write!(f, "\n");
-        for (right, left) in self.right2left.iter() {
-            write!(f, "{:?} <-> {:?},", left, right)?;
-        }
+        write!(f, "}}")?;
         Ok(())
     }
 }
