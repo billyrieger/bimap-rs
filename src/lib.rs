@@ -66,7 +66,7 @@ where
     }
 
     /// Create an iterator over the left-right pairs in the `Bimap`.
-    /// The iterator element type is `(&'iter L, &'iter R)`.
+    /// The iterator element type is `(&'a L, &'a R)`.
     ///
     /// # Examples
     ///
@@ -82,12 +82,12 @@ where
     ///     println!("({}, {})", left, right);
     /// }
     /// ```
-    pub fn iter<'iter>(&'iter self) -> Iter<'iter, L, R> {
+    pub fn iter<'a>(&'a self) -> Iter<'a, L, R> {
         Iter { inner: self.left2right.iter() }
     }
 
     /// Create an iterator over only the left values in the `Bimap`.
-    /// The iterator element type is `&'iter L`.
+    /// The iterator element type is `&'a L`.
     ///
     /// # Examples
     ///
@@ -103,12 +103,12 @@ where
     ///     println!("{}", char_value);
     /// }
     /// ```
-    pub fn left_values<'iter>(&'iter self) -> LeftValues<'iter, L, R> {
+    pub fn left_values<'a>(&'a self) -> LeftValues<'a, L, R> {
         LeftValues { inner: self.left2right.iter() }
     }
 
     /// Create an iterator over only the right values in the `Bimap`.
-    /// The iterator element type is `&'iter R`.
+    /// The iterator element type is `&'a R`.
     ///
     /// # Examples
     ///
@@ -124,7 +124,7 @@ where
     ///     println!("{}", int_value);
     /// }
     /// ```
-    pub fn right_values<'iter>(&'iter self) -> RightValues<'iter, L, R> {
+    pub fn right_values<'a>(&'a self) -> RightValues<'a, L, R> {
         RightValues { inner: self.left2right.iter() }
     }
 
@@ -433,18 +433,18 @@ impl<L, R> Iterator for IntoIter<L, R> {
 }
 
 /// A iterator over the left-right pairs in a `Bimap`.
-pub struct Iter<'iter, L, R>
+pub struct Iter<'a, L, R>
 where
-    L: 'iter,
-    R: 'iter,
+    L: 'a,
+    R: 'a,
 {
-    inner: hash_map::Iter<'iter, Rc<L>, Rc<R>>,
+    inner: hash_map::Iter<'a, Rc<L>, Rc<R>>,
 }
 
-impl<'iter, L, R> Iterator for Iter<'iter, L, R> {
-    type Item = (&'iter L, &'iter R);
+impl<'a, L, R> Iterator for Iter<'a, L, R> {
+    type Item = (&'a L, &'a R);
 
-    fn next(&mut self) -> Option<(&'iter L, &'iter R)> {
+    fn next(&mut self) -> Option<(&'a L, &'a R)> {
         self.inner.next().map(|(left_rc, right_rc)| {
             (Deref::deref(left_rc), Deref::deref(right_rc))
         })
@@ -456,18 +456,18 @@ impl<'iter, L, R> Iterator for Iter<'iter, L, R> {
 }
 
 /// An iterator over the left values in a `Bimap`.
-pub struct LeftValues<'iter, L, R>
+pub struct LeftValues<'a, L, R>
 where
-    L: 'iter,
-    R: 'iter,
+    L: 'a,
+    R: 'a,
 {
-    inner: hash_map::Iter<'iter, Rc<L>, Rc<R>>,
+    inner: hash_map::Iter<'a, Rc<L>, Rc<R>>,
 }
 
-impl<'iter, L, R> Iterator for LeftValues<'iter, L, R> {
-    type Item = &'iter L;
+impl<'a, L, R> Iterator for LeftValues<'a, L, R> {
+    type Item = &'a L;
 
-    fn next(&mut self) -> Option<&'iter L> {
+    fn next(&mut self) -> Option<&'a L> {
         self.inner.next().map(|(left_rc, _)| Deref::deref(left_rc))
     }
 
@@ -477,18 +477,18 @@ impl<'iter, L, R> Iterator for LeftValues<'iter, L, R> {
 }
 
 /// An iterator over the right values in a `Bimap`.
-pub struct RightValues<'iter, L, R>
+pub struct RightValues<'a, L, R>
 where
-    L: 'iter,
-    R: 'iter,
+    L: 'a,
+    R: 'a,
 {
-    inner: hash_map::Iter<'iter, Rc<L>, Rc<R>>,
+    inner: hash_map::Iter<'a, Rc<L>, Rc<R>>,
 }
 
-impl<'iter, L, R> Iterator for RightValues<'iter, L, R> {
-    type Item = &'iter R;
+impl<'a, L, R> Iterator for RightValues<'a, L, R> {
+    type Item = &'a R;
 
-    fn next(&mut self) -> Option<&'iter R> {
+    fn next(&mut self) -> Option<&'a R> {
         self.inner.next().map(
             |(_, right_rc)| Deref::deref(right_rc),
         )
