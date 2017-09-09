@@ -243,26 +243,64 @@ where
     }
 
     /// Inserts the given left-right pair into the `Bimap`.
-    /// If either the left value or the right value already exists, the corresponding entry is
-    /// overwritten and the existing pair is returned as `Some((left, right))`.
+    ///
+    /// The return type is `(Option<L>, Option<R>)`.
+    /// If the left value being inserted already exists in the `Bimap`, then the returned `Option<R>` is `Some(right)`, where
+    /// `right` is the previous value associated with given left value. If not, then the returned
+    /// value is `None`. Similarly for if the right value being inserted already exists.
+    ///
+    /// # Warnings
+    ///
+    /// Somewhat paradoxically, calling `insert()` can actually reduce the size of the `Bimap`!
+    /// This is because of the invariant that each left value maps to exactly one right value and
+    /// vice versa. This is shown in the example below.
     ///
     /// # Examples
     ///
     /// ```
     /// use bimap::Bimap;
     ///
+    /// // build the bimap
+    /// // nothing tricky going on here
     /// let mut bimap = Bimap::new();                           // {}
     /// assert_eq!(bimap.insert('a', 1), (None, None));         // {'a' <> 1}
     /// assert_eq!(bimap.insert('b', 2), (None, None));         // {'a' <> 1, 'b' <> 2}
     /// assert_eq!(bimap.insert('c', 3), (None, None));         // {'a' <> 1, 'b' <> 2, 'c' <> 3}
+    /// assert_eq!(bimap.insert('c', 3), (Some('c'), Some(3)));         // {'a' <> 1, 'b' <> 2, 'c' <> 3}
+    ///
+    /// // the left value 'a' already exists, and its corresponding right value was 1
+    /// // so `Some(1)` is returned as part of the tuple
     /// assert_eq!(bimap.insert('a', 4), (None, Some(1)));      // {'a' <> 4, 'b' <> 2, 'c' <> 3}
+    ///
+    /// // the right value '3' already exists, and its corresponding left value was 'c'
+    /// // so `Some('c')` is returned as part of the tuple
     /// assert_eq!(bimap.insert('d', 3), (Some('c'), None));    // {'a' <> 4, 'b' <> 2, 'd' <> 3}
+    ///
+    /// // both the left value 'a' and the right value 2 already exist
+    /// // their corresponding values were 4 and 'b', so both Some('b') and Some(4) are returned
+    /// // as part of the tuple
     /// assert_eq!(bimap.insert('a', 2), (Some('b'), Some(4))); // {'a' <> 2, 'd' <> 3}
     /// ```
     pub fn insert(&mut self, left: L, right: R) -> (Option<L>, Option<R>) {
-        // get the existing values in the map
-        let right_retval = self.remove_by_left(&left);
-        let left_retval = self.remove_by_right(&right);
+        // special case when the left-right pair already exists
+        let retval = if self.get_by_left(&left) == Some(&right) &&
+            self.get_by_right(&right) == Some(&left)
+        {
+            // remove the preexisting values from the HashMaps
+            let right_rc = self.left2right.remove(&left).unwrap();
+            let left_rc = self.right2left.remove(&right).unwrap();
+            // now it's safe to unwrap the Rcs
+            (
+                Some(Rc::try_unwrap(left_rc).ok().unwrap()),
+                Some(Rc::try_unwrap(right_rc).ok().unwrap()),
+            )
+        } else {
+            // this doesn't work when the left-right pair already exists because the previous left
+            // value is deleted prematurely
+            let right_retval = self.remove_by_left(&left);
+            let left_retval = self.remove_by_right(&right);
+            (left_retval, right_retval)
+        };
         // create new `Rc`s for the new values
         let left_rc = Rc::new(left);
         let right_rc = Rc::new(right);
@@ -270,7 +308,7 @@ where
         self.left2right.insert(left_rc.clone(), right_rc.clone());
         self.right2left.insert(right_rc, left_rc);
         // return the preexisting values
-        (left_retval, right_retval)
+        retval
     }
 }
 
@@ -376,7 +414,7 @@ where
     }
 }
 
-/// A iterator over the left-right pairs in a `Bimap`.
+/// An owning iterator over the left-right pairs in a `Bimap`.
 pub struct IntoIter<L, R> {
     inner: hash_map::IntoIter<Rc<L>, Rc<R>>,
 }
@@ -417,7 +455,7 @@ impl<'iter, L, R> Iterator for Iter<'iter, L, R> {
     }
 }
 
-/// A iterator over the left values in a `Bimap`.
+/// An iterator over the left values in a `Bimap`.
 pub struct LeftValues<'iter, L, R>
 where
     L: 'iter,
@@ -438,7 +476,7 @@ impl<'iter, L, R> Iterator for LeftValues<'iter, L, R> {
     }
 }
 
-/// A iterator over the right values in a `Bimap`.
+/// An iterator over the right values in a `Bimap`.
 pub struct RightValues<'iter, L, R>
 where
     L: 'iter,
@@ -466,13 +504,5 @@ mod tests {
     use super::*;
 
     #[test]
-    fn it_works() {
-        let mut bimap = Bimap::new();
-        bimap.insert('a', 1);
-        bimap.insert('b', 2);
-        bimap.insert('c', 3);
-        for (left, right) in bimap.iter() {
-            println!("{}, {}", left, right);
-        }
-    }
+    fn it_works() {}
 }
