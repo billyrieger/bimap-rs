@@ -1,3 +1,4 @@
+use std::cmp;
 use std::collections::HashMap;
 use std::collections::hash_map;
 use std::fmt;
@@ -24,10 +25,27 @@ where
     /// ```
     /// use bimap::Bimap;
     ///
-    /// let bimap: Bimap<char, u32> = Bimap::new();
+    /// let mut bimap: Bimap<char, u32> = Bimap::new();
     /// ```
     pub fn new() -> Bimap<L, R> {
         Bimap::default()
+    }
+
+    /// Creates an empty `Bimap` with the given capacity.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use bimap::Bimap;
+    ///
+    /// let mut bimap: Bimap<char, u32> = Bimap::with_capacity(5);
+    /// assert!(bimap.capacity() >= 5);
+    /// ```
+    pub fn with_capacity(capacity: usize) -> Bimap<L, R> {
+        Bimap {
+            left2right: HashMap::with_capacity(capacity),
+            right2left: HashMap::with_capacity(capacity),
+        }
     }
 
     /// Returns the number of left-right pairs in the map.
@@ -65,6 +83,32 @@ where
         self.len() == 0
     }
 
+    /// Removes all left-right pairs from the `Bimap`, but keeps the allocated memory for reuse.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use bimap::Bimap;
+    ///
+    /// let mut bimap = Bimap::new();
+    /// bimap.insert('a', 1);
+    /// bimap.insert('b', 2);
+    /// bimap.insert('c', 3);
+    /// bimap.clear();
+    /// assert!(bimap.len() == 0);
+    /// assert!(bimap.capacity() >= 3);
+    /// ```
+    pub fn clear(&mut self) {
+        self.left2right.clear();
+        self.right2left.clear();
+    }
+
+    /// Returns a lower bound on the number of elements the `Bimap` can store without reallocating
+    /// memory.
+    pub fn capacity(&self) -> usize {
+        cmp::min(self.left2right.capacity(), self.right2left.capacity())
+    }
+
     /// Create an iterator over the left-right pairs in the `Bimap`.
     /// The iterator element type is `(&'a L, &'a R)`.
     ///
@@ -86,7 +130,7 @@ where
         Iter { inner: self.left2right.iter() }
     }
 
-    /// Create an iterator over only the left values in the `Bimap`.
+    /// Create an iterator over the left values in the `Bimap`.
     /// The iterator element type is `&'a L`.
     ///
     /// # Examples
@@ -107,7 +151,7 @@ where
         LeftValues { inner: self.left2right.iter() }
     }
 
-    /// Create an iterator over only the right values in the `Bimap`.
+    /// Create an iterator over the right values in the `Bimap`.
     /// The iterator element type is `&'a R`.
     ///
     /// # Examples
@@ -262,24 +306,24 @@ where
     ///
     /// // build the bimap
     /// // nothing tricky going on here
-    /// let mut bimap = Bimap::new();                           // {}
-    /// assert_eq!(bimap.insert('a', 1), (None, None));         // {'a' <> 1}
-    /// assert_eq!(bimap.insert('b', 2), (None, None));         // {'a' <> 1, 'b' <> 2}
-    /// assert_eq!(bimap.insert('c', 3), (None, None));         // {'a' <> 1, 'b' <> 2, 'c' <> 3}
-    /// assert_eq!(bimap.insert('c', 3), (Some('c'), Some(3)));         // {'a' <> 1, 'b' <> 2, 'c' <> 3}
+    /// let mut bimap = Bimap::new();
+    /// assert_eq!(bimap.insert('a', 1), (None, None));
+    /// assert_eq!(bimap.insert('b', 2), (None, None));
+    /// assert_eq!(bimap.insert('c', 3), (None, None));
+    /// assert_eq!(bimap.insert('c', 3), (Some('c'), Some(3)));
     ///
     /// // the left value 'a' already exists, and its corresponding right value was 1
     /// // so `Some(1)` is returned as part of the tuple
-    /// assert_eq!(bimap.insert('a', 4), (None, Some(1)));      // {'a' <> 4, 'b' <> 2, 'c' <> 3}
+    /// assert_eq!(bimap.insert('a', 4), (None, Some(1)));
     ///
     /// // the right value '3' already exists, and its corresponding left value was 'c'
     /// // so `Some('c')` is returned as part of the tuple
-    /// assert_eq!(bimap.insert('d', 3), (Some('c'), None));    // {'a' <> 4, 'b' <> 2, 'd' <> 3}
+    /// assert_eq!(bimap.insert('d', 3), (Some('c'), None));
     ///
     /// // both the left value 'a' and the right value 2 already exist
     /// // their corresponding values were 4 and 'b', so both Some('b') and Some(4) are returned
     /// // as part of the tuple
-    /// assert_eq!(bimap.insert('a', 2), (Some('b'), Some(4))); // {'a' <> 2, 'd' <> 3}
+    /// assert_eq!(bimap.insert('a', 2), (Some('b'), Some(4)));
     /// ```
     pub fn insert(&mut self, left: L, right: R) -> (Option<L>, Option<R>) {
         // special case when the left-right pair already exists
