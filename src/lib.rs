@@ -6,7 +6,7 @@ use std::iter::{FromIterator, IntoIterator};
 use std::ops::Deref;
 use std::rc::Rc;
 
-/// A bijective map backed by `std::collections::HashMap`.
+/// A two-way bijective map backed by `std::collections::HashMap`.
 pub struct Bimap<L, R> {
     left2right: HashMap<Rc<L>, Rc<R>>,
     right2left: HashMap<Rc<R>, Rc<L>>,
@@ -88,12 +88,42 @@ where
 
     /// Create an iterator over only the left values in the `Bimap`.
     /// The iterator element type is `&'iter L`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use bimap::Bimap;
+    ///
+    /// let mut bimap = Bimap::new();
+    /// bimap.insert('a', 1);
+    /// bimap.insert('b', 2);
+    /// bimap.insert('c', 3);
+    ///
+    /// for char_value in bimap.left_values() {
+    ///     println!("{}", char_value);
+    /// }
+    /// ```
     pub fn left_values<'iter>(&'iter self) -> LeftValues<'iter, L, R> {
         LeftValues { inner: self.left2right.iter() }
     }
 
     /// Create an iterator over only the right values in the `Bimap`.
     /// The iterator element type is `&'iter R`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use bimap::Bimap;
+    ///
+    /// let mut bimap = Bimap::new();
+    /// bimap.insert('a', 1);
+    /// bimap.insert('b', 2);
+    /// bimap.insert('c', 3);
+    ///
+    /// for int_value in bimap.right_values() {
+    ///     println!("{}", int_value);
+    /// }
+    /// ```
     pub fn right_values<'iter>(&'iter self) -> RightValues<'iter, L, R> {
         RightValues { inner: self.left2right.iter() }
     }
