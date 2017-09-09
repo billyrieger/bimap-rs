@@ -4,3 +4,6 @@ version = "0.1.0"
 authors = ["Billy Rieger <>"]
 
 [dependencies]
+
+[package]
+license = "Apache-2.0"
