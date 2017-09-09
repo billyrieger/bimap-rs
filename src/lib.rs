@@ -7,7 +7,7 @@ use std::iter::{FromIterator, IntoIterator};
 use std::ops::Deref;
 use std::rc::Rc;
 
-/// A two-way bijective map backed by `std::collections::HashMap`.
+/// A fast two-way bijective map.
 pub struct Bimap<L, R> {
     left2right: HashMap<Rc<L>, Rc<R>>,
     right2left: HashMap<Rc<R>, Rc<L>>,
@@ -39,7 +39,6 @@ where
     /// use bimap::Bimap;
     ///
     /// let mut bimap: Bimap<char, u32> = Bimap::with_capacity(5);
-    /// assert!(bimap.capacity() >= 5);
     /// ```
     pub fn with_capacity(capacity: usize) -> Bimap<L, R> {
         Bimap {
@@ -105,6 +104,15 @@ where
 
     /// Returns a lower bound on the number of elements the `Bimap` can store without reallocating
     /// memory.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use bimap::Bimap;
+    ///
+    /// let mut bimap: Bimap<char, u32> = Bimap::with_capacity(5);
+    /// assert!(bimap.capacity() >= 5);
+    /// ```
     pub fn capacity(&self) -> usize {
         cmp::min(self.left2right.capacity(), self.right2left.capacity())
     }
@@ -548,5 +556,11 @@ mod tests {
     use super::*;
 
     #[test]
-    fn it_works() {}
+    fn from_iter() {
+        let bimap1 = Bimap::from_iter(vec![('a', 1), ('b', 2), ('c', 3), ('b', 2), ('a', 4), ('b', 3)]);
+        let mut bimap2 = Bimap::with_capacity(3);
+        bimap2.insert('a', 4);
+        bimap2.insert('b', 3);
+        assert_eq!(bimap1, bimap2);
+    }
 }
