@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::collections::hash_map;
 use std::fmt;
 use std::hash::Hash;
-use std::iter::FromIterator;
+use std::iter::{FromIterator, IntoIterator};
 use std::ops::Deref;
 use std::rc::Rc;
 
@@ -88,14 +88,14 @@ where
 
     /// Create an iterator over only the left values in the `Bimap`.
     /// The iterator element type is `&'iter L`.
-    pub fn iter_lefts<'iter>(&'iter self) -> IterLefts<'iter, L, R> {
-        IterLefts { inner: self.left2right.iter() }
+    pub fn left_values<'iter>(&'iter self) -> LeftValues<'iter, L, R> {
+        LeftValues { inner: self.left2right.iter() }
     }
 
     /// Create an iterator over only the right values in the `Bimap`.
     /// The iterator element type is `&'iter R`.
-    pub fn iter_rights<'iter>(&'iter self) -> IterRights<'iter, L, R> {
-        IterRights { inner: self.left2right.iter() }
+    pub fn right_values<'iter>(&'iter self) -> RightValues<'iter, L, R> {
+        RightValues { inner: self.left2right.iter() }
     }
 
     /// Returns a reference to the right value corresponding to the left key.
@@ -310,6 +310,32 @@ where
     }
 }
 
+impl<'a, L, R> IntoIterator for &'a Bimap<L, R>
+where
+    L: Eq + Hash,
+    R: Eq + Hash,
+{
+    type Item = (&'a L, &'a R);
+    type IntoIter = Iter<'a, L, R>;
+
+    fn into_iter(self) -> Iter<'a, L, R> {
+        self.iter()
+    }
+}
+
+impl<L, R> IntoIterator for Bimap<L, R>
+where
+    L: Eq + Hash,
+    R: Eq + Hash,
+{
+    type Item = (L, R);
+    type IntoIter = IntoIter<L, R>;
+
+    fn into_iter(self) -> IntoIter<L, R> {
+        IntoIter { inner: self.left2right.into_iter() }
+    }
+}
+
 impl<L, R> PartialEq for Bimap<L, R>
 where
     L: Eq + Hash,
@@ -317,6 +343,24 @@ where
 {
     fn eq(&self, other: &Bimap<L, R>) -> bool {
         self.left2right == other.left2right
+    }
+}
+
+/// A iterator over the left-right pairs in a `Bimap`.
+pub struct IntoIter<L, R> {
+    inner: hash_map::IntoIter<Rc<L>, Rc<R>>,
+}
+
+impl<L, R> Iterator for IntoIter<L, R> {
+    type Item = (L, R);
+
+    fn next(&mut self) -> Option<(L, R)> {
+        self.inner.next().map(|(l, r)| {
+            (
+                Rc::try_unwrap(l).ok().unwrap(),
+                Rc::try_unwrap(r).ok().unwrap(),
+            )
+        })
     }
 }
 
@@ -344,7 +388,7 @@ impl<'iter, L, R> Iterator for Iter<'iter, L, R> {
 }
 
 /// A iterator over the left values in a `Bimap`.
-pub struct IterLefts<'iter, L, R>
+pub struct LeftValues<'iter, L, R>
 where
     L: 'iter,
     R: 'iter,
@@ -352,13 +396,11 @@ where
     inner: hash_map::Iter<'iter, Rc<L>, Rc<R>>,
 }
 
-impl<'iter, L, R> Iterator for IterLefts<'iter, L, R> {
+impl<'iter, L, R> Iterator for LeftValues<'iter, L, R> {
     type Item = &'iter L;
 
     fn next(&mut self) -> Option<&'iter L> {
-        self.inner.next().map(|(left_rc, _)| {
-            Deref::deref(left_rc)
-        })
+        self.inner.next().map(|(left_rc, _)| Deref::deref(left_rc))
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -367,7 +409,7 @@ impl<'iter, L, R> Iterator for IterLefts<'iter, L, R> {
 }
 
 /// A iterator over the right values in a `Bimap`.
-pub struct IterRights<'iter, L, R>
+pub struct RightValues<'iter, L, R>
 where
     L: 'iter,
     R: 'iter,
@@ -375,13 +417,13 @@ where
     inner: hash_map::Iter<'iter, Rc<L>, Rc<R>>,
 }
 
-impl<'iter, L, R> Iterator for IterRights<'iter, L, R> {
+impl<'iter, L, R> Iterator for RightValues<'iter, L, R> {
     type Item = &'iter R;
 
     fn next(&mut self) -> Option<&'iter R> {
-        self.inner.next().map(|(_, right_rc)| {
-            Deref::deref(right_rc)
-        })
+        self.inner.next().map(
+            |(_, right_rc)| Deref::deref(right_rc),
+        )
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
