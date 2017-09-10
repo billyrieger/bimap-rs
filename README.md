@@ -2,9 +2,10 @@
 [![Documentation](https://docs.rs/bimap/badge.svg)](https://docs.rs/bimap/)
 [![crates.io](https://img.shields.io/crates/v/bimap.svg)](https://crates.io/crates/bimap)
 
-# bimap-rs: a fast two-way bijective map for Rust
+# bimap-rs
+bimap-rs is a fast two-way bijective map implementation for Rust.
 
-## Examples
+## Example usage
 
 ```rust
 use bimap::Bimap;
@@ -38,3 +39,7 @@ for (left, right) in &elements {
     println!("the chemical symbol for {} is {}", left, right);
 }
 ```
+
+## License
+
+bimap-rs is licensed under the Apache-2.0 license.
