@@ -3,7 +3,7 @@
 //! A `Bimap<L, R>` is a [bijective map] between values of type `L`, called left values, and values
 //! of type `R`, called right values. This means every left value is associated with exactly one
 //! right value and vice versa. Compare this to a `HashMap<K, V>`, where every key is associated
-//! with exactly one value but a value can be associated with more than one key. 
+//! with exactly one value but a value can be associated with more than one key.
 //!
 //! Internally, a `Bimap` is composed of two `HashMaps`, one for the left-to-right direction and
 //! one for right-to-left. As such, the big-O performance of the `get()`, `remove()`, `insert()`,
@@ -18,7 +18,7 @@
 //! use bimap::Bimap;
 //!
 //! let mut elements = Bimap::new();
-//! 
+//!
 //! // insert chemicals and their corresponding symbols
 //! elements.insert("hydrogen", "H");
 //! elements.insert("carbon", "C");

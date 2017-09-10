@@ -1,7 +1,11 @@
 [package]
 authors = ["Billy Rieger <wrieger93@gmail.com>"]
+description = "A fast two-way bijective map"
+homepage = "https://github.com/wrieger93/bimap-rs/"
+keywords = ["bijective", "bijection", "map", "container", "two-way"]
 license = "Apache-2.0"
 name = "bimap"
+repository = "https://github.com/wrieger93/bimap-rs/"
 version = "0.1.0"
 
 [dependencies]
