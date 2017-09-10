@@ -1,5 +1,6 @@
 [package]
 authors = ["Billy Rieger <wrieger93@gmail.com>"]
+categories = ["data-structures", "algorithms"]
 description = "A fast two-way bijective map"
 homepage = "https://github.com/wrieger93/bimap-rs/"
 keywords = ["bijective", "bijection", "map", "container", "two-way"]
