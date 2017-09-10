@@ -7,6 +7,34 @@ use std::iter::{FromIterator, IntoIterator};
 use std::ops::Deref;
 use std::rc::Rc;
 
+/// The previous values, if any, that were overwritten by a call to `bimap.insert(left, right)`.
+#[derive(Debug, PartialEq)]
+pub enum Overwritten<L, R> {
+    /// Neither the left nor the right value previously existed in the `Bimap`.
+    Neither,
+    /// The left value existed in the `Bimap`, and the previous left-right pair is returned.
+    Left(L, R),
+    /// The right value existed in the `Bimap`, and the previous left-right pair is returned.
+    Right(L, R),
+    /// Both the left and the right value existed in the `Bimap`, but as part of separate pairs.
+    /// The first tuple is the left-right pair of the previous left value, and the second is the
+    /// left-right pair of the previous right value.
+    Both((L, R), (L, R)),
+    /// The left-right pair already existed in the `Bimap`, and the previous left-right pair is
+    /// returned.
+    Pair(L, R),
+}
+
+// impl<L, R> fmt::Debug for Overwritten<L, R>
+// where
+//     L: fmt::Debug,
+//     R: fmt::Debug,
+// {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         write!(f, "{:?}", self)
+//     }
+// }
+
 /// A fast two-way bijective map.
 pub struct Bimap<L, R> {
     left2right: HashMap<Rc<L>, Rc<R>>,
@@ -245,7 +273,9 @@ where
     }
 
     /// Removes the given left element.
-    /// Returns `Some((left, right))` if the map contained the element and `None` otherwise.
+    ///
+    /// Returns the previous left-right pair if the map contained the left element and `None`
+    /// otherwise.
     ///
     /// # Examples
     ///
@@ -257,20 +287,22 @@ where
     /// bimap.insert('b', 2);
     /// bimap.insert('c', 3);
     /// assert_eq!(bimap.len(), 3);
-    /// assert_eq!(bimap.remove_by_left(&'b'), Some(2));
+    /// assert_eq!(bimap.remove_by_left(&'b'), Some(('b', 2)));
     /// assert_eq!(bimap.len(), 2);
-    /// assert_eq!(bimap.remove_by_left(&'z'), None);
+    /// assert_eq!(bimap.remove_by_left(&'b'), None);
     /// assert_eq!(bimap.len(), 2);
     /// ```
-    pub fn remove_by_left(&mut self, left: &L) -> Option<R> {
+    pub fn remove_by_left(&mut self, left: &L) -> Option<(L, R)> {
         self.left2right.remove(left).map(|right_rc| {
-            self.right2left.remove(&right_rc);
-            Rc::try_unwrap(right_rc).ok().unwrap()
+            let left_rc = self.right2left.remove(&right_rc).unwrap();
+            (Rc::try_unwrap(left_rc).ok().unwrap(), Rc::try_unwrap(right_rc).ok().unwrap())
         })
     }
 
     /// Removes the given right element.
-    /// Returns `Some((left, right))` if the map contained the element and `None` otherwise.
+    ///
+    /// Returns the previous left-right pair if the map contained the right element and `None`
+    /// otherwise.
     ///
     /// # Examples
     ///
@@ -282,15 +314,15 @@ where
     /// bimap.insert('b', 2);
     /// bimap.insert('c', 3);
     /// assert_eq!(bimap.len(), 3);
-    /// assert_eq!(bimap.remove_by_right(&2), Some('b'));
+    /// assert_eq!(bimap.remove_by_right(&2), Some(('b', 2)));
     /// assert_eq!(bimap.len(), 2);
     /// assert_eq!(bimap.remove_by_right(&2), None);
     /// assert_eq!(bimap.len(), 2);
     /// ```
-    pub fn remove_by_right(&mut self, right: &R) -> Option<L> {
+    pub fn remove_by_right(&mut self, right: &R) -> Option<(L, R)> {
         self.right2left.remove(right).map(|left_rc| {
-            self.left2right.remove(&left_rc);
-            Rc::try_unwrap(left_rc).ok().unwrap()
+            let right_rc = self.left2right.remove(&left_rc).unwrap();
+            (Rc::try_unwrap(left_rc).ok().unwrap(), Rc::try_unwrap(right_rc).ok().unwrap())
         })
     }
 
@@ -310,56 +342,63 @@ where
     /// # Examples
     ///
     /// ```
-    /// use bimap::Bimap;
+    /// use bimap::{Bimap, Overwritten};
     ///
-    /// // build the bimap
-    /// // nothing tricky going on here
-    /// let mut bimap = Bimap::new();
-    /// assert_eq!(bimap.insert('a', 1), (None, None));
-    /// assert_eq!(bimap.insert('b', 2), (None, None));
-    /// assert_eq!(bimap.insert('c', 3), (None, None));
-    /// assert_eq!(bimap.insert('c', 3), (Some('c'), Some(3)));
+    /// let mut bimap = Bimap::<char, u32>::new();
+    /// assert_eq!(bimap.len(), 0); // {}
     ///
-    /// // the left value 'a' already exists, and its corresponding right value was 1
-    /// // so `Some(1)` is returned as part of the tuple
-    /// assert_eq!(bimap.insert('a', 4), (None, Some(1)));
+    /// // no values are overwritten
+    /// assert_eq!(bimap.insert('a', 1), Overwritten::Neither);
+    /// assert_eq!(bimap.len(), 1); // {'a' <> 1}
     ///
-    /// // the right value '3' already exists, and its corresponding left value was 'c'
-    /// // so `Some('c')` is returned as part of the tuple
-    /// assert_eq!(bimap.insert('d', 3), (Some('c'), None));
+    /// // no values are overwritten
+    /// assert_eq!(bimap.insert('b', 2), Overwritten::Neither);
+    /// assert_eq!(bimap.len(), 2); // {'a' <> 1, 'b' <> 2}
     ///
-    /// // both the left value 'a' and the right value 2 already exist
-    /// // their corresponding values were 4 and 'b', so both Some('b') and Some(4) are returned
-    /// // as part of the tuple
-    /// assert_eq!(bimap.insert('a', 2), (Some('b'), Some(4)));
+    /// // ('a', 1) already exists, so inserting ('a', 4) overwrites 'a', the left value
+    /// assert_eq!(bimap.insert('a', 4), Overwritten::Left('a', 1));
+    /// assert_eq!(bimap.len(), 2); // {'a' <> 4, 'b' <> 2}
+    ///
+    /// // ('b', 2) already exists, so inserting ('c', 2) overwrites 2, the right value
+    /// assert_eq!(bimap.insert('c', 2), Overwritten::Right('b', 2));
+    /// assert_eq!(bimap.len(), 2); // {'a' <> 1, 'c' <> 2}
+    ///
+    /// // both ('a', 4) and ('c', 2) already exist, so inserting ('a', 2) overwrites both
+    /// // ('c', 2) has the overwritten left value ('c'), so it's the first tuple
+    /// // ('a', 4) has the overwritten right value (4), so it's the second tuple
+    /// assert_eq!(bimap.insert('a', 2), Overwritten::Both(('c', 2), ('a', 4)));
+    /// assert_eq!(bimap.len(), 1); // {'a' <> 2}
+    ///
+    /// // the pair ('a', 2) already exists, so inserting ('a', 2) overwrites the pair
+    /// assert_eq!(bimap.insert('a', 2), Overwritten::Pair('a', 2));
+    /// assert_eq!(bimap.len(), 1); // {'a' <> 2}
     /// ```
-    pub fn insert(&mut self, left: L, right: R) -> (Option<L>, Option<R>) {
-        // special case when the left-right pair already exists
-        let retval = if self.get_by_left(&left) == Some(&right) &&
-            self.get_by_right(&right) == Some(&left)
-        {
-            // remove the preexisting values from the HashMaps
-            let right_rc = self.left2right.remove(&left).unwrap();
-            let left_rc = self.right2left.remove(&right).unwrap();
-            // now it's safe to unwrap the Rcs
-            (
-                Some(Rc::try_unwrap(left_rc).ok().unwrap()),
-                Some(Rc::try_unwrap(right_rc).ok().unwrap()),
-            )
-        } else {
-            // this doesn't work when the left-right pair already exists because the previous left
-            // value is deleted prematurely
-            let right_retval = self.remove_by_left(&left);
-            let left_retval = self.remove_by_right(&right);
-            (left_retval, right_retval)
+    pub fn insert(&mut self, left: L, right: R) -> Overwritten<L, R> {
+        let retval = match (self.contains_left(&left), self.contains_right(&right)) {
+            (false, false) => Overwritten::Neither,
+            (true, false) => {
+                let prev_pair = self.remove_by_left(&left).unwrap();
+                Overwritten::Left(prev_pair.0, prev_pair.1)
+            },
+            (false, true) => {
+                let prev_pair = self.remove_by_right(&right).unwrap();
+                Overwritten::Right(prev_pair.0, prev_pair.1)
+            },
+            (true, true) => {
+                if self.get_by_left(&left) == Some(&right) {
+                    let prev_pair = self.remove_by_left(&left).unwrap();
+                    Overwritten::Pair(prev_pair.0, prev_pair.1)
+                } else {
+                    let right_overwritten = self.remove_by_left(&left).unwrap();
+                    let left_overwritten = self.remove_by_right(&right).unwrap();
+                    Overwritten::Both(left_overwritten, right_overwritten)
+                }
+            }
         };
-        // create new `Rc`s for the new values
         let left_rc = Rc::new(left);
         let right_rc = Rc::new(right);
-        // insert the new `Rc`s into the map
         self.left2right.insert(left_rc.clone(), right_rc.clone());
         self.right2left.insert(right_rc, left_rc);
-        // return the preexisting values
         retval
     }
 }
