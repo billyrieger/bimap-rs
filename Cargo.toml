@@ -2,6 +2,7 @@
 authors = ["Billy Rieger <wrieger93@gmail.com>"]
 categories = ["data-structures", "algorithms"]
 description = "A fast two-way bijective map"
+documentation = "https://docs.rs/bimap/"
 homepage = "https://github.com/wrieger93/bimap-rs/"
 keywords = ["bijective", "bijection", "map", "container", "two-way"]
 license = "Apache-2.0"
