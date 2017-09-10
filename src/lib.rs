@@ -484,7 +484,7 @@ impl<L, R> Iterator for IntoIter<L, R> {
     }
 }
 
-/// A iterator over the left-right pairs in a `Bimap`.
+/// An iterator over the left-right pairs in a `Bimap`.
 pub struct Iter<'a, L, R>
 where
     L: 'a,
@@ -556,11 +556,53 @@ mod tests {
     use super::*;
 
     #[test]
-    fn from_iter() {
-        let bimap1 = Bimap::from_iter(vec![('a', 1), ('b', 2), ('c', 3), ('b', 2), ('a', 4), ('b', 3)]);
+    fn test_clone() {
+        let mut bimap = Bimap::new();
+        bimap.insert('a', 1);
+        bimap.insert('b', 2);
+        let bimap2 = bimap.clone();
+        assert_eq!(bimap, bimap2);
+    }
+
+    #[test]
+    fn test_debug() {
+        let mut bimap = Bimap::new();
+
+        bimap.insert('a', 1);
+        assert_eq!("{'a' <> 1}", format!("{:?}", bimap));
+
+        bimap.insert('b', 2);
+        let expected1 = "{'a' <> 1, 'b' <> 2}";
+        let expected2 = "{'b' <> 2, 'a' <> 1}";
+        let formatted = format!("{:?}", bimap);
+        assert!(formatted == expected1 || formatted == expected2);
+    }
+
+    #[test]
+    fn test_eq() {
+        let mut bimap = Bimap::new();
+        assert_eq!(bimap, bimap);
+        bimap.insert('a', 1);
+        assert_eq!(bimap, bimap);
+        bimap.insert('b', 2);
+        assert_eq!(bimap, bimap);
+
+        let mut bimap2 = Bimap::new();
+        assert_ne!(bimap, bimap2);
+        bimap2.insert('a', 1);
+        assert_ne!(bimap, bimap2);
+        bimap2.insert('b', 2);
+        assert_eq!(bimap, bimap2);
+        bimap2.insert('c', 3);
+        assert_ne!(bimap, bimap2);
+    }
+
+    #[test]
+    fn test_from_iter() {
+        let bimap = Bimap::from_iter(vec![('a', 1), ('b', 2), ('c', 3), ('b', 2), ('a', 4), ('b', 3)]);
         let mut bimap2 = Bimap::with_capacity(3);
         bimap2.insert('a', 4);
         bimap2.insert('b', 3);
-        assert_eq!(bimap1, bimap2);
+        assert_eq!(bimap, bimap2);
     }
 }
