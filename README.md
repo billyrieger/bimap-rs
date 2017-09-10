@@ -1,5 +1,6 @@
 [![Build Status](https://travis-ci.org/wrieger93/bimap-rs.svg?branch=master)](https://travis-ci.org/wrieger93/bimap-rs)
 [![Documentation](https://docs.rs/bimap/badge.svg)](https://docs.rs/bimap/)
+[![crates.io](https://img.shields.io/crates/v/bimap.svg)](https://crates.io/crates/bimap)
 
 # bimap-rs: a fast two-way bijective map for Rust
 
