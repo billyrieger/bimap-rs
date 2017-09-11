@@ -2,12 +2,12 @@
 //!
 //! A `BiMap<L, R>` is a [bijective map] between values of type `L`, called left values, and values
 //! of type `R`, called right values. This means every left value is associated with exactly one
-//! right value and vice versa. Compare this to a [`HashMap<K, V>`], where every key is associated
-//! with exactly one value but a value can be associated with more than one key.
+//! right value and vice versa. Compare this to a [`HashMap`], where every key is associated with
+//! exactly one value but a value can be associated with more than one key.
 //!
-//! Internally, a `BiMap` is composed of two `HashMaps`, one for the left-to-right direction and
-//! one for right-to-left. As such, the big-O performance of the `get()`, `remove()`, `insert()`,
-//! and `contains()` functions are the same as those of a `HashMap`.
+//! Internally, a `BiMap` is composed of two `HashMap`s, one for the left-to-right direction and
+//! one for right-to-left. As such, the big-O performance of the `get`, `remove`, `insert`, and
+//! `contains` methods are the same as those of a `HashMap`.
 //!
 //! As with `HashMap`, it is considered a logic error to modify a value's hash while it is in the
 //! `BiMap` using a `Cell`, `RefCell`, etc.
@@ -59,17 +59,17 @@
 //! bimap.insert('b', 1); // what to do here?
 //! ```
 //!
-//! In order to maintain the bijection, the `bimap` cannot have both `('a', 1)` and `('b', 1)` in
+//! In order to maintain the bijection, the `BiMap` cannot have both `('a', 1)` and `('b', 1)` in
 //! the map. Otherwise, the right-value `1` would have two left values associated with it. Either
-//! we should allow the call to `insert('b', 1)` to go through and overwrite `('a', 1)`, or not let
-//! `('b', 1)` be inserted at all. `BiMap` allows for both possibilities. To insert with overwriting,
-//! use `insert()`, and to insert without overwriting, use `insert_no_overwrite()`. The return type
-//! of `insert` is the `enum` `Overwritten`, which indicates what values, if any, were overwritten;
-//! the return type of `insert_no_overwrite()` is a boolean indicating if the insertion was
-//! successful.
+//! we should allow the call to `insert` to go through and overwrite `('a', 1)`, or not let
+//! `('b', 1)` be inserted at all. `BiMap` allows for both possibilities. To insert with
+//! overwriting, use [`insert`], and to insert without overwriting, use [`insert_no_overwrite`].
+//! The return type of `insert` is the `enum` [`Overwritten`], which indicates what values, if any,
+//! were overwritten; the return type of `insert_no_overwrite` is a boolean indicating if the
+//! insertion was successful.
 //!
 //! This is especially important when dealing with types that can be equal while having different
-//! data. Unlike `HashMap`, which [doesn't update an equal key upon insertion], a `BiMap` updates
+//! data. Unlike a `HashMap`, which [doesn't update an equal key upon insertion], a `BiMap` updates
 //! both the left values and the right values.
 //!
 //! ```
@@ -112,7 +112,7 @@
 //! let mut bimap = BiMap::new();
 //! bimap.insert(foo1, 99);
 //! let overwritten = bimap.insert(foo2, 100);
-//! // foo1 is overwritten and returned, foo2 is in the bimap
+//! // foo1 is overwritten and returned; foo2 is in the bimap
 //! assert_eq!(overwritten, Overwritten::Left(foo1, 99));
 //! assert_eq!(bimap.get_by_right(&100), Some(&foo2));
 //! ```
@@ -120,7 +120,10 @@
 //! [bijective map]: https://en.wikipedia.org/wiki/Bijection
 //! [doesn't update an equal key upon insertion]:
 //! https://doc.rust-lang.org/std/collections/index.html#insert-and-complex-keys
-//! [`HashMap<K, V>`]
+//! [`HashMap`]: https://doc.rust-lang.org/std/collections/struct.HashMap.html
+//! [`insert`]: struct.BiMap.html#method.insert
+//! [`insert_no_overwrite`]: struct.BiMap.html#method.insert_no_overwrite
+//! [`Overwritten`]: enum.Overwritten.html
 
 use std::cmp;
 use std::collections::HashMap;
@@ -131,7 +134,11 @@ use std::iter::{FromIterator, IntoIterator};
 use std::ops::Deref;
 use std::rc::Rc;
 
-/// The previous left-right pairs, if any, that were overwritten by a call to `bimap.insert()`.
+/// The previous left-right pairs, if any, that were overwritten by a call to the [`insert`] method
+/// of [`BiMap`].
+///
+/// [`insert`]: struct.BiMap.html#method.insert
+/// [`BiMap`]: struct.BiMap.html
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Overwritten<L, R> {
     /// Neither the left nor the right value previously existed in the `BiMap`.
@@ -157,7 +164,7 @@ impl<L, R> Overwritten<L, R> {
     /// Returns a boolean indicating if the `Overwritten` variant implies any values were
     /// overwritten.
     ///
-    /// This function is `true` for all variants other than `Neither`.
+    /// This method is `true` for all variants other than `Neither`.
     ///
     /// # Examples
     ///
@@ -178,7 +185,9 @@ impl<L, R> Overwritten<L, R> {
 
 /// A two-way map between left values and right values.
 ///
-/// See the module-level documentation for more details and examples.
+/// See the [module-level documentation] for more details and examples.
+///
+/// [module-level documentation]: index.html
 #[derive(Clone)]
 pub struct BiMap<L, R> {
     left2right: HashMap<Rc<L>, Rc<R>>,
@@ -236,7 +245,7 @@ where
         self.left2right.len()
     }
 
-    /// Returns `true` if the map contains no elements, and `false` otherwise.
+    /// Returns `true` if the map contains no left-right pairs, and `false` otherwise.
     ///
     /// # Examples
     ///
@@ -274,8 +283,8 @@ where
         self.right2left.clear();
     }
 
-    /// Returns a lower bound on the number of elements the `BiMap` can store without reallocating
-    /// memory.
+    /// Returns a lower bound on the number of left-right pairs the `BiMap` can store without
+    /// reallocating memory.
     ///
     /// # Examples
     ///
@@ -290,6 +299,7 @@ where
     }
 
     /// Create an iterator over the left-right pairs in the `BiMap` in arbitrary order.
+    ///
     /// The iterator element type is `(&'a L, &'a R)`.
     ///
     /// # Examples
@@ -311,6 +321,7 @@ where
     }
 
     /// Create an iterator over the left values in the `BiMap` in arbitrary order.
+    ///
     /// The iterator element type is `&'a L`.
     ///
     /// # Examples
@@ -332,6 +343,7 @@ where
     }
 
     /// Create an iterator over the right values in the `BiMap` in arbitrary order.
+    ///
     /// The iterator element type is `&'a R`.
     ///
     /// # Examples
@@ -352,7 +364,7 @@ where
         RightValues { inner: self.left2right.iter() }
     }
 
-    /// Returns a reference to the right value corresponding to the left key.
+    /// Returns a reference to the right value corresponding to the given left value.
     ///
     /// # Examples
     ///
@@ -368,7 +380,7 @@ where
         self.left2right.get(left).map(Deref::deref)
     }
 
-    /// Returns a reference to the left value corresponding to the right key.
+    /// Returns a reference to the left value corresponding to the given right value.
     ///
     /// # Examples
     ///
@@ -384,7 +396,7 @@ where
         self.right2left.get(right).map(Deref::deref)
     }
 
-    /// Returns `true` if the map contains the specified left element and `false` otherwise.
+    /// Returns `true` if the map contains the given left value and `false` otherwise.
     ///
     /// # Examples
     ///
@@ -400,7 +412,7 @@ where
         self.left2right.contains_key(left)
     }
 
-    /// Returns `true` if the map contains the specified right element and `false` otherwise.
+    /// Returns `true` if the map contains the given right value and `false` otherwise.
     ///
     /// # Examples
     ///
@@ -416,9 +428,9 @@ where
         self.right2left.contains_key(right)
     }
 
-    /// Removes the left-right pair correspondin to the given left element.
+    /// Removes the left-right pair corresponding to the given left value.
     ///
-    /// Returns the previous left-right pair if the map contained the left element and `None`
+    /// Returns the previous left-right pair if the map contained the left value and `None`
     /// otherwise.
     ///
     /// # Examples
@@ -446,9 +458,9 @@ where
         })
     }
 
-    /// Removes the left-right pair correspondin to the given right element.
+    /// Removes the left-right pair corresponding to the given right value.
     ///
-    /// Returns the previous left-right pair if the map contained the right element and `None`
+    /// Returns the previous left-right pair if the map contained the right value and `None`
     /// otherwise.
     ///
     /// # Examples
@@ -479,7 +491,8 @@ where
     /// Inserts the given left-right pair into the `BiMap`.
     ///
     /// Returns an `enum` `Overwritten` representing any left-right pairs that were overwritten by
-    /// the call to `insert()`.
+    /// the call to `insert`. The example below details all possible `enum` variants that can be
+    /// returned.
     ///
     /// # Warnings
     ///
@@ -514,9 +527,9 @@ where
     /// assert_eq!(bimap.len(), 2); // {'a' <> 1, 'c' <> 2}
     ///
     /// // both ('a', 4) and ('c', 2) already exist, so inserting ('a', 2) overwrites both.
-    /// // ('c', 2) has the overwritten left value ('c'), so it's the first tuple returned.
-    /// // ('a', 4) has the overwritten right value (4), so it's the second tuple returned.
-    /// assert_eq!(bimap.insert('a', 2), Overwritten::Both(('c', 2), ('a', 4)));
+    /// // ('a', 4) has the overwritten left value ('a'), so it's the first tuple returned.
+    /// // ('c', 2) has the overwritten right value (2), so it's the second tuple returned.
+    /// assert_eq!(bimap.insert('a', 2), Overwritten::Both(('a', 4), ('c', 2)));
     /// assert_eq!(bimap.len(), 1); // {'a' <> 2} // bimap is smaller than before!
     ///
     /// // ('a', 2) already exists, so inserting ('a', 2) overwrites the pair.
@@ -540,8 +553,8 @@ where
                     let prev_pair = self.remove_by_left(&left).unwrap();
                     Overwritten::Pair(prev_pair.0, prev_pair.1)
                 } else {
-                    let right_overwritten = self.remove_by_left(&left).unwrap();
-                    let left_overwritten = self.remove_by_right(&right).unwrap();
+                    let left_overwritten = self.remove_by_left(&left).unwrap();
+                    let right_overwritten = self.remove_by_right(&right).unwrap();
                     Overwritten::Both(left_overwritten, right_overwritten)
                 }
             }
@@ -671,7 +684,10 @@ where
 
 /// An owning iterator over the left-right pairs in a `BiMap`.
 ///
-/// This `struct` is created by the `into_iter` method of `BiMap`.
+/// This `struct` is created by the [`into_iter`] method of [`BiMap`].
+///
+/// [`into_iter`]: struct.BiMap.html#method.into_iter
+/// [`BiMap`]: struct.BiMap.html
 pub struct IntoIter<L, R> {
     inner: hash_map::IntoIter<Rc<L>, Rc<R>>,
 }
@@ -691,7 +707,10 @@ impl<L, R> Iterator for IntoIter<L, R> {
 
 /// An iterator over the left-right pairs in a `BiMap`.
 ///
-/// This `struct` is created by the `iter` method of `BiMap`.
+/// This `struct` is created by the [`iter`] method of [`BiMap`].
+///
+/// [`iter`]: struct.BiMap.html#method.iter
+/// [`BiMap`]: struct.BiMap.html
 pub struct Iter<'a, L, R>
 where
     L: 'a,
@@ -716,7 +735,10 @@ impl<'a, L, R> Iterator for Iter<'a, L, R> {
 
 /// An iterator over the left values in a `BiMap`.
 ///
-/// This `struct` is created by the `left_values` method of `BiMap`.
+/// This `struct` is created by the [`left_values`] method of [`BiMap`].
+///
+/// [`left_values`]: struct.BiMap.html#method.left_values
+/// [`BiMap`]: struct.BiMap.html
 pub struct LeftValues<'a, L, R>
 where
     L: 'a,
@@ -739,7 +761,10 @@ impl<'a, L, R> Iterator for LeftValues<'a, L, R> {
 
 /// An iterator over the right values in a `BiMap`.
 ///
-/// This `struct` is created by the `right_values` method of `BiMap`.
+/// This `struct` is created by the [`right_values`] method of [`BiMap`].
+///
+/// [`right_values`]: struct.BiMap.html#method.right_values
+/// [`BiMap`]: struct.BiMap.html
 pub struct RightValues<'a, L, R>
 where
     L: 'a,
