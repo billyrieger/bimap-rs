@@ -2,7 +2,7 @@
 //!
 //! A `Bimap<L, R>` is a [bijective map] between values of type `L`, called left values, and values
 //! of type `R`, called right values. This means every left value is associated with exactly one
-//! right value and vice versa. Compare this to a `HashMap<K, V>`, where every key is associated
+//! right value and vice versa. Compare this to a [`HashMap<K, V>`], where every key is associated
 //! with exactly one value but a value can be associated with more than one key.
 //!
 //! Internally, a `Bimap` is composed of two `HashMaps`, one for the left-to-right direction and
@@ -47,7 +47,80 @@
 //! }
 //! ```
 //!
+//! ## Insertion and overwriting
+//!
+//! Consider the following example:
+//!
+//! ```
+//! use bimap::Bimap;
+//!
+//! let mut bimap = Bimap::new();
+//! bimap.insert('a', 1);
+//! bimap.insert('b', 1); // what to do here?
+//! ```
+//!
+//! In order to maintain the bijection, the `bimap` cannot have both `('a', 1)` and `('b', 1)` in
+//! the map. Otherwise, the right-value `1` would have two left values associated with it. Either
+//! we should allow the call to `insert('b', 1)` to go through and overwrite `('a', 1)`, or not let
+//! `('b', 1)` be inserted at all. `Bimap` allows for both possibilities. To insert with overwriting,
+//! use `insert()`, and to insert without overwriting, use `insert_no_overwrite()`. The return type
+//! of `insert` is the `enum` `Overwritten`, which indicates what values, if any, were overwritten;
+//! the return type of `insert_no_overwrite()` is a boolean indicating if the insertion was
+//! successful.
+//!
+//! This is especially important when dealing with types that can be equal while having different
+//! data. Unlike `HashMap`, which [doesn't update an equal key upon insertion], a `Bimap` updates
+//! both the left values and the right values.
+//!
+//! ```
+//! use std::hash::{Hash, Hasher};
+//! use bimap::{Bimap, Overwritten};
+//!
+//! #[derive(Clone, Copy, Debug)]
+//! struct Foo {
+//!     important: char,
+//!     unimportant: u32,
+//! }
+//!
+//! // equality only depends on the important data
+//! impl PartialEq for Foo {
+//!     fn eq(&self, other: &Foo) -> bool {
+//!         self.important == other.important
+//!     }
+//! }
+//!
+//! impl Eq for Foo {}
+//!
+//! // hash only depends on the important data
+//! impl Hash for Foo {
+//!     fn hash<H: Hasher>(&self, state: &mut H) {
+//!         self.important.hash(state);
+//!     }
+//! }
+//!
+//! // create two Foos that are equal but have different data
+//! let foo1 = Foo {
+//!     important: 'a',
+//!     unimportant: 1,
+//! };
+//! let foo2 = Foo {
+//!     important: 'a',
+//!     unimportant: 2,
+//! };
+//! assert_eq!(foo1, foo2);
+//!
+//! let mut bimap = Bimap::new();
+//! bimap.insert(foo1, 99);
+//! let overwritten = bimap.insert(foo2, 100);
+//! // foo1 is overwritten and returned, foo2 is in the bimap
+//! assert_eq!(overwritten, Overwritten::Left(foo1, 99));
+//! assert_eq!(bimap.get_by_right(&100), Some(&foo2));
+//! ```
+//!
 //! [bijective map]: https://en.wikipedia.org/wiki/Bijection
+//! [doesn't update an equal key upon insertion]:
+//! https://doc.rust-lang.org/std/collections/index.html#insert-and-complex-keys
+//! [`HashMap<K, V>`]
 
 use std::cmp;
 use std::collections::HashMap;
@@ -78,6 +151,29 @@ pub enum Overwritten<L, R> {
     /// The left-right pair already existed in the `Bimap`, and the previous left-right pair is
     /// returned.
     Pair(L, R),
+}
+
+impl<L, R> Overwritten<L, R> {
+    /// Returns a boolean indicating if the `Overwritten` variant implies any values were
+    /// overwritten.
+    ///
+    /// This function is `true` for all variants other than `Neither`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use bimap::{Bimap, Overwritten};
+    ///
+    /// let mut bimap = Bimap::new();
+    /// assert!(!bimap.insert('a', 1).did_overwrite());
+    /// assert!(bimap.insert('a', 2).did_overwrite());
+    /// ```
+    pub fn did_overwrite(&self) -> bool {
+        match self {
+            &Overwritten::Neither => false,
+            _ => true,
+        }
+    }
 }
 
 /// A two-way map between left values and right values.
@@ -382,22 +478,21 @@ where
 
     /// Inserts the given left-right pair into the `Bimap`.
     ///
-    /// Returns an enum `Overwritten` representing any left-right pairs that were overwritten by a
-    /// call to `insert()`. See the documentation for `Overwritten` and the example below for more
-    /// details.
+    /// Returns an `enum` `Overwritten` representing any left-right pairs that were overwritten by
+    /// the call to `insert()`.
     ///
     /// # Warnings
     ///
     /// Somewhat paradoxically, calling `insert()` can actually reduce the size of the `Bimap`!
     /// This is because of the invariant that each left value maps to exactly one right value and
-    /// vice versa. This is detailed in the example below.
+    /// vice versa.
     ///
     /// # Examples
     ///
     /// ```
     /// use bimap::{Bimap, Overwritten};
     ///
-    /// let mut bimap = Bimap::<char, u32>::new();
+    /// let mut bimap = Bimap::new();
     /// assert_eq!(bimap.len(), 0); // {}
     ///
     /// // no values are overwritten.
@@ -575,6 +670,8 @@ where
 }
 
 /// An owning iterator over the left-right pairs in a `Bimap`.
+///
+/// This `struct` is created by the `into_iter` method of `Bimap`.
 pub struct IntoIter<L, R> {
     inner: hash_map::IntoIter<Rc<L>, Rc<R>>,
 }
@@ -593,6 +690,8 @@ impl<L, R> Iterator for IntoIter<L, R> {
 }
 
 /// An iterator over the left-right pairs in a `Bimap`.
+///
+/// This `struct` is created by the `iter` method of `Bimap`.
 pub struct Iter<'a, L, R>
 where
     L: 'a,
@@ -616,6 +715,8 @@ impl<'a, L, R> Iterator for Iter<'a, L, R> {
 }
 
 /// An iterator over the left values in a `Bimap`.
+///
+/// This `struct` is created by the `left_values` method of `Bimap`.
 pub struct LeftValues<'a, L, R>
 where
     L: 'a,
@@ -637,6 +738,8 @@ impl<'a, L, R> Iterator for LeftValues<'a, L, R> {
 }
 
 /// An iterator over the right values in a `Bimap`.
+///
+/// This `struct` is created by the `right_values` method of `Bimap`.
 pub struct RightValues<'a, L, R>
 where
     L: 'a,
@@ -719,5 +822,38 @@ mod tests {
         bimap2.insert('a', 4);
         bimap2.insert('b', 3);
         assert_eq!(bimap, bimap2);
+    }
+
+    #[test]
+    fn test_iter() {
+        let mut bimap = Bimap::new();
+        bimap.insert('a', 1);
+        bimap.insert('b', 2);
+        bimap.insert('c', 3);
+        let mut pairs = bimap.iter().map(|(c, i)| (*c, *i)).collect::<Vec<_>>();
+        pairs.sort();
+        assert_eq!(pairs, vec![('a', 1), ('b', 2), ('c', 3)]);
+    }
+
+    #[test]
+    fn test_left_values() {
+        let mut bimap = Bimap::new();
+        bimap.insert('a', 1);
+        bimap.insert('b', 2);
+        bimap.insert('c', 3);
+        let mut left_values = bimap.left_values().cloned().collect::<Vec<_>>();
+        left_values.sort();
+        assert_eq!(left_values, vec!['a', 'b', 'c'])
+    }
+
+    #[test]
+    fn test_right_values() {
+        let mut bimap = Bimap::new();
+        bimap.insert('a', 1);
+        bimap.insert('b', 2);
+        bimap.insert('c', 3);
+        let mut right_values = bimap.right_values().cloned().collect::<Vec<_>>();
+        right_values.sort();
+        assert_eq!(right_values, vec![1, 2, 3])
     }
 }
