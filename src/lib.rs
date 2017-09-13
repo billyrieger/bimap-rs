@@ -188,7 +188,6 @@ impl<L, R> Overwritten<L, R> {
 /// See the [module-level documentation] for more details and examples.
 ///
 /// [module-level documentation]: index.html
-#[derive(Clone)]
 pub struct BiMap<L, R> {
     left2right: HashMap<Rc<L>, Rc<R>>,
     right2left: HashMap<Rc<R>, Rc<L>>,
@@ -593,6 +592,16 @@ where
     }
 }
 
+impl<L, R> Clone for BiMap<L, R>
+where
+    L: Eq + Hash + Clone,
+    R: Eq + Hash + Clone,
+{
+    fn clone(&self) -> BiMap<L, R> {
+        self.iter().map(|(l, r)| (l.clone(), r.clone())).collect()
+    }
+}
+
 impl<L, R> fmt::Debug for BiMap<L, R>
 where
     L: Eq + Hash + fmt::Debug,
@@ -798,6 +807,20 @@ mod tests {
         bimap.insert('b', 2);
         let bimap2 = bimap.clone();
         assert_eq!(bimap, bimap2);
+    }
+
+    #[test]
+    fn test_deep_clone() {
+        let mut bimap = BiMap::new();
+        bimap.insert('a', 1);
+        bimap.insert('b', 2);
+        let mut bimap2 = bimap.clone();
+
+        // would panic if clone() didn't deep clone
+        bimap.insert('b', 5);
+        bimap2.insert('a', 12);
+        bimap2.remove_by_left(&'a');
+        bimap.remove_by_right(&2);
     }
 
     #[test]
