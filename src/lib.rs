@@ -691,6 +691,10 @@ where
     }
 }
 
+unsafe impl<L: Send, R: Send> Send for BiMap<L, R> {}
+
+unsafe impl<L: Sync, R: Sync> Sync for BiMap<L, R> {}
+
 /// An owning iterator over the left-right pairs in a `BiMap`.
 ///
 /// This `struct` is created by the [`into_iter`] method of [`BiMap`].
