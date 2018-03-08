@@ -590,6 +590,35 @@ where
             true
         }
     }
+
+    /// Retains only the elements specified by the predicate.
+    ///
+    /// In other words, remove all pairs (l, r) such that f(&l, &r) returns false.
+    ///
+    /// This is called for both internal `HashMap`s.
+    ///
+    /// # Examples
+    /// 
+    /// ```
+    /// use bimap::BiMap;
+    ///
+    /// let mut bimap = BiMap::new();
+    /// bimap.insert('a', 1);
+    /// bimap.insert('b', 2);
+    /// bimap.insert('c', 3);
+    /// bimap.retain(|&l, &r| r >= 2);
+    /// assert_eq!(bimap.len(), 2);
+    /// assert_eq!(bimap.get_by_left(&'b'), Some(&2));
+    /// assert_eq!(bimap.get_by_left(&'c'), Some(&3));
+    /// assert_eq!(bimap.get_by_left(&'a'), None);
+    /// ```
+    pub fn retain<F>(&mut self, mut f: F)
+    where
+        F: FnMut(&L, &R) -> bool 
+    {
+        self.left2right.retain(|k, v| f(k, v));
+        self.right2left.retain(|k, v| f(v, k));
+    }
 }
 
 impl<L, R> Clone for BiMap<L, R>
