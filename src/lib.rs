@@ -2,14 +2,14 @@
 //!
 //! A `BiMap<L, R>` is a [bijective map] between values of type `L`, called left values, and values
 //! of type `R`, called right values. This means every left value is associated with exactly one
-//! right value and vice versa. Compare this to a [`HashMap`], where every key is associated with
+//! right value and vice versa. Compare this to a [`BTreeMap`], where every key is associated with
 //! exactly one value but a value can be associated with more than one key.
 //!
-//! Internally, a `BiMap` is composed of two `HashMap`s, one for the left-to-right direction and
+//! Internally, a `BiMap` is composed of two `BTreeMap`s, one for the left-to-right direction and
 //! one for right-to-left. As such, the big-O performance of the `get`, `remove`, `insert`, and
-//! `contains` methods are the same as those of a `HashMap`.
+//! `contains` methods are the same as those of a `BTreeMap`.
 //!
-//! As with `HashMap`, it is considered a logic error to modify a value's hash while it is in the
+//! As with `BTreeMap`, it is considered a logic error to modify a value's hash while it is in the
 //! `BiMap` using a `Cell`, `RefCell`, etc.
 //!
 //! # Examples
@@ -69,7 +69,7 @@
 //! insertion was successful.
 //!
 //! This is especially important when dealing with types that can be equal while having different
-//! data. Unlike a `HashMap`, which [doesn't update an equal key upon insertion], a `BiMap` updates
+//! data. Unlike a `BTreeMap`, which [doesn't update an equal key upon insertion], a `BiMap` updates
 //! both the left values and the right values.
 //!
 //! ```
@@ -120,19 +120,24 @@
 //! [bijective map]: https://en.wikipedia.org/wiki/Bijection
 //! [doesn't update an equal key upon insertion]:
 //! https://doc.rust-lang.org/std/collections/index.html#insert-and-complex-keys
-//! [`HashMap`]: https://doc.rust-lang.org/std/collections/struct.HashMap.html
+//! [`BTreeMap`]: https://doc.rust-lang.org/std/collections/struct.BTreeMap.html
 //! [`insert`]: struct.BiMap.html#method.insert
 //! [`insert_no_overwrite`]: struct.BiMap.html#method.insert_no_overwrite
 //! [`Overwritten`]: enum.Overwritten.html
 
-use std::cmp;
-use std::collections::HashMap;
-use std::collections::hash_map;
-use std::fmt;
-use std::hash::Hash;
-use std::iter::{FromIterator, IntoIterator};
-use std::ops::Deref;
-use std::rc::Rc;
+#![no_std]
+#![feature(alloc)]
+
+extern crate alloc;
+
+use core::cmp::Ord;
+use alloc::BTreeMap;
+use alloc::btree_map;
+use core::fmt;
+use core::hash::Hash;
+use core::iter::{FromIterator, IntoIterator};
+use core::ops::Deref;
+use alloc::rc::Rc;
 
 /// The previous left-right pairs, if any, that were overwritten by a call to the [`insert`] method
 /// of [`BiMap`].
@@ -140,7 +145,7 @@ use std::rc::Rc;
 /// [`insert`]: struct.BiMap.html#method.insert
 /// [`BiMap`]: struct.BiMap.html
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub enum Overwritten<L, R> {
+pub enum Overwritten<L, R> where L: Ord, R: Ord {
     /// Neither the left nor the right value previously existed in the `BiMap`.
     Neither,
 
@@ -160,7 +165,7 @@ pub enum Overwritten<L, R> {
     Pair(L, R),
 }
 
-impl<L, R> Overwritten<L, R> {
+impl<L, R> Overwritten<L, R> where L: Ord, R: Ord {
     /// Returns a boolean indicating if the `Overwritten` variant implies any values were
     /// overwritten.
     ///
@@ -188,15 +193,15 @@ impl<L, R> Overwritten<L, R> {
 /// See the [module-level documentation] for more details and examples.
 ///
 /// [module-level documentation]: index.html
-pub struct BiMap<L, R> {
-    left2right: HashMap<Rc<L>, Rc<R>>,
-    right2left: HashMap<Rc<R>, Rc<L>>,
+pub struct BiMap<L, R> where L: Ord, R: Ord {
+    left2right: BTreeMap<Rc<L>, Rc<R>>,
+    right2left: BTreeMap<Rc<R>, Rc<L>>,
 }
 
 impl<L, R> BiMap<L, R>
 where
-    L: Eq + Hash,
-    R: Eq + Hash,
+    L: Eq + Hash + Ord,
+    R: Eq + Hash + Ord,
 {
     /// Creates an empty `BiMap`.
     ///
@@ -209,22 +214,6 @@ where
     /// ```
     pub fn new() -> BiMap<L, R> {
         BiMap::default()
-    }
-
-    /// Creates an empty `BiMap` with the given capacity.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use bimap::BiMap;
-    ///
-    /// let mut bimap: BiMap<char, u32> = BiMap::with_capacity(5);
-    /// ```
-    pub fn with_capacity(capacity: usize) -> BiMap<L, R> {
-        BiMap {
-            left2right: HashMap::with_capacity(capacity),
-            right2left: HashMap::with_capacity(capacity),
-        }
     }
 
     /// Returns the number of left-right pairs in the map.
@@ -262,26 +251,6 @@ where
         self.len() == 0
     }
 
-    /// Removes all left-right pairs from the `BiMap`, but keeps the allocated memory for reuse.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use bimap::BiMap;
-    ///
-    /// let mut bimap = BiMap::new();
-    /// bimap.insert('a', 1);
-    /// bimap.insert('b', 2);
-    /// bimap.insert('c', 3);
-    /// bimap.clear();
-    /// assert!(bimap.len() == 0);
-    /// assert!(bimap.capacity() >= 3);
-    /// ```
-    pub fn clear(&mut self) {
-        self.left2right.clear();
-        self.right2left.clear();
-    }
-
     /// Returns a lower bound on the number of left-right pairs the `BiMap` can store without
     /// reallocating memory.
     ///
@@ -293,9 +262,9 @@ where
     /// let mut bimap: BiMap<char, u32> = BiMap::with_capacity(5);
     /// assert!(bimap.capacity() >= 5);
     /// ```
-    pub fn capacity(&self) -> usize {
-        cmp::min(self.left2right.capacity(), self.right2left.capacity())
-    }
+	// pub fn capacity(&self) -> usize {
+	//	 cmp::min(self.left2right.capacity(), self.right2left.capacity())
+	// }
 
     /// Create an iterator over the left-right pairs in the `BiMap` in arbitrary order.
     ///
@@ -590,41 +559,12 @@ where
             true
         }
     }
-
-    /// Retains only the elements specified by the predicate.
-    ///
-    /// In other words, remove all pairs (l, r) such that f(&l, &r) returns false.
-    ///
-    /// This is called for both internal `HashMap`s.
-    ///
-    /// # Examples
-    /// 
-    /// ```
-    /// use bimap::BiMap;
-    ///
-    /// let mut bimap = BiMap::new();
-    /// bimap.insert('a', 1);
-    /// bimap.insert('b', 2);
-    /// bimap.insert('c', 3);
-    /// bimap.retain(|&l, &r| r >= 2);
-    /// assert_eq!(bimap.len(), 2);
-    /// assert_eq!(bimap.get_by_left(&'b'), Some(&2));
-    /// assert_eq!(bimap.get_by_left(&'c'), Some(&3));
-    /// assert_eq!(bimap.get_by_left(&'a'), None);
-    /// ```
-    pub fn retain<F>(&mut self, mut f: F)
-    where
-        F: FnMut(&L, &R) -> bool 
-    {
-        self.left2right.retain(|k, v| f(k, v));
-        self.right2left.retain(|k, v| f(v, k));
-    }
 }
 
 impl<L, R> Clone for BiMap<L, R>
 where
-    L: Eq + Hash + Clone,
-    R: Eq + Hash + Clone,
+    L: Eq + Hash + Clone + Ord,
+    R: Eq + Hash + Clone + Ord,
 {
     fn clone(&self) -> BiMap<L, R> {
         self.iter().map(|(l, r)| (l.clone(), r.clone())).collect()
@@ -633,8 +573,8 @@ where
 
 impl<L, R> fmt::Debug for BiMap<L, R>
 where
-    L: Eq + Hash + fmt::Debug,
-    R: Eq + Hash + fmt::Debug,
+    L: Eq + Hash + fmt::Debug + Ord,
+    R: Eq + Hash + fmt::Debug + Ord,
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{{")?;
@@ -649,28 +589,28 @@ where
 
 impl<L, R> Default for BiMap<L, R>
 where
-    L: Eq + Hash,
-    R: Eq + Hash,
+    L: Eq + Hash + Ord,
+    R: Eq + Hash + Ord,
 {
     fn default() -> BiMap<L, R> {
         BiMap {
-            left2right: HashMap::default(),
-            right2left: HashMap::default(),
+            left2right: BTreeMap::default(),
+            right2left: BTreeMap::default(),
         }
     }
 }
 
 impl<L, R> Eq for BiMap<L, R>
 where
-    L: Eq + Hash,
-    R: Eq + Hash,
+    L: Eq + Hash + Ord,
+    R: Eq + Hash + Ord,
 {
 }
 
 impl<L, R> FromIterator<(L, R)> for BiMap<L, R>
 where
-    L: Eq + Hash,
-    R: Eq + Hash,
+    L: Eq + Hash + Ord,
+    R: Eq + Hash + Ord,
 {
     fn from_iter<I>(iter: I) -> BiMap<L, R>
     where
@@ -686,8 +626,8 @@ where
 
 impl<'a, L, R> IntoIterator for &'a BiMap<L, R>
 where
-    L: Eq + Hash,
-    R: Eq + Hash,
+    L: Eq + Hash + Ord,
+    R: Eq + Hash + Ord,
 {
     type Item = (&'a L, &'a R);
     type IntoIter = Iter<'a, L, R>;
@@ -699,8 +639,8 @@ where
 
 impl<L, R> IntoIterator for BiMap<L, R>
 where
-    L: Eq + Hash,
-    R: Eq + Hash,
+    L: Eq + Hash + Ord,
+    R: Eq + Hash + Ord,
 {
     type Item = (L, R);
     type IntoIter = IntoIter<L, R>;
@@ -712,17 +652,17 @@ where
 
 impl<L, R> PartialEq for BiMap<L, R>
 where
-    L: Eq + Hash,
-    R: Eq + Hash,
+    L: Eq + Hash + Ord,
+    R: Eq + Hash + Ord,
 {
     fn eq(&self, other: &BiMap<L, R>) -> bool {
         self.left2right == other.left2right
     }
 }
 
-unsafe impl<L: Send, R: Send> Send for BiMap<L, R> {}
+unsafe impl<L: Send + Ord, R: Send + Ord> Send for BiMap<L, R> {}
 
-unsafe impl<L: Sync, R: Sync> Sync for BiMap<L, R> {}
+unsafe impl<L: Sync + Ord, R: Sync + Ord> Sync for BiMap<L, R> {}
 
 /// An owning iterator over the left-right pairs in a `BiMap`.
 ///
@@ -731,7 +671,7 @@ unsafe impl<L: Sync, R: Sync> Sync for BiMap<L, R> {}
 /// [`into_iter`]: struct.BiMap.html#method.into_iter
 /// [`BiMap`]: struct.BiMap.html
 pub struct IntoIter<L, R> {
-    inner: hash_map::IntoIter<Rc<L>, Rc<R>>,
+    inner: btree_map::IntoIter<Rc<L>, Rc<R>>,
 }
 
 impl<L, R> Iterator for IntoIter<L, R> {
@@ -758,7 +698,7 @@ where
     L: 'a,
     R: 'a,
 {
-    inner: hash_map::Iter<'a, Rc<L>, Rc<R>>,
+    inner: btree_map::Iter<'a, Rc<L>, Rc<R>>,
 }
 
 impl<'a, L, R> Iterator for Iter<'a, L, R> {
@@ -786,7 +726,7 @@ where
     L: 'a,
     R: 'a,
 {
-    inner: hash_map::Iter<'a, Rc<L>, Rc<R>>,
+    inner: btree_map::Iter<'a, Rc<L>, Rc<R>>,
 }
 
 impl<'a, L, R> Iterator for LeftValues<'a, L, R> {
@@ -812,7 +752,7 @@ where
     L: 'a,
     R: 'a,
 {
-    inner: hash_map::Iter<'a, Rc<L>, Rc<R>>,
+    inner: btree_map::Iter<'a, Rc<L>, Rc<R>>,
 }
 
 impl<'a, L, R> Iterator for RightValues<'a, L, R> {
