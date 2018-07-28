@@ -616,8 +616,15 @@ where
     where
         F: FnMut(&L, &R) -> bool 
     {
-        self.left2right.retain(|k, v| f(k, v));
-        self.right2left.retain(|k, v| f(v, k));
+        let r2l = &mut self.right2left;
+        self.left2right.retain(|l, r| {
+            let retain_item = f(l, r);
+            if !retain_item {
+                r2l.remove(r);
+            }
+
+            retain_item
+        });
     }
 }
 
@@ -936,5 +943,25 @@ mod tests {
         let mut right_values = bimap.right_values().cloned().collect::<Vec<_>>();
         right_values.sort();
         assert_eq!(right_values, vec![1, 2, 3])
+    }
+
+    #[test]
+    fn test_retain_calls_f_once() {
+        let mut bimap = BiMap::new();
+        bimap.insert('a', 1);
+        bimap.insert('b', 2);
+        bimap.insert('c', 3);
+        // Retain one element
+        let mut i = 0;
+        bimap.retain(|_l, _r| {
+            i += 1;
+            if i > 1 {
+                return false;
+            }
+
+            true
+        });
+        assert_eq!(bimap.len(), 1);
+        assert_eq!(i, 3);
     }
 }
