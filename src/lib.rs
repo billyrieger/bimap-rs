@@ -537,27 +537,23 @@ where
     /// assert_eq!(bimap.len(), 1); // {'a' <> 2}
     /// ```
     pub fn insert(&mut self, left: L, right: R) -> Overwritten<L, R> {
-        let retval = match (self.contains_left(&left), self.contains_right(&right)) {
-            (false, false) => Overwritten::Neither,
-            (true, false) => {
-                let prev_pair = self.remove_by_left(&left).unwrap();
-                Overwritten::Left(prev_pair.0, prev_pair.1)
-            }
-            (false, true) => {
-                let prev_pair = self.remove_by_right(&right).unwrap();
-                Overwritten::Right(prev_pair.0, prev_pair.1)
-            }
-            (true, true) => {
-                if self.get_by_left(&left) == Some(&right) {
-                    let prev_pair = self.remove_by_left(&left).unwrap();
-                    Overwritten::Pair(prev_pair.0, prev_pair.1)
+        let retval = match (self.remove_by_left(&left), self.remove_by_right(&right)) {
+            (None, None) => Overwritten::Neither,
+            (None, Some(r)) => Overwritten::Right(r.0, r.1),
+            (Some(l), None) => {
+                // Removing by left may also remove the right value,
+                // when a duplicated pair is inserted.
+                if &l.1 == &right {
+                    Overwritten::Pair(l.0, l.1)
                 } else {
-                    let left_overwritten = self.remove_by_left(&left).unwrap();
-                    let right_overwritten = self.remove_by_right(&right).unwrap();
-                    Overwritten::Both(left_overwritten, right_overwritten)
+                    Overwritten::Left(l.0, l.1)
                 }
             }
+            (Some(l), Some(r)) => {
+                Overwritten::Both(l, r)
+            }
         };
+
         let left_rc = Rc::new(left);
         let right_rc = Rc::new(right);
         self.left2right.insert(left_rc.clone(), right_rc.clone());
