@@ -750,6 +750,8 @@ impl<L, R> Iterator for IntoIter<L, R> {
     }
 }
 
+impl<L, R> ExactSizeIterator for IntoIter<L, R> {}
+
 /// An iterator over the left-right pairs in a `BiMap`.
 ///
 /// This `struct` is created by the [`iter`] method of [`BiMap`].
@@ -778,6 +780,8 @@ impl<'a, L, R> Iterator for Iter<'a, L, R> {
     }
 }
 
+impl<'a, L, R> ExactSizeIterator for Iter<'a, L, R> {}
+
 /// An iterator over the left values in a `BiMap`.
 ///
 /// This `struct` is created by the [`left_values`] method of [`BiMap`].
@@ -803,6 +807,8 @@ impl<'a, L, R> Iterator for LeftValues<'a, L, R> {
         self.inner.size_hint()
     }
 }
+
+impl<'a, L, R> ExactSizeIterator for LeftValues<'a, L, R> {}
 
 /// An iterator over the right values in a `BiMap`.
 ///
@@ -831,6 +837,8 @@ impl<'a, L, R> Iterator for RightValues<'a, L, R> {
         self.inner.size_hint()
     }
 }
+
+impl<'a, L, R> ExactSizeIterator for RightValues<'a, L, R> {}
 
 #[cfg(test)]
 mod tests {
