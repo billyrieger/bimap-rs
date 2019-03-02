@@ -537,27 +537,23 @@ where
     /// assert_eq!(bimap.len(), 1); // {'a' <> 2}
     /// ```
     pub fn insert(&mut self, left: L, right: R) -> Overwritten<L, R> {
-        let retval = match (self.contains_left(&left), self.contains_right(&right)) {
-            (false, false) => Overwritten::Neither,
-            (true, false) => {
-                let prev_pair = self.remove_by_left(&left).unwrap();
-                Overwritten::Left(prev_pair.0, prev_pair.1)
-            }
-            (false, true) => {
-                let prev_pair = self.remove_by_right(&right).unwrap();
-                Overwritten::Right(prev_pair.0, prev_pair.1)
-            }
-            (true, true) => {
-                if self.get_by_left(&left) == Some(&right) {
-                    let prev_pair = self.remove_by_left(&left).unwrap();
-                    Overwritten::Pair(prev_pair.0, prev_pair.1)
+        let retval = match (self.remove_by_left(&left), self.remove_by_right(&right)) {
+            (None, None) => Overwritten::Neither,
+            (None, Some(r)) => Overwritten::Right(r.0, r.1),
+            (Some(l), None) => {
+                // Removing by left may also remove the right value,
+                // when a duplicated pair is inserted.
+                if &l.1 == &right {
+                    Overwritten::Pair(l.0, l.1)
                 } else {
-                    let left_overwritten = self.remove_by_left(&left).unwrap();
-                    let right_overwritten = self.remove_by_right(&right).unwrap();
-                    Overwritten::Both(left_overwritten, right_overwritten)
+                    Overwritten::Left(l.0, l.1)
                 }
             }
+            (Some(l), Some(r)) => {
+                Overwritten::Both(l, r)
+            }
         };
+
         let left_rc = Rc::new(left);
         let right_rc = Rc::new(right);
         self.left2right.insert(left_rc.clone(), right_rc.clone());
@@ -616,8 +612,15 @@ where
     where
         F: FnMut(&L, &R) -> bool 
     {
-        self.left2right.retain(|k, v| f(k, v));
-        self.right2left.retain(|k, v| f(v, k));
+        let r2l = &mut self.right2left;
+        self.left2right.retain(|l, r| {
+            let retain_item = f(l, r);
+            if !retain_item {
+                r2l.remove(r);
+            }
+
+            retain_item
+        });
     }
 }
 
@@ -747,6 +750,8 @@ impl<L, R> Iterator for IntoIter<L, R> {
     }
 }
 
+impl<L, R> ExactSizeIterator for IntoIter<L, R> {}
+
 /// An iterator over the left-right pairs in a `BiMap`.
 ///
 /// This `struct` is created by the [`iter`] method of [`BiMap`].
@@ -775,6 +780,8 @@ impl<'a, L, R> Iterator for Iter<'a, L, R> {
     }
 }
 
+impl<'a, L, R> ExactSizeIterator for Iter<'a, L, R> {}
+
 /// An iterator over the left values in a `BiMap`.
 ///
 /// This `struct` is created by the [`left_values`] method of [`BiMap`].
@@ -800,6 +807,8 @@ impl<'a, L, R> Iterator for LeftValues<'a, L, R> {
         self.inner.size_hint()
     }
 }
+
+impl<'a, L, R> ExactSizeIterator for LeftValues<'a, L, R> {}
 
 /// An iterator over the right values in a `BiMap`.
 ///
@@ -828,6 +837,8 @@ impl<'a, L, R> Iterator for RightValues<'a, L, R> {
         self.inner.size_hint()
     }
 }
+
+impl<'a, L, R> ExactSizeIterator for RightValues<'a, L, R> {}
 
 #[cfg(test)]
 mod tests {
@@ -936,5 +947,25 @@ mod tests {
         let mut right_values = bimap.right_values().cloned().collect::<Vec<_>>();
         right_values.sort();
         assert_eq!(right_values, vec![1, 2, 3])
+    }
+
+    #[test]
+    fn test_retain_calls_f_once() {
+        let mut bimap = BiMap::new();
+        bimap.insert('a', 1);
+        bimap.insert('b', 2);
+        bimap.insert('c', 3);
+        // Retain one element
+        let mut i = 0;
+        bimap.retain(|_l, _r| {
+            i += 1;
+            if i > 1 {
+                return false;
+            }
+
+            true
+        });
+        assert_eq!(bimap.len(), 1);
+        assert_eq!(i, 3);
     }
 }
