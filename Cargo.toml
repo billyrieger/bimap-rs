@@ -11,4 +11,9 @@ readme = "README.md"
 repository = "https://github.com/wrieger93/bimap-rs/"
 version = "0.1.5"
 
+[features]
+default = ["std"]
+std = []
+
 [dependencies]
+cfg-if = "0.1"

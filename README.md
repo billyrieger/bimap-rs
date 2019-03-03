@@ -4,13 +4,28 @@
 
 # bimap-rs
 
-bimap-rs is a fast two-way bijective map implementation for Rust.
+bimap-rs is a two-way bijective map implementation for Rust.
 
 ## Usage
 
-To use bimap-rs in your Rust project, add `bimap = 0.1` to the dependencies section of your `Cargo.toml`.
+### Installation
+
+To use bimap-rs in your Rust project, add the following to your `Cargo.toml`:
+
+```toml
+bimap = "0.1"
+```
+
 See [the docs](https://docs.rs/bimap/) for more details and example code.
+
+### `no_std` compatibility
+
+To use `bimap-rs` without the Rust standard library, add the following to your `Cargo.toml`:
+
+```toml
+bimap = { version = "0.1", default-features = false }
+```
 
 ## License
 
-bimap-rs is licensed under the Apache-2.0 license.
+bimap-rs is dual licensed under the Apache-2.0 and MIT licenses.
