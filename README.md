@@ -1,6 +1,11 @@
-[![Build Status](https://travis-ci.org/wrieger93/bimap-rs.svg?branch=master)](https://travis-ci.org/wrieger93/bimap-rs)
-[![crates.io](https://img.shields.io/crates/v/bimap.svg)](https://crates.io/crates/bimap)
+[![Build status](https://img.shields.io/travis/com/billyrieger/bimap-rs.svg)](https://travis-ci.com/billyrieger/bimap-rs)
+[![Coverage](https://img.shields.io/codecov/c/github/billyrieger/bimap-rs.svg)](https://codecov.io/gh/billyrieger/bimap-rs/branch/master)
+[![Lines of code](https://tokei.rs/b1/github/billyrieger/bimap-rs)](https://github.com/Aaronepower/tokei)
+[![Version](https://img.shields.io/crates/v/bimap.svg)](https://crates.io/crates/bimap)
 [![Documentation](https://docs.rs/bimap/badge.svg)](https://docs.rs/bimap/)
+[![License](https://img.shields.io/crates/l/bimap.svg)](https://github.com/billyrieger/bimap/blob/master/LICENSE-MIT)
+[![Dependency status](https://deps.rs/repo/github/billyrieger/bimap-rs/status.svg)](https://deps.rs/repo/github/billyrieger/bimap-rs)
+[![Rust version](https://img.shields.io/badge/rust-stable-lightgrey.svg)](https://www.rust-lang.org/)
 
 # bimap-rs
 
