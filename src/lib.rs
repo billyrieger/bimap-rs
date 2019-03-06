@@ -10,7 +10,8 @@
 //! such, the big-O performance of the `get`, `remove`, `insert`, and `contains` methods are the
 //! same as those of the backing map.
 //!
-//! For convenience, the type definition [`BiMap`] corresponds to a `BiHashMap`.
+//! For convenience, the type definition [`BiMap`] corresponds to a `BiHashMap`. If you're using
+//! this crate without the standard library, it instead corresponds to a `BiBTreeMap`.
 //!
 //! # Examples
 //!

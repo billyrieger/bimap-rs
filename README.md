@@ -9,13 +9,13 @@
 
 # bimap-rs
 
-bimap-rs is a two-way bijective map implementation for Rust.
+`bimap-rs` is a two-way bijective map implementation for Rust.
 
 ## Usage
 
 ### Installation
 
-To use bimap-rs in your Rust project, add the following to your `Cargo.toml`:
+To use `bimap-rs` in your Rust project, add the following to your `Cargo.toml`:
 
 ```toml
 bimap = "0.2"
@@ -69,7 +69,7 @@ println!("the chemical symbol for {} is {}", left, right);
 }
 ```
 
-See [the docs](https://docs.rs/bimap/) for more details and example code.
+See [the docs](https://docs.rs/bimap/) for more details.
 
 ## License
 
