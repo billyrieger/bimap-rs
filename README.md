@@ -18,7 +18,7 @@ bimap-rs is a two-way bijective map implementation for Rust.
 To use bimap-rs in your Rust project, add the following to your `Cargo.toml`:
 
 ```toml
-bimap = "0.1"
+bimap = "0.2"
 ```
 
 ### `no_std` compatibility
@@ -26,7 +26,7 @@ bimap = "0.1"
 To use `bimap-rs` without the Rust standard library, add the following to your `Cargo.toml`:
 
 ```toml
-bimap = { version = "0.1", default-features = false }
+bimap = { version = "0.2", default-features = false }
 ```
 
 Note that you'll need to use Rust nightly due to the use of the `alloc` feature.
