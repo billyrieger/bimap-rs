@@ -15,13 +15,17 @@ before_cache: |
     RUSTFLAGS="--cfg procmacro2_semver_exempt" cargo install cargo-tarpaulin -f
   fi
 
-script:
-- cargo clean
-- cargo build
-- if [[ "$TRAVIS_RUST_VERSION" == nightly ]]; then
-    cargo build --no-default-features
+script: |
+  if [[ "$TRAVIS_RUST_VERSION" == nightly ]]; then
+    cargo clean;
+    cargo build;
+    cargo build --no-default-features;
+    cargo test;
+  else 
+    cargo clean;
+    cargo build;
+    cargo test;
   fi
-- cargo test
 
 after_success: |
   if [[ "$TRAVIS_RUST_VERSION" == nightly ]]; then
