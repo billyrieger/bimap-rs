@@ -131,6 +131,11 @@
 //! );
 //! ```
 //!
+//! ## `no_std` compatibility
+//!
+//! This crate can be used without the standard library when the `std` feature is disabled. If you
+//! choose to do this, only `BiBTreeMap` is available, not `BiHashMap`.
+//!
 //! ## serde compatibility
 //!
 //! When the `serde` feature is enabled, implementations of `Serialize` and
