@@ -9,7 +9,7 @@
 //! # Examples
 //!
 //! You can easily serialize and deserialize bimaps with any serde-compatbile
-//! `serializer or deserializer.
+//! serializer or deserializer.
 //!
 //! Serializing and deserializing a [`BiHashMap`]:
 //!
