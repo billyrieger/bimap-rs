@@ -21,10 +21,14 @@ script: |
     cargo build;
     cargo build --no-default-features;
     cargo test;
+    cargo build --all-features
+    cargo test --all-features;
   else 
     cargo clean;
     cargo build;
     cargo test;
+    cargo build --all-features
+    cargo test --all-features;
   fi
 
 after_success: |

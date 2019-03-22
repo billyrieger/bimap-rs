@@ -163,6 +163,9 @@ cfg_if::cfg_if! {
     }
 }
 
+#[cfg(feature = "serde")]
+pub mod serde;
+
 /// The previous left-right pairs, if any, that were overwritten by a call to the
 /// [`insert`](BiHashMap::insert) method of a bimap.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
