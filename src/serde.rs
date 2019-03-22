@@ -254,6 +254,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serde::de::value::Error;
 
     #[test]
     fn serde_hash() {
@@ -279,5 +280,25 @@ mod tests {
         let bimap2 = serde_json::from_str(&json).unwrap();
 
         assert_eq!(bimap, bimap2);
+    }
+
+    #[test]
+    fn expecting_btree() {
+        let visitor = BiBTreeMapVisitor {
+            marker: PhantomData::<BiBTreeMap<char, i32>>,
+        };
+        let error_str = format!("{:?}", visitor.visit_bool::<Error>(true));
+        let expected = "Err(Error { err: \"invalid type: boolean `true`, expected a map\" })";
+        assert_eq!(error_str, expected);
+    }
+
+    #[test]
+    fn expecting_hash() {
+        let visitor = BiHashMapVisitor {
+            marker: PhantomData::<BiHashMap<char, i32>>,
+        };
+        let error_str = format!("{:?}", visitor.visit_bool::<Error>(true));
+        let expected = "Err(Error { err: \"invalid type: boolean `true`, expected a map\" })";
+        assert_eq!(error_str, expected);
     }
 }
