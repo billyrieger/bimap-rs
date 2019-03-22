@@ -18,9 +18,9 @@
 //! let mut map = BiHashMap::new();
 //!
 //! // insert some pairs
-//! map.insert("A", 1);
-//! map.insert("B", 2);
-//! map.insert("C", 3);
+//! map.insert('A', 1);
+//! map.insert('B', 2);
+//! map.insert('C', 3);
 //!
 //! // convert the bimap to json
 //! let json = serde_json::to_string(&map).unwrap();
@@ -39,9 +39,9 @@
 //! let mut map = BiBTreeMap::new();
 //!
 //! // insert some pairs
-//! map.insert(1, 3);
-//! map.insert(2, 2);
-//! map.insert(3, 1);
+//! map.insert('A', 3);
+//! map.insert('B', 2);
+//! map.insert('C', 1);
 //!
 //! // convert the bimap to json
 //! let json = serde_json::to_string(&map).unwrap();
@@ -72,10 +72,16 @@
 //! let json = serde_json::to_string(&map).unwrap();
 //! ```
 //!
-//! Although possible, deserializing a bimap from a serialized form that was
-//! not originally a bimap is not recommended or supported. Deserialization of
-//! a bimap silently overwrites any pairs where either value is already stored,
-//! and this can cause undefined behavior.
+//! # Implementation details
+//!
+//! Bimaps are serialized and deserialized as a map data type in serde.
+//! Consequentially, it is possible to serialize and deserialize bimaps to/from
+//! other types that are represented the same way. *This is considered an
+//! implementation detail and should not be relied upon.*
+//!
+//! For example, a bimap can be deserialized from the serialized form of a
+//! standard hashmap. However, *deserializing a bimap silently overwrites any
+//! conflicting pairs*, leading to non-deterministic results.
 //! ```
 //! # use std::collections::HashMap;
 //! # use bimap::BiHashMap;
@@ -83,27 +89,54 @@
 //! let mut map = HashMap::new();
 //!
 //! // insert some entries
-//! // note that both "B" and "C" are associated with the value 2 here
-//! map.insert("A", 1);
-//! map.insert("B", 2);
-//! map.insert("C", 2);
+//! // note that both 'B' and 'C' are associated with the value 2 here
+//! map.insert('A', 1);
+//! map.insert('B', 2);
+//! map.insert('C', 2);
 //!
 //! // serialize the map
 //! let json = serde_json::to_string(&map).unwrap();
 //!
 //! // deserialize it into a bimap
-//! let bimap: BiHashMap<&str, i32> = serde_json::from_str(&json).unwrap();
+//! let bimap: BiHashMap<char, i32> = serde_json::from_str(&json).unwrap();
 //!
 //! // deserialization succeeds, but the bimap is now in a non-deterministic
-//! // state - either ("B", 2) or ("C", 2) will have been overwritten while
+//! // state - either ('B', 2) or ('C', 2) will have been overwritten while
 //! // deserializing, but this depends on the iteration order of the original
 //! // HashMap that was serialized.
 //!
 //! // we can still demonstrate that certain properties of the bimap are still
-//! // in a known state
+//! // in a known state, but this shouldn't be relied upon
 //! assert_eq!(bimap.len(), 2);
-//! assert_eq!(bimap.get_by_left(&"A"), Some(&1));
-//! assert!(bimap.get_by_left(&"B") == Some(&2) || bimap.get_by_left(&"C") == Some(&2))
+//! assert_eq!(bimap.get_by_left(&'A'), Some(&1));
+//! assert!(bimap.get_by_left(&'B') == Some(&2) || bimap.get_by_left(&'C') == Some(&2))
+//! ```
+//!
+//! The reverse is also possible: bimaps may be serialized and then
+//! deserialized as other compatible types, such as a standard hashmap.
+//! ```
+//! # use std::collections::HashMap;
+//! # use bimap::BiHashMap;
+//! // construct a bimap
+//! let mut bimap = BiHashMap::new();
+//! 
+//! // insert some pairs
+//! bimap.insert('A', 1);
+//! bimap.insert('B', 2);
+//! bimap.insert('C', 3);
+//!
+//! // serialize the bimap
+//! let json = serde_json::to_string(&bimap).unwrap();
+//!
+//! // deserialize it as a regular map
+//! let map: HashMap<char, i32> = serde_json::from_str(&json).unwrap();
+//!
+//! // this succeeds and the result is sensible, but this is still an
+//! // implementation detail and shouldn't be relied upon.
+//! assert_eq!(map.len(), 3);
+//! assert_eq!(map[&'A'], 1);
+//! assert_eq!(map[&'B'], 2);
+//! assert_eq!(map[&'C'], 3);
 //! ```
 
 use crate::{BiHashMap, BiBTreeMap};
@@ -206,5 +239,36 @@ where
 {
     fn deserialize<D: Deserializer<'de>>(de: D) -> Result<Self, D::Error> {
         de.deserialize_map(BiBTreeMapVisitor { marker: PhantomData::default() })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn serde_hash() {
+        let mut bimap = BiHashMap::new();
+        bimap.insert('a', 1);
+        bimap.insert('b', 2);
+        bimap.insert('c', 3);
+
+        let json = serde_json::to_string(&bimap).unwrap();
+        let bimap2 = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(bimap, bimap2);
+    }
+
+    #[test]
+    fn serde_btree() {
+        let mut bimap = BiBTreeMap::new();
+        bimap.insert('a', 1);
+        bimap.insert('b', 2);
+        bimap.insert('c', 3);
+
+        let json = serde_json::to_string(&bimap).unwrap();
+        let bimap2 = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(bimap, bimap2);
     }
 }
