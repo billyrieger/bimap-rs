@@ -3,14 +3,15 @@
 //!
 //! You do not need to import anything from this module to use this
 //! functionality, simply enable the `serde` feature in your dependency
-//! manifest.
+//! manifest. Note that currently, this requires the `std` feature to also be
+//! enabled, and thus cannot be used in `no_std` enviroments.
 //!
 //! # Examples
 //!
 //! You can easily serialize and deserialize bimaps with any serde-compatbile
 //! `serializer or deserializer.
 //!
-//! Serializing and deserializing a BiHashMap:
+//! Serializing and deserializing a [`BiHashMap`]:
 //!
 //! ```
 //! # use bimap::BiHashMap;
@@ -32,7 +33,7 @@
 //! assert_eq!(map, map2);
 //! ```
 //!
-//! Serializing and deserializing a BiBTreeMap:
+//! Serializing and deserializing a [`BiBTreeMap`]:
 //! ```
 //! # use bimap::BiBTreeMap;
 //! // create a new bimap
@@ -80,8 +81,8 @@
 //! implementation detail and should not be relied upon.*
 //!
 //! For example, a bimap can be deserialized from the serialized form of a
-//! standard hashmap. However, *deserializing a bimap silently overwrites any
-//! conflicting pairs*, leading to non-deterministic results.
+//! standard [`HashMap`]. However, *deserializing a bimap silently overwrites
+//! any conflicting pairs*, leading to non-deterministic results.
 //! ```
 //! # use std::collections::HashMap;
 //! # use bimap::BiHashMap;
@@ -113,7 +114,8 @@
 //! ```
 //!
 //! The reverse is also possible: bimaps may be serialized and then
-//! deserialized as other compatible types, such as a standard hashmap.
+//! deserialized as other compatible types, such as a [`HashMap`].
+//!
 //! ```
 //! # use std::collections::HashMap;
 //! # use bimap::BiHashMap;
@@ -138,6 +140,9 @@
 //! assert_eq!(map[&'B'], 2);
 //! assert_eq!(map[&'C'], 3);
 //! ```
+//! [`BiHashMap`]: crate::BiHashMap
+//! [`BiBTreeMap`]: crate::BiBTreeMap
+//! [`HashMap`]: https://doc.rust-lang.org/std/collections/struct.HashMap.html
 
 use crate::{BiHashMap, BiBTreeMap};
 use serde::{Serializer, Serialize, Deserializer, Deserialize};
