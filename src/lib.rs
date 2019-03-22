@@ -131,6 +131,13 @@
 //! );
 //! ```
 //!
+//! ## serde compatibility
+//!
+//! When the `serde` feature is enabled, implementations of `Serialize` and
+//! `Deserialize` are provided for [`BiHashMap`] and [`BiBTreeMap`], allowing
+//! them to be serialized or deserialized painlessly. See the [`serde`] module
+//! for examples and more information.
+//!
 //! [bijective map]: https://en.wikipedia.org/wiki/Bijection
 //! [doesn't update an equal key upon insertion]:
 //! https://doc.rust-lang.org/std/collections/index.html#insert-and-complex-keys
@@ -162,6 +169,9 @@ cfg_if::cfg_if! {
         pub use self::btree::BiBTreeMap;
     }
 }
+
+#[cfg(all(feature = "serde", feature = "std"))]
+pub mod serde;
 
 /// The previous left-right pairs, if any, that were overwritten by a call to the
 /// [`insert`](BiHashMap::insert) method of a bimap.

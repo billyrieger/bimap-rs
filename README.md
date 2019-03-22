@@ -21,6 +21,16 @@ To use `bimap-rs` in your Rust project, add the following to your `Cargo.toml`:
 bimap = "0.2"
 ```
 
+### `serde` compatibility
+
+`bimap-rs` optionally supports serialization and deserialization of `BiHashMap` and `BiBTreeMap`
+through [serde](https://serde.rs). To avoid unnecessary dependencies, this is gated behind the
+`serde` feature and must be manually enabled. To do so, add the following to your `Cargo.toml`:
+
+```toml
+bimap = { version = "0.2", features = [ "serde" ]} 
+```
+
 ### `no_std` compatibility
 
 To use `bimap-rs` without the Rust standard library, add the following to your `Cargo.toml`:
@@ -31,6 +41,7 @@ bimap = { version = "0.2", default-features = false }
 
 Note that you'll need to use Rust nightly due to the use of the `alloc` feature.
 If you do use `bimap` without the standard library, there is no `BiHashMap`, only `BiBTreeMap`.
+Currently, the `no_std` version of this library may not be used with `serde` integration.
 
 ### Example
 
