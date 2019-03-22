@@ -121,7 +121,7 @@
 //! # use bimap::BiHashMap;
 //! // construct a bimap
 //! let mut bimap = BiHashMap::new();
-//! 
+//!
 //! // insert some pairs
 //! bimap.insert('A', 1);
 //! bimap.insert('B', 2);
@@ -144,13 +144,13 @@
 //! [`BiBTreeMap`]: crate::BiBTreeMap
 //! [`HashMap`]: https://doc.rust-lang.org/std/collections/struct.HashMap.html
 
-use crate::{BiHashMap, BiBTreeMap};
-use serde::{Serializer, Serialize, Deserializer, Deserialize};
-use serde::de::{Visitor, MapAccess};
-use std::hash::Hash;
-use std::fmt::{Formatter, Result as FmtResult};
-use std::marker::PhantomData;
+use crate::{BiBTreeMap, BiHashMap};
+use serde::de::{MapAccess, Visitor};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::default::Default;
+use std::fmt::{Formatter, Result as FmtResult};
+use std::hash::Hash;
+use std::marker::PhantomData;
 
 /// Serializer for `BiHashMap`
 impl<L, R> Serialize for BiHashMap<L, R>
@@ -165,7 +165,7 @@ where
 
 /// Visitor to construct `BiHashMap` from serialized map entries
 struct BiHashMapVisitor<L, R> {
-    marker: PhantomData<BiHashMap<L, R>>
+    marker: PhantomData<BiHashMap<L, R>>,
 }
 
 impl<'de, L, R> Visitor<'de> for BiHashMapVisitor<L, R>
@@ -181,7 +181,7 @@ where
     fn visit_map<A: MapAccess<'de>>(self, mut entries: A) -> Result<Self::Value, A::Error> {
         let mut map = match entries.size_hint() {
             Some(s) => BiHashMap::with_capacity(s),
-            None => BiHashMap::new()
+            None => BiHashMap::new(),
         };
         while let Some((l, r)) = entries.next_entry()? {
             map.insert(l, r);
@@ -197,7 +197,9 @@ where
     R: Deserialize<'de> + Eq + Hash,
 {
     fn deserialize<D: Deserializer<'de>>(de: D) -> Result<Self, D::Error> {
-        de.deserialize_map(BiHashMapVisitor { marker: PhantomData::default() })
+        de.deserialize_map(BiHashMapVisitor {
+            marker: PhantomData::default(),
+        })
     }
 }
 
@@ -214,7 +216,7 @@ where
 
 /// Visitor to construct `BiBTreeMap` from serialized map entries
 struct BiBTreeMapVisitor<L, R> {
-    marker: PhantomData<BiBTreeMap<L, R>>
+    marker: PhantomData<BiBTreeMap<L, R>>,
 }
 
 impl<'de, L, R> Visitor<'de> for BiBTreeMapVisitor<L, R>
@@ -243,7 +245,9 @@ where
     R: Deserialize<'de> + Ord,
 {
     fn deserialize<D: Deserializer<'de>>(de: D) -> Result<Self, D::Error> {
-        de.deserialize_map(BiBTreeMapVisitor { marker: PhantomData::default() })
+        de.deserialize_map(BiBTreeMapVisitor {
+            marker: PhantomData::default(),
+        })
     }
 }
 

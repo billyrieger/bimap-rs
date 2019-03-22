@@ -170,7 +170,7 @@ cfg_if::cfg_if! {
     }
 }
 
-#[cfg(all(feature = "serde", feature="std"))]
+#[cfg(all(feature = "serde", feature = "std"))]
 pub mod serde;
 
 /// The previous left-right pairs, if any, that were overwritten by a call to the
