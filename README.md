@@ -70,14 +70,14 @@ assert!(!elements.contains_right(&"He"));
 
 // remove elements
 assert_eq!(
-elements.remove_by_left(&"neodymium"),
-Some(("neodymium", "Nd"))
+    elements.remove_by_left(&"neodymium"),
+    Some(("neodymium", "Nd"))
 );
 assert_eq!(elements.remove_by_right(&"Nd"), None);
 
 // iterate over elements
 for (left, right) in &elements {
-println!("the chemical symbol for {} is {}", left, right);
+    println!("the chemical symbol for {} is {}", left, right);
 }
 ```
 
