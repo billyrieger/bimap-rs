@@ -7,14 +7,14 @@ cfg_if::cfg_if! {
             cmp::Ordering,
             collections::{btree_map, BTreeMap},
             fmt,
-            iter::FromIterator,
+            iter::{FromIterator, FusedIterator},
             rc::Rc,
         };
     } else {
         use core::{
             cmp::Ordering,
             fmt,
-            iter::FromIterator,
+            iter::{FromIterator, FusedIterator},
         };
         use alloc::{collections::{btree_map, BTreeMap }, rc::Rc};
     }
@@ -546,6 +546,8 @@ impl<L, R> DoubleEndedIterator for IntoIter<L, R> {
 
 impl<L, R> ExactSizeIterator for IntoIter<L, R> {}
 
+impl<L, R> FusedIterator for IntoIter<L, R> {}
+
 impl<L, R> Iterator for IntoIter<L, R> {
     type Item = (L, R);
 
@@ -581,6 +583,8 @@ impl<'a, L, R> DoubleEndedIterator for Iter<'a, L, R> {
 
 impl<'a, L, R> ExactSizeIterator for Iter<'a, L, R> {}
 
+impl<'a, L, R> FusedIterator for Iter<'a, L, R> {}
+
 impl<'a, L, R> Iterator for Iter<'a, L, R> {
     type Item = (&'a L, &'a R);
 
@@ -610,6 +614,8 @@ impl<'a, L, R> DoubleEndedIterator for LeftValues<'a, L, R> {
 
 impl<'a, L, R> ExactSizeIterator for LeftValues<'a, L, R> {}
 
+impl<'a, L, R> FusedIterator for LeftValues<'a, L, R> {}
+
 impl<'a, L, R> Iterator for LeftValues<'a, L, R> {
     type Item = &'a L;
 
@@ -638,6 +644,8 @@ impl<'a, L, R> DoubleEndedIterator for RightValues<'a, L, R> {
 }
 
 impl<'a, L, R> ExactSizeIterator for RightValues<'a, L, R> {}
+
+impl<'a, L, R> FusedIterator for RightValues<'a, L, R> {}
 
 impl<'a, L, R> Iterator for RightValues<'a, L, R> {
     type Item = &'a R;

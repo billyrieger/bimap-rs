@@ -5,7 +5,7 @@ use std::{
     collections::{hash_map, HashMap},
     fmt,
     hash::Hash,
-    iter::FromIterator,
+    iter::{FromIterator, FusedIterator},
     rc::Rc,
 };
 
@@ -569,6 +569,8 @@ pub struct IntoIter<L, R> {
 
 impl<L, R> ExactSizeIterator for IntoIter<L, R> {}
 
+impl<L, R> FusedIterator for IntoIter<L, R> {}
+
 impl<L, R> Iterator for IntoIter<L, R> {
     type Item = (L, R);
 
@@ -597,6 +599,8 @@ pub struct Iter<'a, L, R> {
 
 impl<'a, L, R> ExactSizeIterator for Iter<'a, L, R> {}
 
+impl<'a, L, R> FusedIterator for Iter<'a, L, R> {}
+
 impl<'a, L, R> Iterator for Iter<'a, L, R> {
     type Item = (&'a L, &'a R);
 
@@ -620,6 +624,8 @@ pub struct LeftValues<'a, L, R> {
 
 impl<'a, L, R> ExactSizeIterator for LeftValues<'a, L, R> {}
 
+impl<'a, L, R> FusedIterator for LeftValues<'a, L, R> {}
+
 impl<'a, L, R> Iterator for LeftValues<'a, L, R> {
     type Item = &'a L;
 
@@ -642,6 +648,8 @@ pub struct RightValues<'a, L, R> {
 }
 
 impl<'a, L, R> ExactSizeIterator for RightValues<'a, L, R> {}
+
+impl<'a, L, R> FusedIterator for RightValues<'a, L, R> {}
 
 impl<'a, L, R> Iterator for RightValues<'a, L, R> {
     type Item = &'a R;
