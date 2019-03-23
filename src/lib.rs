@@ -131,6 +131,23 @@
 //! );
 //! ```
 //!
+//! Note that the `FromIterator` implementations for both `BiHashMap` and `BiBTreeMap` use the
+//! `insert` method internally, meaning that values from the original iterator can be silently
+//! overwritten.
+//!
+//! ```
+//! use bimap::BiMap;
+//! use std::iter::FromIterator;
+//!
+//! // note that both 'b' and 'c' have the right-value 2
+//! let mut bimap = BiMap::from_iter(vec![('a', 1), ('b', 2), ('c', 2)]);
+//!
+//! // ('b', 2) was overwritten by ('c', 2)
+//! assert_eq!(bimap.len(), 2);
+//! assert_eq!(bimap.get_by_left(&'b'), None);
+//! assert_eq!(bimap.get_by_left(&'c'), Some(&2));
+//! ```
+//!
 //! ## `no_std` compatibility
 //!
 //! This crate can be used without the standard library when the `std` feature is disabled. If you
