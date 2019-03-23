@@ -3,6 +3,7 @@
 [![Lines of code](https://tokei.rs/b1/github/billyrieger/bimap-rs)](https://github.com/Aaronepower/tokei)
 [![Version](https://img.shields.io/crates/v/bimap.svg)](https://crates.io/crates/bimap)
 [![Documentation](https://docs.rs/bimap/badge.svg)](https://docs.rs/bimap/)
+[![Downloads](https://img.shields.io/crates/d/bimap.svg)](https://crates.io/crates/bimap)
 [![License](https://img.shields.io/crates/l/bimap.svg)](https://github.com/billyrieger/bimap-rs/blob/master/LICENSE-MIT)
 [![Dependency status](https://deps.rs/repo/github/billyrieger/bimap-rs/status.svg)](https://deps.rs/repo/github/billyrieger/bimap-rs)
 [![Rust version](https://img.shields.io/badge/rust-stable-lightgrey.svg)](https://www.rust-lang.org/)
