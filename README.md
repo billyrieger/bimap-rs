@@ -18,7 +18,7 @@
 To use `bimap-rs` in your Rust project, add the following to your `Cargo.toml`:
 
 ```toml
-bimap = "0.2"
+bimap = "0.3"
 ```
 
 ### `serde` compatibility
@@ -28,7 +28,7 @@ through [serde](https://serde.rs). To avoid unnecessary dependencies, this is ga
 `serde` feature and must be manually enabled. To do so, add the following to your `Cargo.toml`:
 
 ```toml
-bimap = { version = "0.2", features = [ "serde" ]} 
+bimap = { version = "0.3", features = [ "serde" ]}
 ```
 
 ### `no_std` compatibility
@@ -36,7 +36,7 @@ bimap = { version = "0.2", features = [ "serde" ]}
 To use `bimap-rs` without the Rust standard library, add the following to your `Cargo.toml`:
 
 ```toml
-bimap = { version = "0.2", default-features = false }
+bimap = { version = "0.3", default-features = false }
 ```
 
 Note that you'll need to use Rust nightly due to the use of the `alloc` feature.

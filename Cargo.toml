@@ -1,6 +1,6 @@
 [package]
 name = "bimap"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["Billy Rieger <wrieger@protonmail.com>"]
 description = "A fast two-way bijective map implementation"
 repository = "https://github.com/billyrieger/bimap-rs/"
