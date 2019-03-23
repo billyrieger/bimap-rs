@@ -516,7 +516,11 @@ where
     where
         I: IntoIterator<Item = (L, R)>,
     {
-        let mut bimap = BiHashMap::new();
+        let iter = iter.into_iter();
+        let mut bimap = match iter.size_hint() {
+            (lower, None) => BiHashMap::with_capacity(lower),
+            (_, Some(upper)) => BiHashMap::with_capacity(upper),
+        };
         for (left, right) in iter {
             bimap.insert(left, right);
         }
