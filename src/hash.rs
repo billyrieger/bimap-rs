@@ -7,6 +7,7 @@ use std::{
     hash::Hash,
     iter::{FromIterator, FusedIterator},
     rc::Rc,
+    ops::Deref,
 };
 
 /// A bimap backed by two `HashMap`s.
@@ -211,7 +212,7 @@ where
     /// assert_eq!(bimap.get_by_left(&'z'), None);
     /// ```
     pub fn get_by_left(&self, left: &L) -> Option<&R> {
-        self.left2right.get(left).map(|l| &**l)
+        self.left2right.get(left).map(Deref::deref)
     }
 
     /// Returns a reference to the left value corresponding to the given right value.
@@ -227,7 +228,7 @@ where
     /// assert_eq!(bimap.get_by_right(&2), None);
     /// ```
     pub fn get_by_right(&self, right: &R) -> Option<&L> {
-        self.right2left.get(right).map(|r| &**r)
+        self.right2left.get(right).map(Deref::deref)
     }
 
     /// Returns `true` if the bimap contains the given left value and `false` otherwise.
@@ -609,7 +610,7 @@ impl<'a, L, R> Iterator for Iter<'a, L, R> {
     type Item = (&'a L, &'a R);
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.inner.next().map(|(l, r)| (&**l, &**r))
+        self.inner.next().map(|(l, r)| (Deref::deref(l), Deref::deref(r)))
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -634,7 +635,7 @@ impl<'a, L, R> Iterator for LeftValues<'a, L, R> {
     type Item = &'a L;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.inner.next().map(|(l, _)| &**l)
+        self.inner.next().map(|(l, _)| Deref::deref(l))
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -659,7 +660,7 @@ impl<'a, L, R> Iterator for RightValues<'a, L, R> {
     type Item = &'a R;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.inner.next().map(|(r, _)| &**r)
+        self.inner.next().map(|(r, _)| Deref::deref(r))
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
