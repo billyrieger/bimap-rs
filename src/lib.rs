@@ -170,8 +170,8 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-//cfg_if::cfg_if! {
-//    if #[cfg(feature = "std")] {
+cfg_if::cfg_if! {
+    if #[cfg(feature = "std")] {
         pub mod btree;
         pub mod hash;
 
@@ -179,17 +179,17 @@
         pub type BiMap<L, R> = BiHashMap<L, R>;
 
         pub use self::{btree::BiBTreeMap, hash::BiHashMap};
-//    } else {
-//        extern crate alloc;
-//
-//        pub mod btree;
-//
-//        /// Type definition for convenience and compatibility with older versions of this crate.
-//        pub type BiMap<L, R> = BiBTreeMap<L, R>;
-//
-//        pub use self::btree::BiBTreeMap;
-//    }
-//}
+    } else {
+        extern crate alloc;
+
+        pub mod btree;
+
+        /// Type definition for convenience and compatibility with older versions of this crate.
+        pub type BiMap<L, R> = BiBTreeMap<L, R>;
+
+        pub use self::btree::BiBTreeMap;
+    }
+}
 
 #[cfg(all(feature = "serde", feature = "std"))]
 pub mod serde;

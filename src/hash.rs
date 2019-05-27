@@ -3,13 +3,14 @@
 use crate::Overwritten;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{BuildHasher, Hasher};
+use std::mem::replace;
+use std::vec::IntoIter;
 use std::{
     collections::HashMap,
     fmt,
     hash::Hash,
     iter::{FromIterator, FusedIterator},
 };
-use std::vec::IntoIter;
 
 /// A dummy hasher that maps simply returns the hashed u64
 ///
@@ -188,7 +189,7 @@ where
     /// ```
     pub fn iter(&self) -> Iter<'_, L, R> {
         Iter {
-            inner: self.data.iter()
+            inner: self.data.iter(),
         }
     }
 
@@ -445,22 +446,59 @@ where
     /// assert_eq!(bimap.len(), 1); // {'a' <> 2}
     /// ```
     pub fn insert(&mut self, left: L, right: R) -> Overwritten<L, R> {
-        let retval = match (self.remove_by_left(&left), self.remove_by_right(&right)) {
-            (None, None) => Overwritten::Neither,
-            (None, Some(r_pair)) => Overwritten::Right(r_pair.0, r_pair.1),
-            (Some(l_pair), None) => {
-                // since remove_by_left() was called first, it's possible the right value was
-                // removed if a duplicate pair is being inserted
-                if l_pair.1 == right {
-                    Overwritten::Pair(l_pair.0, l_pair.1)
+        let left_hash = Self::get_hash(&left);
+        let right_hash = Self::get_hash(&right);
+
+        match (self.left.get(&left_hash), self.right.get(&right_hash)) {
+            (None, None) => {
+                self.insert_unchecked(left, right);
+                Overwritten::Neither
+            }
+            (None, Some(key)) => {
+                let key = *key;
+                let (old_left, old_right) = replace(&mut self.data[key], (left, right));
+
+                let old_left_hash = Self::get_hash(&old_left);
+                let _ = self.left.remove(&old_left_hash);
+                self.left.insert(left_hash, key);
+
+                Overwritten::Right(old_left, old_right)
+            }
+            (Some(key), None) => {
+                let key = *key;
+                let (old_left, old_right) = replace(&mut self.data[key], (left, right));
+
+                let old_right_hash = Self::get_hash(&old_right);
+                let _ = self.right.remove(&old_right_hash);
+                self.right.insert(right_hash, key);
+
+                Overwritten::Left(old_left, old_right)
+            }
+            (Some(left_key), Some(right_key)) => {
+                let left_key = *left_key;
+                let right_key = *right_key;
+
+                if left_key == right_key {
+                    // instead of updating we return the new pair as if it was the old one
+                    Overwritten::Pair(left, right)
                 } else {
-                    Overwritten::Left(l_pair.0, l_pair.1)
+                    let old_left_pair = replace(&mut self.data[left_key], (left, right));
+                    let new_key = left_key;
+                    let old_right_pair = self.swap_remove(right_key);
+
+                    // right half of the old pair that the left hash points to
+                    let old_left_right_hash = Self::get_hash(&old_left_pair.1);
+                    // left half of the old pair that the right hash points to
+                    let old_right_left_hash = Self::get_hash(&old_right_pair.0);
+
+                    self.right.remove(&old_left_right_hash);
+                    self.left.remove(&old_right_left_hash);
+                    self.right.insert(right_hash, new_key);
+
+                    Overwritten::Both(old_left_pair, old_right_pair)
                 }
             }
-            (Some(l_pair), Some(r_pair)) => Overwritten::Both(l_pair, r_pair),
-        };
-        self.insert_unchecked(left, right);
-        retval
+        }
     }
 
     /// Inserts the given left-right pair into the bimap without overwriting any existing values.
@@ -520,12 +558,10 @@ where
 
         let left = &mut self.left;
         let right = &mut self.right;
-        self.data.iter()
-            .enumerate()
-            .for_each(|(key, (l, r))| {
-                left.insert(Self::get_hash(l), key);
-                right.insert(Self::get_hash(r), key);
-            });
+        self.data.iter().enumerate().for_each(|(key, (l, r))| {
+            left.insert(Self::get_hash(l), key);
+            right.insert(Self::get_hash(r), key);
+        });
     }
 
     /// Inserts the given left-right pair into the bimap without checking if the pair already
