@@ -6,7 +6,7 @@ use std::hash::{BuildHasher, Hasher};
 use std::mem::replace;
 use std::vec::IntoIter;
 use std::{
-    collections::HashMap,
+    collections::{HashMap, hash_map::Entry},
     fmt,
     hash::Hash,
     iter::{FromIterator, FusedIterator},
@@ -58,9 +58,9 @@ pub struct BiHashMap<L, R> {
 }
 
 impl<L, R> BiHashMap<L, R>
-where
-    L: Eq + Hash,
-    R: Eq + Hash,
+    where
+        L: Eq + Hash,
+        R: Eq + Hash,
 {
     /// Creates an empty `BiHashMap`.
     ///
@@ -449,41 +449,49 @@ where
         let left_hash = Self::get_hash(&left);
         let right_hash = Self::get_hash(&right);
 
-        match (self.left.get(&left_hash), self.right.get(&right_hash)) {
-            (None, None) => {
-                self.insert_unchecked(left, right);
+        match (self.left.entry(left_hash), self.right.entry(right_hash)) {
+            (Entry::Vacant(left_entry), Entry::Vacant(right_entry)) => {
+                let key = self.data.len();
+                left_entry.insert(key);
+                right_entry.insert(key);
+                self.data.push((left, right));
                 Overwritten::Neither
             }
-            (None, Some(key)) => {
-                let key = *key;
+            (Entry::Vacant(left_entry), Entry::Occupied(right_entry)) => {
+                let key = *right_entry.get();
+                left_entry.insert(key);
+
                 let (old_left, old_right) = replace(&mut self.data[key], (left, right));
 
                 let old_left_hash = Self::get_hash(&old_left);
                 let _ = self.left.remove(&old_left_hash);
-                self.left.insert(left_hash, key);
 
                 Overwritten::Right(old_left, old_right)
             }
-            (Some(key), None) => {
-                let key = *key;
+            (Entry::Occupied(left_entry), Entry::Vacant(right_entry)) => {
+                let key = *left_entry.get();
+                right_entry.insert(key);
+
                 let (old_left, old_right) = replace(&mut self.data[key], (left, right));
 
                 let old_right_hash = Self::get_hash(&old_right);
                 let _ = self.right.remove(&old_right_hash);
-                self.right.insert(right_hash, key);
 
                 Overwritten::Left(old_left, old_right)
             }
-            (Some(left_key), Some(right_key)) => {
-                let left_key = *left_key;
-                let right_key = *right_key;
+            (Entry::Occupied(left_entry), Entry::Occupied(mut right_entry)) => {
+                let left_key = *left_entry.get();
+                let right_key = *right_entry.get();
 
                 if left_key == right_key {
                     // instead of updating we return the new pair as if it was the old one
                     Overwritten::Pair(left, right)
                 } else {
-                    let old_left_pair = replace(&mut self.data[left_key], (left, right));
                     let new_key = left_key;
+                    right_entry.insert(new_key);
+
+                    let old_left_pair = replace(&mut self.data[left_key], (left, right));
+
                     let old_right_pair = self.swap_remove(right_key);
 
                     // right half of the old pair that the left hash points to
@@ -493,7 +501,6 @@ where
 
                     self.right.remove(&old_left_right_hash);
                     self.left.remove(&old_right_left_hash);
-                    self.right.insert(right_hash, new_key);
 
                     Overwritten::Both(old_left_pair, old_right_pair)
                 }
@@ -519,11 +526,18 @@ where
     /// assert_eq!(bimap.insert_no_overwrite('c', 2), Err(('c', 2)));
     /// ```
     pub fn insert_no_overwrite(&mut self, left: L, right: R) -> Result<(), (L, R)> {
-        if self.contains_left(&left) || self.contains_right(&right) {
-            Err((left, right))
-        } else {
-            self.insert_unchecked(left, right);
-            Ok(())
+        let left_hash = Self::get_hash(&left);
+        let right_hash = Self::get_hash(&right);
+
+        match (self.left.entry(left_hash), self.right.entry(right_hash)) {
+            (Entry::Vacant(left_entry), Entry::Vacant(right_entry)) => {
+                let key = self.data.len();
+                left_entry.insert(key);
+                right_entry.insert(key);
+                self.data.push((left, right));
+                Ok(())
+            }
+            _ => Err((left, right))
         }
     }
 
@@ -547,8 +561,8 @@ where
     /// assert_eq!(bimap.get_by_left(&'a'), None);
     /// ```
     pub fn retain<F>(&mut self, f: F)
-    where
-        F: FnMut(&L, &R) -> bool,
+        where
+            F: FnMut(&L, &R) -> bool,
     {
         let mut f = f;
 
@@ -563,21 +577,12 @@ where
             right.insert(Self::get_hash(r), key);
         });
     }
-
-    /// Inserts the given left-right pair into the bimap without checking if the pair already
-    /// exists.
-    fn insert_unchecked(&mut self, left: L, right: R) {
-        let key = self.data.len();
-        self.left.insert(Self::get_hash(&left), key);
-        self.right.insert(Self::get_hash(&right), key);
-        self.data.push((left, right));
-    }
 }
 
 impl<L, R> Clone for BiHashMap<L, R>
-where
-    L: Clone + Eq + Hash,
-    R: Clone + Eq + Hash,
+    where
+        L: Clone + Eq + Hash,
+        R: Clone + Eq + Hash,
 {
     fn clone(&self) -> BiHashMap<L, R> {
         self.iter().map(|(l, r)| (l.clone(), r.clone())).collect()
@@ -585,9 +590,9 @@ where
 }
 
 impl<L, R> fmt::Debug for BiHashMap<L, R>
-where
-    L: fmt::Debug + Eq + Hash,
-    R: fmt::Debug + Eq + Hash,
+    where
+        L: fmt::Debug + Eq + Hash,
+        R: fmt::Debug + Eq + Hash,
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{{")?;
@@ -601,9 +606,9 @@ where
 }
 
 impl<L, R> Default for BiHashMap<L, R>
-where
-    L: Eq + Hash,
-    R: Eq + Hash,
+    where
+        L: Eq + Hash,
+        R: Eq + Hash,
 {
     fn default() -> BiHashMap<L, R> {
         BiHashMap::new()
@@ -611,20 +616,19 @@ where
 }
 
 impl<L, R> Eq for BiHashMap<L, R>
-where
-    L: Eq + Hash,
-    R: Eq + Hash,
-{
-}
+    where
+        L: Eq + Hash,
+        R: Eq + Hash,
+{}
 
 impl<L, R> FromIterator<(L, R)> for BiHashMap<L, R>
-where
-    L: Eq + Hash,
-    R: Eq + Hash,
+    where
+        L: Eq + Hash,
+        R: Eq + Hash,
 {
     fn from_iter<I>(iter: I) -> BiHashMap<L, R>
-    where
-        I: IntoIterator<Item = (L, R)>,
+        where
+            I: IntoIterator<Item=(L, R)>,
     {
         let iter = iter.into_iter();
         let mut bimap = match iter.size_hint() {
@@ -639,9 +643,9 @@ where
 }
 
 impl<'a, L, R> IntoIterator for &'a BiHashMap<L, R>
-where
-    L: Eq + Hash,
-    R: Eq + Hash,
+    where
+        L: Eq + Hash,
+        R: Eq + Hash,
 {
     type Item = (&'a L, &'a R);
     type IntoIter = Iter<'a, L, R>;
@@ -652,9 +656,9 @@ where
 }
 
 impl<L, R> IntoIterator for BiHashMap<L, R>
-where
-    L: Eq + Hash,
-    R: Eq + Hash,
+    where
+        L: Eq + Hash,
+        R: Eq + Hash,
 {
     type Item = (L, R);
     type IntoIter = IntoIter<(L, R)>;
@@ -665,15 +669,15 @@ where
 }
 
 impl<L, R> PartialEq for BiHashMap<L, R>
-where
-    L: Eq + Hash,
-    R: Eq + Hash,
+    where
+        L: Eq + Hash,
+        R: Eq + Hash,
 {
     fn eq(&self, other: &Self) -> bool {
         self.left.len() == other.left.len()
             && self
-                .iter()
-                .all(|(left, right)| other.get_by_left(left).map_or(false, |r| *right == *r))
+            .iter()
+            .all(|(left, right)| other.get_by_left(left).map_or(false, |r| *right == *r))
     }
 }
 
@@ -756,18 +760,16 @@ impl<'a, L, R> Iterator for RightValues<'a, L, R> {
 // safe because internal Rcs are not exposed by the api and the reference counts only change in
 // methods with &mut self
 unsafe impl<L, R> Send for BiHashMap<L, R>
-where
-    L: Send,
-    R: Send,
-{
-}
+    where
+        L: Send,
+        R: Send,
+{}
 
 unsafe impl<L, R> Sync for BiHashMap<L, R>
-where
-    L: Sync,
-    R: Sync,
-{
-}
+    where
+        L: Sync,
+        R: Sync,
+{}
 
 #[cfg(test)]
 mod tests {
