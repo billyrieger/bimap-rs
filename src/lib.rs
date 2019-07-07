@@ -169,7 +169,6 @@
 //! [`insert_no_overwrite`]: BiHashMap::insert_no_overwrite
 
 #![cfg_attr(not(feature = "std"), no_std)]
-#![cfg_attr(not(feature = "std"), feature(alloc))]
 
 cfg_if::cfg_if! {
     if #[cfg(feature = "std")] {
