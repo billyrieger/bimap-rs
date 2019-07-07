@@ -40,7 +40,6 @@ To use `bimap-rs` without the Rust standard library, add the following to your `
 bimap = { version = "0.3", default-features = false }
 ```
 
-Note that you'll need to use Rust nightly due to the use of the `alloc` feature.
 If you do use `bimap` without the standard library, there is no `BiHashMap`, only `BiBTreeMap`.
 Currently, the `no_std` version of this library may not be used with `serde` integration.
 
