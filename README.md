@@ -1,6 +1,6 @@
 [![Build status](https://img.shields.io/travis/com/billyrieger/bimap-rs.svg)](https://travis-ci.com/billyrieger/bimap-rs)
 [![Coverage](https://img.shields.io/codecov/c/github/billyrieger/bimap-rs.svg)](https://codecov.io/gh/billyrieger/bimap-rs/branch/master)
-[![Lines of code](https://tokei.rs/b1/github/billyrieger/bimap-rs)](https://github.com/Aaronepower/tokei)
+[![Lines of code](https://tokei.rs/b1/github/billyrieger/bimap-rs?category=code)](https://github.com/XAMPPRocky/tokei)
 [![Version](https://img.shields.io/crates/v/bimap.svg)](https://crates.io/crates/bimap)
 [![Documentation](https://docs.rs/bimap/badge.svg)](https://docs.rs/bimap/)
 [![Downloads](https://img.shields.io/crates/d/bimap.svg)](https://crates.io/crates/bimap)
