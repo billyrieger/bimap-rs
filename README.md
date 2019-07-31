@@ -20,7 +20,7 @@ To use `bimap-rs` in your Rust project, add the following to the `dependencies` 
 `Cargo.toml`:
 
 ```toml
-bimap = "0.3"
+bimap = "0.4"
 ```
 
 ### `serde` compatibility
@@ -31,7 +31,7 @@ through [serde](https://serde.rs). To avoid unnecessary dependencies, this is ga
 section of your `Cargo.toml`:
 
 ```toml
-bimap = { version = "0.3", features = [ "serde" ]}
+bimap = { version = "0.4", features = [ "serde" ]}
 ```
 
 ### `no_std` compatibility
@@ -40,7 +40,7 @@ To use `bimap-rs` without the Rust standard library, add the following the `depe
 your `Cargo.toml`:
 
 ```toml
-bimap = { version = "0.3", default-features = false }
+bimap = { version = "0.4", default-features = false }
 ```
 
 If you do use `bimap` without the standard library, there is no `BiHashMap`, only `BiBTreeMap`.
