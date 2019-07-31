@@ -522,11 +522,19 @@ impl<L, R, LS, RS> Clone for BiHashMap<L, R, LS, RS>
 where
     L: Clone + Eq + Hash,
     R: Clone + Eq + Hash,
-    LS: BuildHasher + Default,
-    RS: BuildHasher + Default,
+    LS: BuildHasher + Clone,
+    RS: BuildHasher + Clone,
 {
     fn clone(&self) -> BiHashMap<L, R, LS, RS> {
-        self.iter().map(|(l, r)| (l.clone(), r.clone())).collect()
+        let mut new_bimap = BiHashMap::with_capacity_and_hashers(
+            self.capacity(),
+            self.left2right.hasher().clone(),
+            self.right2left.hasher().clone(),
+        );
+        for (l, r) in self.iter() {
+            new_bimap.insert(l.clone(), r.clone());
+        }
+        new_bimap
     }
 }
 
