@@ -4,7 +4,7 @@ use crate::Overwritten;
 use std::{
     collections::{hash_map, HashMap},
     fmt,
-    hash::Hash,
+    hash::{Hash, BuildHasher},
     iter::{FromIterator, FusedIterator},
     rc::Rc,
     ops::Deref,
@@ -15,12 +15,12 @@ use std::{
 /// See the [module-level documentation] for more details and examples.
 ///
 /// [module-level documentation]: crate
-pub struct BiHashMap<L, R> {
-    left2right: HashMap<Rc<L>, Rc<R>>,
-    right2left: HashMap<Rc<R>, Rc<L>>,
+pub struct BiHashMap<L, R, LS = hash_map::RandomState, RS = hash_map::RandomState> {
+    left2right: HashMap<Rc<L>, Rc<R>, LS>,
+    right2left: HashMap<Rc<R>, Rc<L>, RS>,
 }
 
-impl<L, R> BiHashMap<L, R>
+impl<L, R> BiHashMap<L, R, hash_map::RandomState, hash_map::RandomState>
 where
     L: Eq + Hash,
     R: Eq + Hash,
@@ -57,7 +57,13 @@ where
             right2left: HashMap::with_capacity(capacity),
         }
     }
+}
 
+impl<L, R, LS, RS> BiHashMap<L, R, LS, RS>
+where
+    L: Eq + Hash,
+    R: Eq + Hash,
+{
     /// Returns the number of left-right pairs in the bimap.
     ///
     /// # Examples
@@ -196,6 +202,56 @@ where
     pub fn right_values(&self) -> RightValues<'_, L, R> {
         RightValues {
             inner: self.right2left.iter(),
+        }
+    }
+}
+
+impl<L, R, LS, RS> BiHashMap<L, R, LS, RS>
+where
+    L: Eq + Hash,
+    R: Eq + Hash,
+    LS: BuildHasher,
+    RS: BuildHasher,
+{
+    /// Creates a new empty `BiHashMap` using `hash_builder_left` to hash left values and
+    /// `hash_builder_right` to hash right values.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::collections::hash_map::RandomState;
+    /// use bimap::BiHashMap;
+    ///
+    /// let s_left = RandomState::new();
+    /// let s_right = RandomState::new();
+    /// let mut bimap = BiHashMap::<char, i32>::with_hashers(s_left, s_right);
+    /// bimap.insert('a', 42);
+    /// ```
+    pub fn with_hashers(hash_builder_left: LS, hash_builder_right: RS) -> Self {
+        Self {
+            left2right: HashMap::with_hasher(hash_builder_left),
+            right2left: HashMap::with_hasher(hash_builder_right),
+        }
+    }
+
+    /// Creates a new empty `BiHashMap` with the given capacity, using `hash_builder_left`
+    /// to hash left values and `hash_builder_right` to hash right values.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::collections::hash_map::RandomState;
+    /// use bimap::BiHashMap;
+    ///
+    /// let s_left = RandomState::new();
+    /// let s_right = RandomState::new();
+    /// let bimap = BiHashMap::<char, i32>::with_capacity_and_hashers(10, s_left, s_right);
+    /// assert!(bimap.capacity() >= 10);
+    /// ```
+    pub fn with_capacity_and_hashers(capacity: usize, hash_builder_left: LS, hash_builder_right: RS) -> Self {
+        Self {
+            left2right: HashMap::with_capacity_and_hasher(capacity, hash_builder_left),
+            right2left: HashMap::with_capacity_and_hasher(capacity, hash_builder_right),
         }
     }
 
@@ -462,17 +518,19 @@ where
     }
 }
 
-impl<L, R> Clone for BiHashMap<L, R>
+impl<L, R, LS, RS> Clone for BiHashMap<L, R, LS, RS>
 where
     L: Clone + Eq + Hash,
     R: Clone + Eq + Hash,
+    LS: BuildHasher + Default,
+    RS: BuildHasher + Default,
 {
-    fn clone(&self) -> BiHashMap<L, R> {
+    fn clone(&self) -> BiHashMap<L, R, LS, RS> {
         self.iter().map(|(l, r)| (l.clone(), r.clone())).collect()
     }
 }
 
-impl<L, R> fmt::Debug for BiHashMap<L, R>
+impl<L, R, LS, RS> fmt::Debug for BiHashMap<L, R, LS, RS>
 where
     L: fmt::Debug + Eq + Hash,
     R: fmt::Debug + Eq + Hash,
@@ -488,12 +546,14 @@ where
     }
 }
 
-impl<L, R> Default for BiHashMap<L, R>
+impl<L, R, LS, RS> Default for BiHashMap<L, R, LS, RS>
 where
     L: Eq + Hash,
     R: Eq + Hash,
+    LS: BuildHasher + Default,
+    RS: BuildHasher + Default,
 {
-    fn default() -> BiHashMap<L, R> {
+    fn default() -> BiHashMap<L, R, LS, RS> {
         BiHashMap {
             left2right: HashMap::default(),
             right2left: HashMap::default(),
@@ -501,26 +561,30 @@ where
     }
 }
 
-impl<L, R> Eq for BiHashMap<L, R>
+impl<L, R, LS, RS> Eq for BiHashMap<L, R, LS, RS>
 where
     L: Eq + Hash,
     R: Eq + Hash,
+    LS: BuildHasher,
+    RS: BuildHasher,
 {
 }
 
-impl<L, R> FromIterator<(L, R)> for BiHashMap<L, R>
+impl<L, R, LS, RS> FromIterator<(L, R)> for BiHashMap<L, R, LS, RS>
 where
     L: Eq + Hash,
     R: Eq + Hash,
+    LS: BuildHasher + Default,
+    RS: BuildHasher + Default,
 {
-    fn from_iter<I>(iter: I) -> BiHashMap<L, R>
+    fn from_iter<I>(iter: I) -> BiHashMap<L, R, LS, RS>
     where
         I: IntoIterator<Item = (L, R)>,
     {
         let iter = iter.into_iter();
         let mut bimap = match iter.size_hint() {
-            (lower, None) => BiHashMap::with_capacity(lower),
-            (_, Some(upper)) => BiHashMap::with_capacity(upper),
+            (lower, None) => BiHashMap::with_capacity_and_hashers(lower, LS::default(), RS::default()),
+            (_, Some(upper)) => BiHashMap::with_capacity_and_hashers(upper, LS::default(), RS::default()),
         };
         for (left, right) in iter {
             bimap.insert(left, right);
@@ -529,7 +593,7 @@ where
     }
 }
 
-impl<'a, L, R> IntoIterator for &'a BiHashMap<L, R>
+impl<'a, L, R, LS, RS> IntoIterator for &'a BiHashMap<L, R, LS, RS>
 where
     L: Eq + Hash,
     R: Eq + Hash,
@@ -542,7 +606,7 @@ where
     }
 }
 
-impl<L, R> IntoIterator for BiHashMap<L, R>
+impl<L, R, LS, RS> IntoIterator for BiHashMap<L, R, LS, RS>
 where
     L: Eq + Hash,
     R: Eq + Hash,
@@ -557,10 +621,12 @@ where
     }
 }
 
-impl<L, R> PartialEq for BiHashMap<L, R>
+impl<L, R, LS, RS> PartialEq for BiHashMap<L, R, LS, RS>
 where
     L: Eq + Hash,
     R: Eq + Hash,
+    LS: BuildHasher,
+    RS: BuildHasher,
 {
     fn eq(&self, other: &Self) -> bool {
         self.left2right == other.left2right
@@ -670,8 +736,8 @@ impl<'a, L, R> Iterator for RightValues<'a, L, R> {
 
 // safe because internal Rcs are not exposed by the api and the reference counts only change in
 // methods with &mut self
-unsafe impl<L, R> Send for BiHashMap<L, R> where L: Send, R: Send {}
-unsafe impl<L, R> Sync for BiHashMap<L, R> where L: Sync, R: Sync {}
+unsafe impl<L, R, LS, RS> Send for BiHashMap<L, R, LS, RS> where L: Send, R: Send, LS: Send, RS: Send {}
+unsafe impl<L, R, LS, RS> Sync for BiHashMap<L, R, LS, RS> where L: Sync, R: Sync, LS: Sync, RS: Sync {}
 
 #[cfg(test)]
 mod tests {
@@ -818,7 +884,7 @@ mod tests {
 
     #[test]
     fn clear() {
-        let mut bimap = BiHashMap::from_iter(vec![('a', 1)]);
+        let mut bimap = vec![('a', 1)].into_iter().collect::<BiHashMap<_, _>>();
         assert_eq!(bimap.len(), 1);
         assert!(!bimap.is_empty());
 
@@ -830,7 +896,7 @@ mod tests {
 
     #[test]
     fn get_contains() {
-        let bimap = BiHashMap::from_iter(vec![('a', 1)]);
+        let bimap = vec![('a', 1)].into_iter().collect::<BiHashMap<_, _>>();
 
         assert_eq!(bimap.get_by_left(&'a'), Some(&1));
         assert!(bimap.contains_left(&'a'));
