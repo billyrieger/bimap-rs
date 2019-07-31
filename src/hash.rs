@@ -883,6 +883,16 @@ mod tests {
     }
 
     #[test]
+    fn with_hashers() {
+        let s_left = hash_map::RandomState::new();
+        let s_right = hash_map::RandomState::new();
+        let mut bimap = BiHashMap::<char, i32>::with_hashers(s_left, s_right);
+        bimap.insert('a', 42);
+        assert_eq!(Some(&'a'), bimap.get_by_right(&42));
+        assert_eq!(Some(&42), bimap.get_by_left(&'a'));
+    }
+
+    #[test]
     fn clear() {
         let mut bimap = vec![('a', 1)].into_iter().collect::<BiHashMap<_, _>>();
         assert_eq!(bimap.len(), 1);
