@@ -21,7 +21,7 @@ cfg_if::cfg_if! {
 }
 
 /// A bimap backed by two `BTreeMap`s.
-/// 
+///
 /// See the [module-level documentation] for more details and examples.
 ///
 /// [module-level documentation]: crate
@@ -661,8 +661,18 @@ impl<'a, L, R> Iterator for RightValues<'a, L, R> {
 
 // safe because internal Rcs are not exposed by the api and the reference counts only change in
 // methods with &mut self
-unsafe impl<L, R> Send for BiBTreeMap<L, R> where L: Send, R: Send {}
-unsafe impl<L, R> Sync for BiBTreeMap<L, R> where L: Sync, R: Sync {}
+unsafe impl<L, R> Send for BiBTreeMap<L, R>
+where
+    L: Send,
+    R: Send,
+{
+}
+unsafe impl<L, R> Sync for BiBTreeMap<L, R>
+where
+    L: Sync,
+    R: Sync,
+{
+}
 
 #[cfg(test)]
 mod tests {

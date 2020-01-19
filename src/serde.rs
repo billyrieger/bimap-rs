@@ -145,12 +145,16 @@
 //! [`HashMap`]: https://doc.rust-lang.org/std/collections/struct.HashMap.html
 
 use crate::{BiBTreeMap, BiHashMap};
-use serde::de::{MapAccess, Visitor};
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use std::default::Default;
-use std::fmt::{Formatter, Result as FmtResult};
-use std::hash::Hash;
-use std::marker::PhantomData;
+use serde::{
+    de::{MapAccess, Visitor},
+    Deserialize, Deserializer, Serialize, Serializer,
+};
+use std::{
+    default::Default,
+    fmt::{Formatter, Result as FmtResult},
+    hash::Hash,
+    marker::PhantomData,
+};
 
 /// Serializer for `BiHashMap`
 impl<L, R> Serialize for BiHashMap<L, R>

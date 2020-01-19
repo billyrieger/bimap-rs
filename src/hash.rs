@@ -4,14 +4,14 @@ use crate::Overwritten;
 use std::{
     collections::{hash_map, HashMap},
     fmt,
-    hash::{Hash, BuildHasher},
+    hash::{BuildHasher, Hash},
     iter::{FromIterator, FusedIterator},
-    rc::Rc,
     ops::Deref,
+    rc::Rc,
 };
 
 /// A bimap backed by two `HashMap`s.
-/// 
+///
 /// See the [module-level documentation] for more details and examples.
 ///
 /// [module-level documentation]: crate
@@ -248,7 +248,11 @@ where
     /// let bimap = BiHashMap::<char, i32>::with_capacity_and_hashers(10, s_left, s_right);
     /// assert!(bimap.capacity() >= 10);
     /// ```
-    pub fn with_capacity_and_hashers(capacity: usize, hash_builder_left: LS, hash_builder_right: RS) -> Self {
+    pub fn with_capacity_and_hashers(
+        capacity: usize,
+        hash_builder_left: LS,
+        hash_builder_right: RS,
+    ) -> Self {
         Self {
             left2right: HashMap::with_capacity_and_hasher(capacity, hash_builder_left),
             right2left: HashMap::with_capacity_and_hasher(capacity, hash_builder_right),
@@ -473,13 +477,12 @@ where
         }
     }
 
-
     /// Retains only the elements specified by the predicate.
     ///
     /// In other words, remove all left-right pairs `(l, r)` such that `f(&l, &r)` returns `false`.
     ///
     /// # Examples
-    /// 
+    ///
     /// ```
     /// use bimap::BiHashMap;
     ///
@@ -591,8 +594,12 @@ where
     {
         let iter = iter.into_iter();
         let mut bimap = match iter.size_hint() {
-            (lower, None) => BiHashMap::with_capacity_and_hashers(lower, LS::default(), RS::default()),
-            (_, Some(upper)) => BiHashMap::with_capacity_and_hashers(upper, LS::default(), RS::default()),
+            (lower, None) => {
+                BiHashMap::with_capacity_and_hashers(lower, LS::default(), RS::default())
+            }
+            (_, Some(upper)) => {
+                BiHashMap::with_capacity_and_hashers(upper, LS::default(), RS::default())
+            }
         };
         for (left, right) in iter {
             bimap.insert(left, right);
@@ -684,7 +691,9 @@ impl<'a, L, R> Iterator for Iter<'a, L, R> {
     type Item = (&'a L, &'a R);
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.inner.next().map(|(l, r)| (Deref::deref(l), Deref::deref(r)))
+        self.inner
+            .next()
+            .map(|(l, r)| (Deref::deref(l), Deref::deref(r)))
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -744,8 +753,22 @@ impl<'a, L, R> Iterator for RightValues<'a, L, R> {
 
 // safe because internal Rcs are not exposed by the api and the reference counts only change in
 // methods with &mut self
-unsafe impl<L, R, LS, RS> Send for BiHashMap<L, R, LS, RS> where L: Send, R: Send, LS: Send, RS: Send {}
-unsafe impl<L, R, LS, RS> Sync for BiHashMap<L, R, LS, RS> where L: Sync, R: Sync, LS: Sync, RS: Sync {}
+unsafe impl<L, R, LS, RS> Send for BiHashMap<L, R, LS, RS>
+where
+    L: Send,
+    R: Send,
+    LS: Send,
+    RS: Send,
+{
+}
+unsafe impl<L, R, LS, RS> Sync for BiHashMap<L, R, LS, RS>
+where
+    L: Sync,
+    R: Sync,
+    LS: Sync,
+    RS: Sync,
+{
+}
 
 #[cfg(test)]
 mod tests {
