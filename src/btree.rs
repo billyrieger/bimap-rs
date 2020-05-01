@@ -678,6 +678,9 @@ where
 mod tests {
     use super::*;
 
+    #[cfg(not(feature = "std"))]
+    use alloc::vec::Vec;
+
     #[test]
     fn clone() {
         let mut bimap = BiBTreeMap::new();
