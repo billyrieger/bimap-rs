@@ -78,6 +78,7 @@
 //!
 //! ```
 //! use bimap::{BiMap, Overwritten};
+//! use std::cmp::Ordering;
 //! use std::hash::{Hash, Hasher};
 //!
 //! #[derive(Clone, Copy, Debug)]
@@ -94,6 +95,19 @@
 //! }
 //!
 //! impl Eq for Foo {}
+//!
+//! impl PartialOrd for Foo {
+//!     fn partial_cmp(&self, other: &Foo) -> Option<Ordering> {
+//!         Some(self.cmp(other))
+//!     }
+//! }
+//!
+//! // ordering only depends on the important data
+//! impl Ord for Foo {
+//!     fn cmp(&self, other: &Foo) -> Ordering {
+//!         self.important.cmp(&other.important)
+//!     }
+//! }
 //!
 //! // hash only depends on the important data
 //! impl Hash for Foo {
@@ -180,6 +194,11 @@ cfg_if::cfg_if! {
 
         pub use self::{btree::BiBTreeMap, hash::BiHashMap};
     } else {
+        #[cfg(test)]
+        #[macro_use]
+        extern crate alloc;
+
+        #[cfg(not(test))]
         extern crate alloc;
 
         pub mod btree;
