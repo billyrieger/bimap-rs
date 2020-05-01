@@ -5,7 +5,7 @@ use std::{
     collections::{hash_map, HashMap},
     fmt,
     hash::{BuildHasher, Hash},
-    iter::{FromIterator, FusedIterator},
+    iter::{Extend, FromIterator, FusedIterator},
     ops::Deref,
     rc::Rc,
 };
@@ -636,6 +636,20 @@ where
     }
 }
 
+impl<L, R, LS, RS> Extend<(L, R)> for BiHashMap<L, R, LS, RS>
+where
+    L: Eq + Hash,
+    R: Eq + Hash,
+    LS: BuildHasher,
+    RS: BuildHasher,
+{
+    fn extend<T: IntoIterator<Item = (L, R)>>(&mut self, iter: T) {
+        iter.into_iter().for_each(move |(l, r)| {
+            self.insert(l, r);
+        });
+    }
+}
+
 impl<L, R, LS, RS> PartialEq for BiHashMap<L, R, LS, RS>
 where
     L: Eq + Hash,
@@ -872,6 +886,19 @@ mod tests {
         let mut pairs = (&bimap).into_iter().collect::<Vec<_>>();
         pairs.sort();
         assert_eq!(pairs, vec![(&'a', &3), (&'b', &2), (&'c', &1)]);
+    }
+
+    #[test]
+    fn extend() {
+        let mut bimap = BiHashMap::new();
+        bimap.insert('a', 3);
+        bimap.insert('b', 2);
+        bimap.extend(vec![('c', 3), ('b', 1), ('a', 4)]);
+        let mut bimap2 = BiHashMap::new();
+        bimap2.insert('a', 4);
+        bimap2.insert('b', 1);
+        bimap2.insert('c', 3);
+        assert_eq!(bimap, bimap2);
     }
 
     #[test]

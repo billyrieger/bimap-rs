@@ -7,14 +7,14 @@ cfg_if::cfg_if! {
             cmp::Ordering,
             collections::{btree_map, BTreeMap},
             fmt,
-            iter::{FromIterator, FusedIterator},
+            iter::{Extend, FromIterator, FusedIterator},
             rc::Rc,
         };
     } else {
         use core::{
             cmp::Ordering,
             fmt,
-            iter::{FromIterator, FusedIterator},
+            iter::{Extend, FromIterator, FusedIterator},
         };
         use alloc::{collections::{btree_map, BTreeMap }, rc::Rc};
     }
@@ -497,6 +497,18 @@ where
     }
 }
 
+impl<L, R> Extend<(L, R)> for BiBTreeMap<L, R>
+where
+    L: Ord,
+    R: Ord,
+{
+    fn extend<T: IntoIterator<Item = (L, R)>>(&mut self, iter: T) {
+        iter.into_iter().for_each(move |(l, r)| {
+            self.insert(l, r);
+        });
+    }
+}
+
 impl<L, R> Ord for BiBTreeMap<L, R>
 where
     L: Ord,
@@ -774,6 +786,19 @@ mod tests {
         bimap.insert('c', 1);
         let pairs = (&bimap).into_iter().collect::<Vec<_>>();
         assert_eq!(pairs, vec![(&'a', &3), (&'b', &2), (&'c', &1)]);
+    }
+
+    #[test]
+    fn extend() {
+        let mut bimap = BiBTreeMap::new();
+        bimap.insert('a', 3);
+        bimap.insert('b', 2);
+        bimap.extend(vec![('c', 3), ('b', 1), ('a', 4)]);
+        let mut bimap2 = BiBTreeMap::new();
+        bimap2.insert('a', 4);
+        bimap2.insert('b', 1);
+        bimap2.insert('c', 3);
+        assert_eq!(bimap, bimap2);
     }
 
     #[test]

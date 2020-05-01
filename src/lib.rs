@@ -145,9 +145,9 @@
 //! );
 //! ```
 //!
-//! Note that the `FromIterator` implementations for both `BiHashMap` and `BiBTreeMap` use the
-//! `insert` method internally, meaning that values from the original iterator can be silently
-//! overwritten.
+//! Note that the `FromIterator` and `Extend` implementations for both `BiHashMap` and `BiBTreeMap`
+//! use the `insert` method internally, meaning that values from the original iterator/collection
+//! can be silently overwritten.
 //!
 //! ```
 //! use bimap::BiMap;
