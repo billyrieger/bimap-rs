@@ -184,31 +184,25 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-cfg_if::cfg_if! {
-    if #[cfg(feature = "std")] {
-        pub mod btree;
-        pub mod hash;
+// Necessary to support no_std setups
+#[allow(unused_imports)]
+#[macro_use]
+extern crate alloc;
 
-        /// Type definition for convenience and compatibility with older versions of this crate.
-        pub type BiMap<L, R> = BiHashMap<L, R>;
+pub mod btree;
+pub use btree::BiBTreeMap;
 
-        pub use self::{btree::BiBTreeMap, hash::BiHashMap};
-    } else {
-        #[cfg(test)]
-        #[macro_use]
-        extern crate alloc;
+#[cfg(feature = "std")]
+pub mod hash;
+#[cfg(feature = "std")]
+pub use hash::BiHashMap;
 
-        #[cfg(not(test))]
-        extern crate alloc;
+/// Type definition for convenience and compatibility with older versions of this crate.
+#[cfg(feature = "std")]
+pub type BiMap<L, R> = BiHashMap<L, R>;
 
-        pub mod btree;
-
-        /// Type definition for convenience and compatibility with older versions of this crate.
-        pub type BiMap<L, R> = BiBTreeMap<L, R>;
-
-        pub use self::btree::BiBTreeMap;
-    }
-}
+#[cfg(not(feature = "std"))]
+pub type BiMap<L, R> = BiBTreeMap<L, R>;
 
 #[cfg(all(feature = "serde", feature = "std"))]
 pub mod serde;

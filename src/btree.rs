@@ -1,24 +1,15 @@
 //! A bimap backed by two `BTreeMap`s.
 
 use crate::Overwritten;
-cfg_if::cfg_if! {
-    if #[cfg(feature = "std")] {
-        use std::{
-            cmp::Ordering,
-            collections::{btree_map, BTreeMap},
-            fmt,
-            iter::{Extend, FromIterator, FusedIterator},
-            rc::Rc,
-        };
-    } else {
-        use core::{
-            cmp::Ordering,
-            fmt,
-            iter::{Extend, FromIterator, FusedIterator},
-        };
-        use alloc::{collections::{btree_map, BTreeMap }, rc::Rc};
-    }
-}
+use alloc::{
+    collections::{btree_map, BTreeMap},
+    rc::Rc,
+};
+use core::{
+    cmp::Ordering,
+    fmt,
+    iter::{Extend, FromIterator, FusedIterator},
+};
 
 /// A bimap backed by two `BTreeMap`s.
 ///
