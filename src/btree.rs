@@ -396,7 +396,6 @@ where
         self.right2left.insert(right_rc, left_rc);
     }
 
-
     /// Creates an iterator over the left-right pairs lying within a range of left values in
     /// the bimap in ascending order by left
     ///
@@ -418,13 +417,13 @@ where
     /// }
     /// ```
     pub fn left_range<'a, A>(&'a self, range: A) -> LeftRange<'a, L, R>
-        where A: std::ops::RangeBounds<L>
+    where
+        A: std::ops::RangeBounds<L>,
     {
         LeftRange {
             inner: self.left2right.range(range),
         }
     }
-
 
     /// Creates an iterator over the left-right pairs lying within a range of right values in
     /// the bimap in ascending order by right
@@ -447,7 +446,8 @@ where
     /// }
     /// ```
     pub fn right_range<'a, A>(&'a self, range: A) -> RightRange<'a, L, R>
-        where A: std::ops::RangeBounds<R>
+    where
+        A: std::ops::RangeBounds<R>,
     {
         RightRange {
             inner: self.right2left.range(range),
@@ -772,8 +772,6 @@ impl<'a, L, R> ExactSizeIterator for RightRange<'a, L, R> {}
 
 impl<'a, L, R> FusedIterator for RightRange<'a, L, R> {}
 
-
-
 impl<'a, L, R> Iterator for RightRange<'a, L, R> {
     type Item = (&'a L, &'a R);
 
@@ -1019,7 +1017,10 @@ mod tests {
         bimap.insert('b', 3);
         bimap.insert('c', 2);
         bimap.insert('d', 1);
-        let left_range = bimap.left_range('b'..'d').map(|(l, r)| (*l, *r)).collect::<Vec<_>>();
+        let left_range = bimap
+            .left_range('b'..'d')
+            .map(|(l, r)| (*l, *r))
+            .collect::<Vec<_>>();
         assert_eq!(left_range, vec![('b', 3), ('c', 2)])
     }
 
@@ -1044,7 +1045,10 @@ mod tests {
         bimap.insert('b', 3);
         bimap.insert('c', 2);
         bimap.insert('d', 1);
-        let right_range = bimap.right_range(2..4).map(|(l, r)| (*l, *r)).collect::<Vec<_>>();
+        let right_range = bimap
+            .right_range(2..4)
+            .map(|(l, r)| (*l, *r))
+            .collect::<Vec<_>>();
         assert_eq!(right_range, vec![('c', 2), ('b', 3)])
     }
 
