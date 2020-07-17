@@ -395,6 +395,64 @@ where
         self.left2right.insert(left_rc.clone(), right_rc.clone());
         self.right2left.insert(right_rc, left_rc);
     }
+
+
+    /// Creates an iterator over the left-right pairs lying within a range of left values in
+    /// the bimap in ascending order by left
+    ///
+    /// The iterator element type is `(&L, &R)`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use bimap::BiBTreeMap;
+    ///
+    /// let mut bimap = BiBTreeMap::new();
+    /// bimap.insert('a', 1);
+    /// bimap.insert('b', 2);
+    /// bimap.insert('c', 3);
+    /// bimap.insert('d', 4);
+    ///
+    /// for (left, right) in bimap.left_range('b'..'d') {
+    ///     println!("({}, {})", left, right);
+    /// }
+    /// ```
+    pub fn left_range<'a, A>(&'a self, range: A) -> LeftRange<'a, L, R>
+        where A: std::ops::RangeBounds<L>
+    {
+        LeftRange {
+            inner: self.left2right.range(range),
+        }
+    }
+
+
+    /// Creates an iterator over the left-right pairs lying within a range of right values in
+    /// the bimap in ascending order by right
+    ///
+    /// The iterator element type is `(&L, &R)`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use bimap::BiBTreeMap;
+    ///
+    /// let mut bimap = BiBTreeMap::new();
+    /// bimap.insert('a', 1);
+    /// bimap.insert('b', 2);
+    /// bimap.insert('c', 3);
+    /// bimap.insert('d', 4);
+    ///
+    /// for (left, right) in bimap.right_range(2..4) {
+    ///     println!("({}, {})", left, right);
+    /// }
+    /// ```
+    pub fn right_range<'a, A>(&'a self, range: A) -> RightRange<'a, L, R>
+        where A: std::ops::RangeBounds<R>
+    {
+        RightRange {
+            inner: self.right2left.range(range),
+        }
+    }
 }
 
 impl<L, R> Clone for BiBTreeMap<L, R>
@@ -662,6 +720,71 @@ impl<'a, L, R> Iterator for RightValues<'a, L, R> {
     }
 }
 
+/// An iterator over a range of left-right pairs in a `BiBTreeMap`.
+///
+/// This struct is created by the [`left_range`] method of `BiBTreeMap`.
+///
+/// [`left_range`]: BiBTreeMap::left_range
+#[derive(Debug)]
+pub struct LeftRange<'a, L, R> {
+    inner: btree_map::Range<'a, Rc<L>, Rc<R>>,
+}
+
+impl<'a, L, R> DoubleEndedIterator for LeftRange<'a, L, R> {
+    fn next_back(&mut self) -> Option<Self::Item> {
+        self.inner.next_back().map(|(l, r)| (&**l, &**r))
+    }
+}
+
+impl<'a, L, R> ExactSizeIterator for LeftRange<'a, L, R> {}
+
+impl<'a, L, R> FusedIterator for LeftRange<'a, L, R> {}
+
+impl<'a, L, R> Iterator for LeftRange<'a, L, R> {
+    type Item = (&'a L, &'a R);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.inner.next().map(|(l, r)| (&**l, &**r))
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.inner.size_hint()
+    }
+}
+
+/// An iterator over a range of left-right pairs in a `BiBTreeMap`.
+///
+/// This struct is created by the [`right_range`] method of `BiBTreeMap`.
+///
+/// [`right_range`]: BiBTreeMap::right_range
+#[derive(Debug)]
+pub struct RightRange<'a, L, R> {
+    inner: btree_map::Range<'a, Rc<R>, Rc<L>>,
+}
+
+impl<'a, L, R> DoubleEndedIterator for RightRange<'a, L, R> {
+    fn next_back(&mut self) -> Option<Self::Item> {
+        self.inner.next_back().map(|(r, l)| (&**l, &**r))
+    }
+}
+
+impl<'a, L, R> ExactSizeIterator for RightRange<'a, L, R> {}
+
+impl<'a, L, R> FusedIterator for RightRange<'a, L, R> {}
+
+
+
+impl<'a, L, R> Iterator for RightRange<'a, L, R> {
+    type Item = (&'a L, &'a R);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.inner.next().map(|(r, l)| (&**l, &**r))
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.inner.size_hint()
+    }
+}
 // safe because internal Rcs are not exposed by the api and the reference counts only change in
 // methods with &mut self
 unsafe impl<L, R> Send for BiBTreeMap<L, R>
@@ -887,6 +1010,56 @@ mod tests {
         assert_eq!(iter.next_back(), Some(&3));
         assert_eq!(iter.next_back(), Some(&2));
         assert_eq!(iter.next_back(), Some(&1));
+    }
+
+    #[test]
+    fn left_range() {
+        let mut bimap = BiBTreeMap::new();
+        bimap.insert('a', 4);
+        bimap.insert('b', 3);
+        bimap.insert('c', 2);
+        bimap.insert('d', 1);
+        let left_range = bimap.left_range('b'..'d').map(|(l, r)| (*l, *r)).collect::<Vec<_>>();
+        assert_eq!(left_range, vec![('b', 3), ('c', 2)])
+    }
+
+    #[test]
+    fn left_range_rev() {
+        let mut bimap = BiBTreeMap::new();
+        bimap.insert('a', 4);
+        bimap.insert('b', 3);
+        bimap.insert('c', 2);
+        bimap.insert('d', 1);
+        let mut left_range = bimap.left_range('b'..'d');
+
+        assert_eq!(left_range.next_back(), Some((&'c', &2)));
+        assert_eq!(left_range.next_back(), Some((&'b', &3)));
+        assert_eq!(left_range.next_back(), None);
+    }
+
+    #[test]
+    fn right_range() {
+        let mut bimap = BiBTreeMap::new();
+        bimap.insert('a', 4);
+        bimap.insert('b', 3);
+        bimap.insert('c', 2);
+        bimap.insert('d', 1);
+        let right_range = bimap.right_range(2..4).map(|(l, r)| (*l, *r)).collect::<Vec<_>>();
+        assert_eq!(right_range, vec![('c', 2), ('b', 3)])
+    }
+
+    #[test]
+    fn right_range_rev() {
+        let mut bimap = BiBTreeMap::new();
+        bimap.insert('a', 4);
+        bimap.insert('b', 3);
+        bimap.insert('c', 2);
+        bimap.insert('d', 1);
+        let mut right_range = bimap.right_range(2..4);
+
+        assert_eq!(right_range.next_back(), Some((&'b', &3)));
+        assert_eq!(right_range.next_back(), Some((&'c', &2)));
+        assert_eq!(right_range.next_back(), None);
     }
 
     #[test]
