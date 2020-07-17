@@ -418,7 +418,7 @@ where
     /// ```
     pub fn left_range<'a, A>(&'a self, range: A) -> LeftRange<'a, L, R>
     where
-        A: std::ops::RangeBounds<L>,
+        A: core::ops::RangeBounds<L>,
     {
         LeftRange {
             inner: self.left2right.range(range),
@@ -447,7 +447,7 @@ where
     /// ```
     pub fn right_range<'a, A>(&'a self, range: A) -> RightRange<'a, L, R>
     where
-        A: std::ops::RangeBounds<R>,
+        A: core::ops::RangeBounds<R>,
     {
         RightRange {
             inner: self.right2left.range(range),
