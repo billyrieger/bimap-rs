@@ -182,6 +182,8 @@
 //! [`insert`]: BiHashMap::insert
 //! [`insert_no_overwrite`]: BiHashMap::insert_no_overwrite
 
+#![deny(missing_docs)]
+
 #![cfg_attr(not(feature = "std"), no_std)]
 
 // Necessary to support no_std setups

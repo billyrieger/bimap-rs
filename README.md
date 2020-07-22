@@ -1,100 +1,62 @@
-[![Build status](https://img.shields.io/travis/com/billyrieger/bimap-rs.svg)](https://travis-ci.com/billyrieger/bimap-rs)
-[![Coverage](https://img.shields.io/codecov/c/github/billyrieger/bimap-rs.svg)](https://codecov.io/gh/billyrieger/bimap-rs/branch/master)
-[![Lines of code](https://tokei.rs/b1/github/billyrieger/bimap-rs?category=code)](https://github.com/XAMPPRocky/tokei)
-[![Version](https://img.shields.io/crates/v/bimap.svg)](https://crates.io/crates/bimap)
-[![Documentation](https://docs.rs/bimap/badge.svg)](https://docs.rs/bimap/)
-[![Downloads](https://img.shields.io/crates/d/bimap.svg)](https://crates.io/crates/bimap)
-[![License](https://img.shields.io/crates/l/bimap.svg)](https://github.com/billyrieger/bimap-rs/blob/master/LICENSE-MIT)
-[![Dependency status](https://deps.rs/repo/github/billyrieger/bimap-rs/status.svg)](https://deps.rs/repo/github/billyrieger/bimap-rs)
-[![Rust version](https://img.shields.io/badge/rust-stable-lightgrey.svg)](https://www.rust-lang.org/)
+# `bimap-rs`
 
-# bimap-rs
+<!-- badges -->
+[![version][version badge]][lib.rs]
+[![documentation][documentation badge]][docs.rs]
+[![license][license badge]](#license)
 
-`bimap-rs` is a two-way bijective map implementation for Rust.
+<!-- external links -->
+[lib.rs]: https://lib.rs/crates/bimap
+[docs.rs]: https://docs.rs/bimap/0.4.0/bimap/
 
-## Usage
+<!-- static badge images -->
+[version badge]: https://img.shields.io/static/v1?label=latest%20version&message=lib.rs&color=blueviolet
+[documentation badge]: https://img.shields.io/static/v1?label=documentation&message=docs.rs&color=blueviolet
+[license badge]: https://img.shields.io/static/v1?label=license&message=Apache-2.0/MIT&color=blueviolet
 
-### Installation
+`bimap-rs` is a pure Rust library for dealing with bijective maps, aiming to
+feel like an extension of [`std::collections`] whenever possible. There are no
+external dependencies by default but [Serde] and [`no_std`]
+compatibility are available through feature gates.
 
-To use `bimap-rs` in your Rust project, add the following to the `dependencies` section of your
-`Cargo.toml`:
+[`no_std`]: https://rust-embedded.github.io/book/intro/no-std.html
+[Serde]: https://serde.rs/
+[`std::collections`]: https://doc.rust-lang.org/std/collections/index.html
 
-```toml
-bimap = "0.4"
-```
+1. [Quick start](#quick-start)
+1. [Documentation](#documentation)
+1. [Contributing](#contributing)
+1. [Semantic versioning](#semantic-versioning)
+1. [License](#license)
 
-### `serde` compatibility
+## Quick start
 
-`bimap-rs` optionally supports serialization and deserialization of `BiHashMap` and `BiBTreeMap`
-through [serde](https://serde.rs). To avoid unnecessary dependencies, this is gated behind the
-`serde` feature and must be manually enabled. To do so, add the following to the `dependencies`
-section of your `Cargo.toml`:
-
-```toml
-bimap = { version = "0.4", features = [ "serde" ]}
-```
-
-### `no_std` compatibility
-
-To use `bimap-rs` without the Rust standard library, add the following the `dependencies` section of
-your `Cargo.toml`:
+To use the latest version of `bimap-rs` with the default features, add this to
+your project's `Cargo.toml` file:
 
 ```toml
-bimap = { version = "0.4", default-features = false }
+[dependencies]
+bimap = "0.5.0"
 ```
 
-If you do use `bimap` without the standard library, there is no `BiHashMap`, only `BiBTreeMap`.
-Currently, the `no_std` version of this library may not be used with `serde` integration.
+## Documentation
 
-### Example
+Documentation for the latest version of `bimap-rs` is available on [docs.rs].
 
-```rust
-use bimap::BiMap;
+## Contributing
 
-let mut elements = BiMap::new();
+Thank you for your interest in helping `bimap-rs`!
 
-// insert chemicals and their corresponding symbols
-elements.insert("hydrogen", "H");
-elements.insert("carbon", "C");
-elements.insert("bromine", "Br");
-elements.insert("neodymium", "Nd");
+## Semantic versioning
 
-// retrieve chemical symbol by name (left to right)
-assert_eq!(elements.get_by_left(&"bromine"), Some(&"Br"));
-assert_eq!(elements.get_by_left(&"oxygen"), None);
-
-// retrieve name by chemical symbol (right to left)
-assert_eq!(elements.get_by_right(&"C"), Some(&"carbon"));
-assert_eq!(elements.get_by_right(&"Al"), None);
-
-// check membership
-assert!(elements.contains_left(&"hydrogen"));
-assert!(!elements.contains_right(&"He"));
-
-// remove elements
-assert_eq!(
-    elements.remove_by_left(&"neodymium"),
-    Some(("neodymium", "Nd"))
-);
-assert_eq!(elements.remove_by_right(&"Nd"), None);
-
-// iterate over elements
-for (left, right) in &elements {
-    println!("the chemical symbol for {} is {}", left, right);
-}
-```
-
-See [the docs](https://docs.rs/bimap/) for more details.
+`bimap-rs` adheres to the de-facto Rust variety of Semantic Versioning.
 
 ## License
 
-`bimap-rs` is licensed under either of
+`bimap-rs` is dual-licensed under the [MIT License] and the [Apache License].
+As a library user, this means that you are free to choose either license when
+using `bimap-rs`. As a library contributor, this means that any work you
+contribute to `bimap-rs` will be similarly dual-licensed.
 
- * Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE))
- * MIT license ([LICENSE-MIT](LICENSE-MIT))
-
-at your option.
-
-Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in the
-work by you, as defined in the Apache-2.0 license, shall be dual licensed as above, without any
-additional terms or conditions.
+[Apache License]: LICENSE_APACHE
+[MIT License]: LICENSE_MIT
