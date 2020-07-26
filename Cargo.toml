@@ -5,7 +5,8 @@ authors = ["Billy Rieger <wrieger@protonmail.com>"]
 description = "Bijective maps"
 repository = "https://github.com/billyrieger/bimap-rs/"
 readme = "README.md"
-categories = ["data-structures", "no-std"]
+keywords = ["bijection", "bidirectional", "map", "container", "two-way"]
+categories = ["data-structures", "algorithms", "no-std"]
 license = "Apache-2.0/MIT"
 edition = "2018"
 
