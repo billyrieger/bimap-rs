@@ -5,25 +5,14 @@
 [![documentation][documentation badge]][docs.rs]
 [![license][license badge]](#license)
 
-<!-- external links -->
-[lib.rs]: https://lib.rs/crates/bimap
-[docs.rs]: https://docs.rs/bimap/0.4.0/bimap/
-
-<!-- static badge images -->
-[version badge]: https://img.shields.io/static/v1?label=latest%20version&message=lib.rs&color=blueviolet
-[documentation badge]: https://img.shields.io/static/v1?label=documentation&message=docs.rs&color=blueviolet
-[license badge]: https://img.shields.io/static/v1?label=license&message=Apache-2.0/MIT&color=blueviolet
 
 `bimap-rs` is a pure Rust library for dealing with bijective maps, aiming to
-feel like an extension of [`std::collections`] whenever possible. There are no
-external dependencies by default but [Serde] and [`no_std`]
-compatibility are available through feature gates.
-
-[`no_std`]: https://rust-embedded.github.io/book/intro/no-std.html
-[Serde]: https://serde.rs/
-[`std::collections`]: https://doc.rust-lang.org/std/collections/index.html
+feel like an extension of the standard library's data structures whenever
+possible. There are no external dependencies by default but [Serde] and
+[`no_std`] compatibility are available through feature flags.
 
 1. [Quick start](#quick-start)
+1. [Feature flags](#feature-flags)
 1. [Documentation](#documentation)
 1. [Contributing](#contributing)
 1. [Semantic versioning](#semantic-versioning)
@@ -39,13 +28,50 @@ your project's `Cargo.toml` file:
 bimap = "0.5.0"
 ```
 
+You can now run the `bimap-rs` Hello World!
+
+```rust
+fn main() {
+    // A bijective map between letters of the English alphabet and their positions.
+    let mut alphabet = bimap::BiMap::<char, u8>::new();
+
+    alphabet.insert('A', 1);
+    // some letters omitted for brevity
+    alphabet.insert('Z', 26);
+
+    println!("A is at position {}", alphabet.get_by_left(&'A').unwrap());
+    println!("{} is at position 26", alphabet.get_by_right(&26).unwrap());
+}
+```
+
+## Feature flags
+
+| Flag name | Description                        | Enabled by default? |
+| ---       | ---                                | ---                 |
+| `std`     | Standard library usage (`HashMap`) | yes                 |
+| `serde`   | (De)serialization using [Serde]    | no                  |
+
+This `Cargo.toml` shows how these features can be enabled and disabled.
+
+```toml
+[dependencies]
+# I just want to use `bimap-rs`.
+bimap = "0.5.0"
+# I want to use `bimap-rs` without the Rust standard library.
+bimap = { version = "0.5.0", default-features = false }
+# I want to use `bimap-rs` with Serde support.
+bimap = { version = "0.5.0", features = ["serde"] }
+```
+
 ## Documentation
 
 Documentation for the latest version of `bimap-rs` is available on [docs.rs].
 
 ## Contributing
 
-Thank you for your interest in helping `bimap-rs`!
+Thank you for your interest in improving `bimap-rs`! Please read the [code of
+conduct] and the [contributing guidelines] before submitting an issue or
+opening a pull request.
 
 ## Semantic versioning
 
@@ -53,10 +79,24 @@ Thank you for your interest in helping `bimap-rs`!
 
 ## License
 
-`bimap-rs` is dual-licensed under the [MIT License] and the [Apache License].
+`bimap-rs` is dual-licensed under the [Apache License] and the [MIT License].
 As a library user, this means that you are free to choose either license when
 using `bimap-rs`. As a library contributor, this means that any work you
 contribute to `bimap-rs` will be similarly dual-licensed.
 
+<!-- external links -->
+[docs.rs]: https://docs.rs/bimap/0.4.0/bimap/
+[lib.rs]: https://lib.rs/crates/bimap
+[`no_std`]: https://rust-embedded.github.io/book/intro/no-std.html
+[Serde]: https://serde.rs/
+
+<!-- local files -->
 [Apache License]: LICENSE_APACHE
+[code of conduct]: CODE_OF_CONDUCT.md
+[contributing guidelines]: CONTRIBUTING.md
 [MIT License]: LICENSE_MIT
+
+<!-- static badge images (all purple) -->
+[documentation badge]: https://img.shields.io/static/v1?label=documentation&message=docs.rs&color=blueviolet
+[license badge]: https://img.shields.io/static/v1?label=license&message=Apache-2.0/MIT&color=blueviolet
+[version badge]: https://img.shields.io/static/v1?label=latest%20version&message=lib.rs&color=blueviolet
