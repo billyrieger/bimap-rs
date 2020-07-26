@@ -81,7 +81,8 @@ where
         self.left2right.len()
     }
 
-    /// Returns `true` if the bimap contains no left-right pairs, and `false` otherwise.
+    /// Returns `true` if the bimap contains no left-right pairs, and `false`
+    /// otherwise.
     ///
     /// # Examples
     ///
@@ -99,8 +100,8 @@ where
         self.left2right.is_empty()
     }
 
-    /// Returns a lower bound on the number of left-right pairs the `BiHashMap` can store without
-    /// reallocating memory.
+    /// Returns a lower bound on the number of left-right pairs the `BiHashMap`
+    /// can store without reallocating memory.
     ///
     /// # Examples
     ///
@@ -133,7 +134,8 @@ where
         self.right2left.clear();
     }
 
-    /// Creates an iterator over the left-right pairs in the bimap in arbitrary order.
+    /// Creates an iterator over the left-right pairs in the bimap in arbitrary
+    /// order.
     ///
     /// The iterator element type is `(&L, &R)`.
     ///
@@ -157,7 +159,8 @@ where
         }
     }
 
-    /// Creates an iterator over the left values in the bimap in arbitrary order.
+    /// Creates an iterator over the left values in the bimap in arbitrary
+    /// order.
     ///
     /// The iterator element type is `&L`.
     ///
@@ -181,7 +184,8 @@ where
         }
     }
 
-    /// Creates an iterator over the right values in the bimap in arbitrary order.
+    /// Creates an iterator over the right values in the bimap in arbitrary
+    /// order.
     ///
     /// The iterator element type is `&R`.
     ///
@@ -213,8 +217,8 @@ where
     LS: BuildHasher,
     RS: BuildHasher,
 {
-    /// Creates a new empty `BiHashMap` using `hash_builder_left` to hash left values and
-    /// `hash_builder_right` to hash right values.
+    /// Creates a new empty `BiHashMap` using `hash_builder_left` to hash left
+    /// values and `hash_builder_right` to hash right values.
     ///
     /// # Examples
     ///
@@ -234,8 +238,9 @@ where
         }
     }
 
-    /// Creates a new empty `BiHashMap` with the given capacity, using `hash_builder_left`
-    /// to hash left values and `hash_builder_right` to hash right values.
+    /// Creates a new empty `BiHashMap` with the given capacity, using
+    /// `hash_builder_left` to hash left values and `hash_builder_right` to
+    /// hash right values.
     ///
     /// # Examples
     ///
@@ -259,7 +264,8 @@ where
         }
     }
 
-    /// Returns a reference to the right value corresponding to the given left value.
+    /// Returns a reference to the right value corresponding to the given left
+    /// value.
     ///
     /// # Examples
     ///
@@ -275,7 +281,8 @@ where
         self.left2right.get(left).map(Deref::deref)
     }
 
-    /// Returns a reference to the left value corresponding to the given right value.
+    /// Returns a reference to the left value corresponding to the given right
+    /// value.
     ///
     /// # Examples
     ///
@@ -291,7 +298,8 @@ where
         self.right2left.get(right).map(Deref::deref)
     }
 
-    /// Returns `true` if the bimap contains the given left value and `false` otherwise.
+    /// Returns `true` if the bimap contains the given left value and `false`
+    /// otherwise.
     ///
     /// # Examples
     ///
@@ -307,7 +315,8 @@ where
         self.left2right.contains_key(left)
     }
 
-    /// Returns `true` if the map contains the given right value and `false` otherwise.
+    /// Returns `true` if the map contains the given right value and `false`
+    /// otherwise.
     ///
     /// # Examples
     ///
@@ -325,8 +334,8 @@ where
 
     /// Removes the left-right pair corresponding to the given left value.
     ///
-    /// Returns the previous left-right pair if the map contained the left value and `None`
-    /// otherwise.
+    /// Returns the previous left-right pair if the map contained the left value
+    /// and `None` otherwise.
     ///
     /// # Examples
     ///
@@ -355,8 +364,8 @@ where
 
     /// Removes the left-right pair corresponding to the given right value.
     ///
-    /// Returns the previous left-right pair if the map contained the right value and `None`
-    /// otherwise.
+    /// Returns the previous left-right pair if the map contained the right
+    /// value and `None` otherwise.
     ///
     /// # Examples
     ///
@@ -385,15 +394,15 @@ where
 
     /// Inserts the given left-right pair into the bimap.
     ///
-    /// Returns an enum `Overwritten` representing any left-right pairs that were overwritten by
-    /// the call to `insert`. The example below details all possible enum variants that can be
-    /// returned.
+    /// Returns an enum `Overwritten` representing any left-right pairs that
+    /// were overwritten by the call to `insert`. The example below details
+    /// all possible enum variants that can be returned.
     ///
     /// # Warnings
     ///
-    /// Somewhat paradoxically, calling `insert()` can actually reduce the size of the bimap! This
-    /// is because of the invariant that each left value maps to exactly one right value and vice
-    /// versa.
+    /// Somewhat paradoxically, calling `insert()` can actually reduce the size
+    /// of the bimap! This is because of the invariant that each left value
+    /// maps to exactly one right value and vice versa.
     ///
     /// # Examples
     ///
@@ -451,11 +460,12 @@ where
         retval
     }
 
-    /// Inserts the given left-right pair into the bimap without overwriting any existing values.
+    /// Inserts the given left-right pair into the bimap without overwriting any
+    /// existing values.
     ///
-    /// Returns `Ok(())` if the pair was successfully inserted into the bimap. If either value
-    /// exists in the map, `Err((left, right)` is returned with the attempted left-right pair and
-    /// the map is unchanged.
+    /// Returns `Ok(())` if the pair was successfully inserted into the bimap.
+    /// If either value exists in the map, `Err((left, right)` is returned
+    /// with the attempted left-right pair and the map is unchanged.
     ///
     /// # Examples
     ///
@@ -479,7 +489,8 @@ where
 
     /// Retains only the elements specified by the predicate.
     ///
-    /// In other words, remove all left-right pairs `(l, r)` such that `f(&l, &r)` returns `false`.
+    /// In other words, remove all left-right pairs `(l, r)` such that `f(&l,
+    /// &r)` returns `false`.
     ///
     /// # Examples
     ///
@@ -511,8 +522,8 @@ where
         });
     }
 
-    /// Inserts the given left-right pair into the bimap without checking if the pair already
-    /// exists.
+    /// Inserts the given left-right pair into the bimap without checking if the
+    /// pair already exists.
     fn insert_unchecked(&mut self, left: L, right: R) {
         let left_rc = Rc::new(left);
         let right_rc = Rc::new(right);
@@ -780,8 +791,8 @@ impl<'a, L, R> Iterator for RightValues<'a, L, R> {
     }
 }
 
-// safe because internal Rcs are not exposed by the api and the reference counts only change in
-// methods with &mut self
+// safe because internal Rcs are not exposed by the api and the reference counts
+// only change in methods with &mut self
 unsafe impl<L, R, LS, RS> Send for BiHashMap<L, R, LS, RS>
 where
     L: Send,

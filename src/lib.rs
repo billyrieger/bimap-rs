@@ -1,17 +1,20 @@
 //! A fast two-way bijective map.
 //!
-//! A bimap is a [bijective map] between values of type `L`, called left values, and values of type
-//! `R`, called right values. This means every left value is associated with exactly one right
-//! value and vice versa. Compare this to a [`HashMap`] or [`BTreeMap`], where every key is
-//! associated with exactly one value but a value can be associated with more than one key.
+//! A bimap is a [bijective map] between values of type `L`, called left values,
+//! and values of type `R`, called right values. This means every left value is
+//! associated with exactly one right value and vice versa. Compare this to a
+//! [`HashMap`] or [`BTreeMap`], where every key is associated with exactly one
+//! value but a value can be associated with more than one key.
 //!
-//! This crate provides two kinds of bimap: a [`BiHashMap`] and a [`BiBTreeMap`]. Internally, each
-//! one is composed of two maps, one for the left-to-right direction and one for right-to-left. As
-//! such, the big-O performance of the `get`, `remove`, `insert`, and `contains` methods are the
+//! This crate provides two kinds of bimap: a [`BiHashMap`] and a
+//! [`BiBTreeMap`]. Internally, each one is composed of two maps, one for the
+//! left-to-right direction and one for right-to-left. As such, the big-O
+//! performance of the `get`, `remove`, `insert`, and `contains` methods are the
 //! same as those of the backing map.
 //!
-//! For convenience, the type definition [`BiMap`] corresponds to a `BiHashMap`. If you're using
-//! this crate without the standard library, it instead corresponds to a `BiBTreeMap`.
+//! For convenience, the type definition [`BiMap`] corresponds to a `BiHashMap`.
+//! If you're using this crate without the standard library, it instead
+//! corresponds to a `BiBTreeMap`.
 //!
 //! # Examples
 //!
@@ -63,18 +66,21 @@
 //! bimap.insert('b', 1); // what to do here?
 //! ```
 //!
-//! In order to maintain the bijection, the bimap cannot have both left-right pairs `('a', 1)` and
-//! `('b', 1)`. Otherwise, the right-value `1` would have two left values associated with it.
-//! Either we should allow the call to `insert` to go through and overwrite `('a', 1)`, or not let
-//! `('b', 1)` be inserted at all. This crate allows for both possibilities. To insert with
-//! overwriting, use [`insert`], and to insert without overwriting, use [`insert_no_overwrite`].
-//! The return type of `insert` is the `enum` [`Overwritten`], which indicates what values, if any,
-//! were overwritten; the return type of `insert_no_overwrite` is a `Result` indicating if the
+//! In order to maintain the bijection, the bimap cannot have both left-right
+//! pairs `('a', 1)` and `('b', 1)`. Otherwise, the right-value `1` would have
+//! two left values associated with it. Either we should allow the call to
+//! `insert` to go through and overwrite `('a', 1)`, or not let `('b', 1)` be
+//! inserted at all. This crate allows for both possibilities. To insert with
+//! overwriting, use [`insert`], and to insert without overwriting, use
+//! [`insert_no_overwrite`]. The return type of `insert` is the `enum`
+//! [`Overwritten`], which indicates what values, if any, were overwritten; the
+//! return type of `insert_no_overwrite` is a `Result` indicating if the
 //! insertion was successful.
 //!
-//! This is especially important when dealing with types that can be equal while having different
-//! data. Unlike a `HashMap` or `BTreeMap`, which [doesn't update an equal key upon insertion], a
-//! bimap updates both the left values and the right values.
+//! This is especially important when dealing with types that can be equal while
+//! having different data. Unlike a `HashMap` or `BTreeMap`, which [doesn't
+//! update an equal key upon insertion], a bimap updates both the left values
+//! and the right values.
 //!
 //! ```
 //! use bimap::{BiMap, Overwritten};
@@ -145,9 +151,10 @@
 //! );
 //! ```
 //!
-//! Note that the `FromIterator` and `Extend` implementations for both `BiHashMap` and `BiBTreeMap`
-//! use the `insert` method internally, meaning that values from the original iterator/collection
-//! can be silently overwritten.
+//! Note that the `FromIterator` and `Extend` implementations for both
+//! `BiHashMap` and `BiBTreeMap` use the `insert` method internally, meaning
+//! that values from the original iterator/collection can be silently
+//! overwritten.
 //!
 //! ```
 //! use bimap::BiMap;
@@ -164,8 +171,9 @@
 //!
 //! ## `no_std` compatibility
 //!
-//! This crate can be used without the standard library when the `std` feature is disabled. If you
-//! choose to do this, only `BiBTreeMap` is available, not `BiHashMap`.
+//! This crate can be used without the standard library when the `std` feature
+//! is disabled. If you choose to do this, only `BiBTreeMap` is available, not
+//! `BiHashMap`.
 //!
 //! ## serde compatibility
 //!
@@ -182,6 +190,7 @@
 //! [`insert`]: BiHashMap::insert
 //! [`insert_no_overwrite`]: BiHashMap::insert_no_overwrite
 
+// Document everything!
 #![deny(missing_docs)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
@@ -198,42 +207,48 @@ pub mod hash;
 #[cfg(feature = "std")]
 pub use hash::BiHashMap;
 
-/// Type definition for convenience and compatibility with older versions of this crate.
+/// Type definition for convenience and compatibility with older versions of
+/// this crate.
 #[cfg(feature = "std")]
 pub type BiMap<L, R> = BiHashMap<L, R>;
 
+/// Type definition for convenience and compatibility with older versions of
+/// this crate.
 #[cfg(not(feature = "std"))]
 pub type BiMap<L, R> = BiBTreeMap<L, R>;
 
 #[cfg(all(feature = "serde", feature = "std"))]
 pub mod serde;
 
-/// The previous left-right pairs, if any, that were overwritten by a call to the
-/// [`insert`](BiHashMap::insert) method of a bimap.
+/// The previous left-right pairs, if any, that were overwritten by a call to
+/// the [`insert`](BiHashMap::insert) method of a bimap.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum Overwritten<L, R> {
     /// Neither the left nor the right value previously existed in the bimap.
     Neither,
 
-    /// The left value existed in the bimap, and the previous left-right pair is returned.
+    /// The left value existed in the bimap, and the previous left-right pair is
+    /// returned.
     Left(L, R),
 
-    /// The right value existed in the bimap, and the previous left-right pair is returned.
+    /// The right value existed in the bimap, and the previous left-right pair
+    /// is returned.
     Right(L, R),
 
-    /// The left-right pair already existed in the bimap, and the previous left-right pair is
-    /// returned.
+    /// The left-right pair already existed in the bimap, and the previous
+    /// left-right pair is returned.
     Pair(L, R),
 
-    /// Both the left and the right value existed in the bimap, but as part of separate pairs. The
-    /// first tuple is the left-right pair of the previous left value, and the second is the
-    /// left-right pair of the previous right value.
+    /// Both the left and the right value existed in the bimap, but as part of
+    /// separate pairs. The first tuple is the left-right pair of the
+    /// previous left value, and the second is the left-right pair of the
+    /// previous right value.
     Both((L, R), (L, R)),
 }
 
 impl<L, R> Overwritten<L, R> {
-    /// Returns a boolean indicating if the `Overwritten` variant implies any values were
-    /// overwritten.
+    /// Returns a boolean indicating if the `Overwritten` variant implies any
+    /// values were overwritten.
     ///
     /// This method is `true` for all variants other than `Neither`.
     ///
