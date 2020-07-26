@@ -4,6 +4,7 @@ version = "0.5.1"
 authors = ["Billy Rieger <wrieger@protonmail.com>"]
 description = "Bijective maps"
 repository = "https://github.com/billyrieger/bimap-rs/"
+documentation = "https://docs.rs/bimap/"
 readme = "README.md"
 keywords = ["bijection", "bidirectional", "map", "container", "two-way"]
 categories = ["data-structures", "algorithms", "no-std"]
