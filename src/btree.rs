@@ -9,6 +9,7 @@ use core::{
     cmp::Ordering,
     fmt,
     iter::{Extend, FromIterator, FusedIterator},
+    ops::RangeBounds,
 };
 
 /// A bimap backed by two `BTreeMap`s.
@@ -59,7 +60,8 @@ where
         self.left2right.len()
     }
 
-    /// Returns `true` if the bimap contains no left-right pairs, and `false` otherwise.
+    /// Returns `true` if the bimap contains no left-right pairs, and `false`
+    /// otherwise.
     ///
     /// # Examples
     ///
@@ -96,8 +98,8 @@ where
         self.right2left.clear();
     }
 
-    /// Creates an iterator over the left-right pairs in the bimap in ascending order by left
-    /// value.
+    /// Creates an iterator over the left-right pairs in the bimap in ascending
+    /// order by left value.
     ///
     /// The iterator element type is `(&L, &R)`.
     ///
@@ -121,7 +123,8 @@ where
         }
     }
 
-    /// Creates an iterator over the left values in the bimap in ascending order.
+    /// Creates an iterator over the left values in the bimap in ascending
+    /// order.
     ///
     /// The iterator element type is `&L`.
     ///
@@ -145,7 +148,8 @@ where
         }
     }
 
-    /// Creates an iterator over the right values in the bimap in ascending order.
+    /// Creates an iterator over the right values in the bimap in ascending
+    /// order.
     ///
     /// The iterator element type is `&R`.
     ///
@@ -169,7 +173,8 @@ where
         }
     }
 
-    /// Returns a reference to the right value corresponding to the given left value.
+    /// Returns a reference to the right value corresponding to the given left
+    /// value.
     ///
     /// # Examples
     ///
@@ -185,7 +190,8 @@ where
         self.left2right.get(left).map(|l| &**l)
     }
 
-    /// Returns a reference to the left value corresponding to the given right value.
+    /// Returns a reference to the left value corresponding to the given right
+    /// value.
     ///
     /// # Examples
     ///
@@ -201,7 +207,8 @@ where
         self.right2left.get(right).map(|r| &**r)
     }
 
-    /// Returns `true` if the bimap contains the given left value and `false` otherwise.
+    /// Returns `true` if the bimap contains the given left value and `false`
+    /// otherwise.
     ///
     /// # Examples
     ///
@@ -217,7 +224,8 @@ where
         self.left2right.contains_key(left)
     }
 
-    /// Returns `true` if the map contains the given right value and `false` otherwise.
+    /// Returns `true` if the map contains the given right value and `false`
+    /// otherwise.
     ///
     /// # Examples
     ///
@@ -235,8 +243,8 @@ where
 
     /// Removes the left-right pair corresponding to the given left value.
     ///
-    /// Returns the previous left-right pair if the map contained the left value and `None`
-    /// otherwise.
+    /// Returns the previous left-right pair if the map contained the left value
+    /// and `None` otherwise.
     ///
     /// # Examples
     ///
@@ -265,8 +273,8 @@ where
 
     /// Removes the left-right pair corresponding to the given right value.
     ///
-    /// Returns the previous left-right pair if the map contained the right value and `None`
-    /// otherwise.
+    /// Returns the previous left-right pair if the map contained the right
+    /// value and `None` otherwise.
     ///
     /// # Examples
     ///
@@ -295,15 +303,15 @@ where
 
     /// Inserts the given left-right pair into the bimap.
     ///
-    /// Returns an enum `Overwritten` representing any left-right pairs that were overwritten by
-    /// the call to `insert`. The example below details all possible enum variants that can be
-    /// returned.
+    /// Returns an enum `Overwritten` representing any left-right pairs that
+    /// were overwritten by the call to `insert`. The example below details
+    /// all possible enum variants that can be returned.
     ///
     /// # Warnings
     ///
-    /// Somewhat paradoxically, calling `insert()` can actually reduce the size of the bimap! This
-    /// is because of the invariant that each left value maps to exactly one right value and vice
-    /// versa.
+    /// Somewhat paradoxically, calling `insert()` can actually reduce the size
+    /// of the bimap! This is because of the invariant that each left value
+    /// maps to exactly one right value and vice versa.
     ///
     /// # Examples
     ///
@@ -361,11 +369,12 @@ where
         retval
     }
 
-    /// Inserts the given left-right pair into the bimap without overwriting any existing values.
+    /// Inserts the given left-right pair into the bimap without overwriting any
+    /// existing values.
     ///
-    /// Returns `Ok(())` if the pair was successfully inserted into the bimap. If either value
-    /// exists in the map, `Err((left, right)` is returned with the attempted left-right pair and
-    /// the map is unchanged.
+    /// Returns `Ok(())` if the pair was successfully inserted into the bimap.
+    /// If either value exists in the map, `Err((left, right)` is returned
+    /// with the attempted left-right pair and the map is unchanged.
     ///
     /// # Examples
     ///
@@ -387,8 +396,8 @@ where
         }
     }
 
-    /// Inserts the given left-right pair into the bimap without checking if the pair already
-    /// exists.
+    /// Inserts the given left-right pair into the bimap without checking if the
+    /// pair already exists.
     fn insert_unchecked(&mut self, left: L, right: R) {
         let left_rc = Rc::new(left);
         let right_rc = Rc::new(right);
@@ -396,8 +405,8 @@ where
         self.right2left.insert(right_rc, left_rc);
     }
 
-    /// Creates an iterator over the left-right pairs lying within a range of left values in
-    /// the bimap in ascending order by left
+    /// Creates an iterator over the left-right pairs lying within a range of
+    /// left values in the bimap in ascending order by left.
     ///
     /// The iterator element type is `(&L, &R)`.
     ///
@@ -416,17 +425,17 @@ where
     ///     println!("({}, {})", left, right);
     /// }
     /// ```
-    pub fn left_range<'a, A>(&'a self, range: A) -> LeftRange<'a, L, R>
+    pub fn left_range<A>(&self, range: A) -> LeftRange<'_, L, R>
     where
-        A: core::ops::RangeBounds<L>,
+        A: RangeBounds<L>,
     {
         LeftRange {
             inner: self.left2right.range(range),
         }
     }
 
-    /// Creates an iterator over the left-right pairs lying within a range of right values in
-    /// the bimap in ascending order by right
+    /// Creates an iterator over the left-right pairs lying within a range of
+    /// right values in the bimap in ascending order by right.
     ///
     /// The iterator element type is `(&L, &R)`.
     ///
@@ -445,9 +454,9 @@ where
     ///     println!("({}, {})", left, right);
     /// }
     /// ```
-    pub fn right_range<'a, A>(&'a self, range: A) -> RightRange<'a, L, R>
+    pub fn right_range<A>(&self, range: A) -> RightRange<'_, L, R>
     where
-        A: core::ops::RangeBounds<R>,
+        A: RangeBounds<R>,
     {
         RightRange {
             inner: self.right2left.range(range),
@@ -783,8 +792,8 @@ impl<'a, L, R> Iterator for RightRange<'a, L, R> {
         self.inner.size_hint()
     }
 }
-// safe because internal Rcs are not exposed by the api and the reference counts only change in
-// methods with &mut self
+// safe because internal Rcs are not exposed by the api and the reference counts
+// only change in methods with &mut self
 unsafe impl<L, R> Send for BiBTreeMap<L, R>
 where
     L: Send,

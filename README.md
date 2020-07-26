@@ -1,100 +1,102 @@
-[![Build status](https://img.shields.io/travis/com/billyrieger/bimap-rs.svg)](https://travis-ci.com/billyrieger/bimap-rs)
-[![Coverage](https://img.shields.io/codecov/c/github/billyrieger/bimap-rs.svg)](https://codecov.io/gh/billyrieger/bimap-rs/branch/master)
-[![Lines of code](https://tokei.rs/b1/github/billyrieger/bimap-rs?category=code)](https://github.com/XAMPPRocky/tokei)
-[![Version](https://img.shields.io/crates/v/bimap.svg)](https://crates.io/crates/bimap)
-[![Documentation](https://docs.rs/bimap/badge.svg)](https://docs.rs/bimap/)
-[![Downloads](https://img.shields.io/crates/d/bimap.svg)](https://crates.io/crates/bimap)
-[![License](https://img.shields.io/crates/l/bimap.svg)](https://github.com/billyrieger/bimap-rs/blob/master/LICENSE-MIT)
-[![Dependency status](https://deps.rs/repo/github/billyrieger/bimap-rs/status.svg)](https://deps.rs/repo/github/billyrieger/bimap-rs)
-[![Rust version](https://img.shields.io/badge/rust-stable-lightgrey.svg)](https://www.rust-lang.org/)
+# `bimap-rs`
 
-# bimap-rs
+<!-- badges -->
+[![version][version badge]][lib.rs]
+[![documentation][documentation badge]][docs.rs]
+[![license][license badge]](#license)
 
-`bimap-rs` is a two-way bijective map implementation for Rust.
 
-## Usage
+`bimap-rs` is a pure Rust library for dealing with bijective maps, aiming to
+feel like an extension of the standard library's data structures whenever
+possible. There are no external dependencies by default but [Serde] and
+[`no_std`] compatibility are available through feature flags.
 
-### Installation
+1. [Quick start](#quick-start)
+1. [Feature flags](#feature-flags)
+1. [Documentation](#documentation)
+1. [Contributing](#contributing)
+1. [Semantic versioning](#semantic-versioning)
+1. [License](#license)
 
-To use `bimap-rs` in your Rust project, add the following to the `dependencies` section of your
-`Cargo.toml`:
+## Quick start
 
-```toml
-bimap = "0.4"
-```
-
-### `serde` compatibility
-
-`bimap-rs` optionally supports serialization and deserialization of `BiHashMap` and `BiBTreeMap`
-through [serde](https://serde.rs). To avoid unnecessary dependencies, this is gated behind the
-`serde` feature and must be manually enabled. To do so, add the following to the `dependencies`
-section of your `Cargo.toml`:
+To use the latest version of `bimap-rs` with the default features, add this to
+your project's `Cargo.toml` file:
 
 ```toml
-bimap = { version = "0.4", features = [ "serde" ]}
+[dependencies]
+bimap = "0.5.0"
 ```
 
-### `no_std` compatibility
-
-To use `bimap-rs` without the Rust standard library, add the following the `dependencies` section of
-your `Cargo.toml`:
-
-```toml
-bimap = { version = "0.4", default-features = false }
-```
-
-If you do use `bimap` without the standard library, there is no `BiHashMap`, only `BiBTreeMap`.
-Currently, the `no_std` version of this library may not be used with `serde` integration.
-
-### Example
+You can now run the `bimap-rs` Hello World!
 
 ```rust
-use bimap::BiMap;
+fn main() {
+    // A bijective map between letters of the English alphabet and their positions.
+    let mut alphabet = bimap::BiMap::<char, u8>::new();
 
-let mut elements = BiMap::new();
+    alphabet.insert('A', 1);
+    // some letters omitted for brevity
+    alphabet.insert('Z', 26);
 
-// insert chemicals and their corresponding symbols
-elements.insert("hydrogen", "H");
-elements.insert("carbon", "C");
-elements.insert("bromine", "Br");
-elements.insert("neodymium", "Nd");
-
-// retrieve chemical symbol by name (left to right)
-assert_eq!(elements.get_by_left(&"bromine"), Some(&"Br"));
-assert_eq!(elements.get_by_left(&"oxygen"), None);
-
-// retrieve name by chemical symbol (right to left)
-assert_eq!(elements.get_by_right(&"C"), Some(&"carbon"));
-assert_eq!(elements.get_by_right(&"Al"), None);
-
-// check membership
-assert!(elements.contains_left(&"hydrogen"));
-assert!(!elements.contains_right(&"He"));
-
-// remove elements
-assert_eq!(
-    elements.remove_by_left(&"neodymium"),
-    Some(("neodymium", "Nd"))
-);
-assert_eq!(elements.remove_by_right(&"Nd"), None);
-
-// iterate over elements
-for (left, right) in &elements {
-    println!("the chemical symbol for {} is {}", left, right);
+    println!("A is at position {}", alphabet.get_by_left(&'A').unwrap());
+    println!("{} is at position 26", alphabet.get_by_right(&26).unwrap());
 }
 ```
 
-See [the docs](https://docs.rs/bimap/) for more details.
+## Feature flags
+
+| Flag name | Description                        | Enabled by default? |
+| ---       | ---                                | ---                 |
+| `std`     | Standard library usage (`HashMap`) | yes                 |
+| `serde`   | (De)serialization using [Serde]    | no                  |
+
+This `Cargo.toml` shows how these features can be enabled and disabled.
+
+```toml
+[dependencies]
+# I just want to use `bimap-rs`.
+bimap = "0.5.0"
+# I want to use `bimap-rs` without the Rust standard library.
+bimap = { version = "0.5.0", default-features = false }
+# I want to use `bimap-rs` with Serde support.
+bimap = { version = "0.5.0", features = ["serde"] }
+```
+
+## Documentation
+
+Documentation for the latest version of `bimap-rs` is available on [docs.rs].
+
+## Contributing
+
+Thank you for your interest in improving `bimap-rs`! Please read the [code of
+conduct] and the [contributing guidelines] before submitting an issue or
+opening a pull request.
+
+## Semantic versioning
+
+`bimap-rs` adheres to the de-facto Rust variety of Semantic Versioning.
 
 ## License
 
-`bimap-rs` is licensed under either of
+`bimap-rs` is dual-licensed under the [Apache License] and the [MIT License].
+As a library user, this means that you are free to choose either license when
+using `bimap-rs`. As a library contributor, this means that any work you
+contribute to `bimap-rs` will be similarly dual-licensed.
 
- * Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE))
- * MIT license ([LICENSE-MIT](LICENSE-MIT))
+<!-- external links -->
+[docs.rs]: https://docs.rs/bimap/0.4.0/bimap/
+[lib.rs]: https://lib.rs/crates/bimap
+[`no_std`]: https://rust-embedded.github.io/book/intro/no-std.html
+[Serde]: https://serde.rs/
 
-at your option.
+<!-- local files -->
+[Apache License]: LICENSE_APACHE
+[code of conduct]: CODE_OF_CONDUCT.md
+[contributing guidelines]: CONTRIBUTING.md
+[MIT License]: LICENSE_MIT
 
-Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in the
-work by you, as defined in the Apache-2.0 license, shall be dual licensed as above, without any
-additional terms or conditions.
+<!-- static badge images (all purple) -->
+[documentation badge]: https://img.shields.io/static/v1?label=documentation&message=docs.rs&color=blueviolet
+[license badge]: https://img.shields.io/static/v1?label=license&message=Apache-2.0/MIT&color=blueviolet
+[version badge]: https://img.shields.io/static/v1?label=latest%20version&message=lib.rs&color=blueviolet

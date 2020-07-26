@@ -1,11 +1,30 @@
 name: Test suite
 on:
-  - push
-  - pull_request
+  push:
+    branches:
+      - master
+  pull_request
 
 jobs:
+  style:
+    name: Enforce style
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          # use nightly rustfmt for unstable options
+          toolchain: nightly
+          override: true
+          components: rustfmt
+      - uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: -- --check
   test:
     name: Run tests
+    needs: style
     strategy:
       matrix:
         os:
@@ -35,19 +54,3 @@ jobs:
         with:
           command: test
           args: --no-default-features
-  style:
-    name: Enforce style
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          # use nightly rustfmt for unstable options
-          toolchain: nightly
-          override: true
-          components: rustfmt
-      - uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: -- --check
