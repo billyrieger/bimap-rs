@@ -85,7 +85,7 @@ using `bimap-rs`. As a library contributor, this means that any work you
 contribute to `bimap-rs` will be similarly dual-licensed.
 
 <!-- external links -->
-[docs.rs]: https://docs.rs/bimap/0.4.0/bimap/
+[docs.rs]: https://docs.rs/bimap/
 [lib.rs]: https://lib.rs/crates/bimap
 [`no_std`]: https://rust-embedded.github.io/book/intro/no-std.html
 [Serde]: https://serde.rs/
