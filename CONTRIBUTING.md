@@ -5,7 +5,8 @@ Thank you for your interest in improving `bimap-rs`!
 1. [How to contribute](#how-to-contribute)
     1. [Bug reports](#bug-reports)
     1. [Feature requests](#feature-requests)
-    1. [Direct pull requests](#direct-pull-reqests)
+    1. [Direct pull requests](#direct-pull-requests)
+1. [Local development](#local-development)
 
 ## How to contribute
 
