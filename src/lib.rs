@@ -262,7 +262,7 @@ impl<L, R> Overwritten<L, R> {
     /// assert!(bimap.insert('a', 2).did_overwrite());
     /// ```
     pub fn did_overwrite(&self) -> bool {
-            match self {
+        match self {
             Overwritten::Neither => false,
             _ => true,
         }
