@@ -9,6 +9,7 @@ use core::{
     cmp::Ordering,
     fmt,
     iter::{Extend, FromIterator, FusedIterator},
+    ops::RangeBounds,
 };
 
 /// A bimap backed by two `BTreeMap`s.
@@ -405,7 +406,7 @@ where
     }
 
     /// Creates an iterator over the left-right pairs lying within a range of
-    /// left values in the bimap in ascending order by left
+    /// left values in the bimap in ascending order by left.
     ///
     /// The iterator element type is `(&L, &R)`.
     ///
@@ -424,9 +425,9 @@ where
     ///     println!("({}, {})", left, right);
     /// }
     /// ```
-    pub fn left_range<'a, A>(&'a self, range: A) -> LeftRange<'a, L, R>
+    pub fn left_range<A>(&self, range: A) -> LeftRange<'_, L, R>
     where
-        A: core::ops::RangeBounds<L>,
+        A: RangeBounds<L>,
     {
         LeftRange {
             inner: self.left2right.range(range),
@@ -434,7 +435,7 @@ where
     }
 
     /// Creates an iterator over the left-right pairs lying within a range of
-    /// right values in the bimap in ascending order by right
+    /// right values in the bimap in ascending order by right.
     ///
     /// The iterator element type is `(&L, &R)`.
     ///
@@ -453,9 +454,9 @@ where
     ///     println!("({}, {})", left, right);
     /// }
     /// ```
-    pub fn right_range<'a, A>(&'a self, range: A) -> RightRange<'a, L, R>
+    pub fn right_range<A>(&self, range: A) -> RightRange<'_, L, R>
     where
-        A: core::ops::RangeBounds<R>,
+        A: RangeBounds<R>,
     {
         RightRange {
             inner: self.right2left.range(range),

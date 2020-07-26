@@ -192,6 +192,7 @@
 
 // Document everything!
 #![deny(missing_docs)]
+
 #![cfg_attr(not(feature = "std"), no_std)]
 
 // Necessary to support no_std setups
