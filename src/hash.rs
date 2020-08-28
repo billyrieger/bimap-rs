@@ -554,8 +554,8 @@ where
 
 impl<L, R, LS, RS> fmt::Debug for BiHashMap<L, R, LS, RS>
 where
-    L: fmt::Debug + Eq + Hash,
-    R: fmt::Debug + Eq + Hash,
+    L: fmt::Debug,
+    R: fmt::Debug,
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         struct EntryDebugger<'a, L, R> {
