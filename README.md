@@ -36,7 +36,7 @@ fn main() {
     let mut alphabet = bimap::BiMap::<char, u8>::new();
 
     alphabet.insert('A', 1);
-    // some letters omitted for brevity
+    // ...
     alphabet.insert('Z', 26);
 
     println!("A is at position {}", alphabet.get_by_left(&'A').unwrap());
@@ -57,8 +57,10 @@ This `Cargo.toml` shows how these features can be enabled and disabled.
 [dependencies]
 # I just want to use `bimap-rs`.
 bimap = "0.5.2"
+
 # I want to use `bimap-rs` without the Rust standard library.
 bimap = { version = "0.5.2", default-features = false }
+
 # I want to use `bimap-rs` with Serde support.
 bimap = { version = "0.5.2", features = ["serde"] }
 ```
