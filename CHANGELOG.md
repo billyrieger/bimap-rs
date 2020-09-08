@@ -11,6 +11,12 @@ Added, Changed, Deprecated, Removed, Fixed, Security
 
 ## [Unreleased]
 
+### Changed
+- Minor edits to the README.
+
+### Removed
+- Unnecessary trait bounds on the `fmt::Debug` impl for `BiMap<L, R>`.
+
 ## [0.5.2]
 
 ### Added
