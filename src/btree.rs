@@ -8,6 +8,7 @@ use alloc::{
 use core::{
     cmp::Ordering,
     fmt,
+    hash::{Hash, Hasher},
     iter::{Extend, FromIterator, FusedIterator},
     ops::RangeBounds,
 };
@@ -597,6 +598,16 @@ where
     }
 }
 
+impl<L, R> Hash for BiBTreeMap<L, R>
+where
+    L: Hash,
+    R: Hash,
+{
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.left2right.hash(state);
+    }
+}
+
 /// An owning iterator over the left-right pairs in a `BiBTreeMap`.
 pub struct IntoIter<L, R> {
     inner: btree_map::IntoIter<Rc<L>, Rc<R>>,
@@ -1124,5 +1135,31 @@ mod tests {
         assert!(bimap.insert_no_overwrite('a', 1).is_ok());
         assert!(bimap.insert_no_overwrite('a', 2).is_err());
         assert!(bimap.insert_no_overwrite('b', 1).is_err());
+    }
+
+    #[test]
+    #[cfg(feature = "std")]
+    fn hash() {
+        use core::iter::{self, FromIterator};
+        use std::collections::HashSet;
+
+        let mut hashset = HashSet::new();
+
+        hashset.insert(BiBTreeMap::new());
+
+        hashset.insert(BiBTreeMap::from_iter(iter::once((0, '0'))));
+
+        hashset.insert(BiBTreeMap::from_iter(vec![(0, '0'), (0, '1'), (1, '0')]));
+        hashset.insert(BiBTreeMap::from_iter(vec![(1, '0'), (0, '1'), (0, '0')]));
+        hashset.insert(BiBTreeMap::from_iter(vec![(0, '0'), (0, '1'), (1, '0')]));
+
+        assert_eq!(
+            hashset,
+            HashSet::from_iter(vec![
+                BiBTreeMap::new(),
+                BiBTreeMap::from_iter(iter::once((0, '0'))),
+                BiBTreeMap::from_iter(vec![(0, '0'), (1, '0'), (0, '1')]),
+            ])
+        );
     }
 }
