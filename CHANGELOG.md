@@ -11,11 +11,16 @@ Added, Changed, Deprecated, Removed, Fixed, Security
 
 ## [Unreleased]
 
+## [0.5.3]
+
+### Added
+- Implement `Hash` for `BiBTreeMap` (#23).
+
 ### Changed
 - Minor edits to the README.
 
 ### Removed
-- Unnecessary trait bounds on the `fmt::Debug` impl for `BiMap<L, R>`.
+- Unnecessary trait bounds on the `fmt::Debug` impl for `BiMap<L, R>` (#22).
 
 ## [0.5.2]
 
@@ -43,7 +48,8 @@ Added, Changed, Deprecated, Removed, Fixed, Security
 
 ## [0.4.0]
 
-[Unreleased]: https://github.com/billyrieger/bimap-rs/compare/v0.5.2...HEAD
+[Unreleased]: https://github.com/billyrieger/bimap-rs/compare/v0.5.3...HEAD
+[0.5.3]: https://github.com/billyrieger/bimap-rs/compare/v0.5.2...v0.5.3
 [0.5.2]: https://github.com/billyrieger/bimap-rs/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/billyrieger/bimap-rs/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/billyrieger/bimap-rs/compare/v0.4.0...v0.5.0
