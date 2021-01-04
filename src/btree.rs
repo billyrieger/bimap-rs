@@ -1,11 +1,15 @@
 //! A bimap backed by two `BTreeMap`s.
 
-use crate::Overwritten;
+use crate::{
+    mem::{Ref, Wrapper},
+    Overwritten,
+};
 use alloc::{
     collections::{btree_map, BTreeMap},
     rc::Rc,
 };
 use core::{
+    borrow::Borrow,
     cmp::Ordering,
     fmt,
     hash::{Hash, Hasher},
@@ -19,8 +23,8 @@ use core::{
 ///
 /// [module-level documentation]: crate
 pub struct BiBTreeMap<L, R> {
-    left2right: BTreeMap<Rc<L>, Rc<R>>,
-    right2left: BTreeMap<Rc<R>, Rc<L>>,
+    left2right: BTreeMap<Ref<L>, Ref<R>>,
+    right2left: BTreeMap<Ref<R>, Ref<L>>,
 }
 
 impl<L, R> BiBTreeMap<L, R>
@@ -177,6 +181,10 @@ where
     /// Returns a reference to the right value corresponding to the given left
     /// value.
     ///
+    /// The input may be any borrowed form of the bimap's left type, but the
+    /// ordering on the borrowed form *must* match the ordering on the left
+    /// type.
+    ///
     /// # Examples
     ///
     /// ```
@@ -187,12 +195,20 @@ where
     /// assert_eq!(bimap.get_by_left(&'a'), Some(&1));
     /// assert_eq!(bimap.get_by_left(&'z'), None);
     /// ```
-    pub fn get_by_left(&self, left: &L) -> Option<&R> {
-        self.left2right.get(left).map(|l| &**l)
+    pub fn get_by_left<Q>(&self, left: &Q) -> Option<&R>
+    where
+        L: Borrow<Q>,
+        Q: Ord + ?Sized,
+    {
+        self.left2right.get(Wrapper::wrap(left)).map(|l| &*l.0)
     }
 
     /// Returns a reference to the left value corresponding to the given right
     /// value.
+    ///
+    /// The input may be any borrowed form of the bimap's right type, but the
+    /// ordering on the borrowed form *must* match the ordering on the right
+    /// type.
     ///
     /// # Examples
     ///
@@ -204,12 +220,20 @@ where
     /// assert_eq!(bimap.get_by_right(&1), Some(&'a'));
     /// assert_eq!(bimap.get_by_right(&2), None);
     /// ```
-    pub fn get_by_right(&self, right: &R) -> Option<&L> {
-        self.right2left.get(right).map(|r| &**r)
+    pub fn get_by_right<Q>(&self, right: &Q) -> Option<&L>
+    where
+        R: Borrow<Q>,
+        Q: Ord + ?Sized,
+    {
+        self.right2left.get(Wrapper::wrap(right)).map(|r| &*r.0)
     }
 
     /// Returns `true` if the bimap contains the given left value and `false`
     /// otherwise.
+    ///
+    /// The input may be any borrowed form of the bimap's left type, but the
+    /// ordering on the borrowed form *must* match the ordering on the left
+    /// type.
     ///
     /// # Examples
     ///
@@ -221,12 +245,20 @@ where
     /// assert!(bimap.contains_left(&'a'));
     /// assert!(!bimap.contains_left(&'b'));
     /// ```
-    pub fn contains_left(&self, left: &L) -> bool {
-        self.left2right.contains_key(left)
+    pub fn contains_left<Q>(&self, left: &Q) -> bool
+    where
+        L: Borrow<Q>,
+        Q: Ord + ?Sized,
+    {
+        self.left2right.contains_key(Wrapper::wrap(left))
     }
 
     /// Returns `true` if the map contains the given right value and `false`
     /// otherwise.
+    ///
+    /// The input may be any borrowed form of the bimap's right type, but the
+    /// ordering on the borrowed form *must* match the ordering on the right
+    /// type.
     ///
     /// # Examples
     ///
@@ -238,14 +270,22 @@ where
     /// assert!(bimap.contains_right(&1));
     /// assert!(!bimap.contains_right(&2));
     /// ```
-    pub fn contains_right(&self, right: &R) -> bool {
-        self.right2left.contains_key(right)
+    pub fn contains_right<Q>(&self, right: &Q) -> bool
+    where
+        R: Borrow<Q>,
+        Q: Ord + ?Sized,
+    {
+        self.right2left.contains_key(Wrapper::wrap(right))
     }
 
     /// Removes the left-right pair corresponding to the given left value.
     ///
     /// Returns the previous left-right pair if the map contained the left value
     /// and `None` otherwise.
+    ///
+    /// The input may be any borrowed form of the bimap's left type, but the
+    /// ordering on the borrowed form *must* match the ordering on the left
+    /// type.
     ///
     /// # Examples
     ///
@@ -260,14 +300,18 @@ where
     /// assert_eq!(bimap.remove_by_left(&'b'), Some(('b', 2)));
     /// assert_eq!(bimap.remove_by_left(&'b'), None);
     /// ```
-    pub fn remove_by_left(&mut self, left: &L) -> Option<(L, R)> {
-        self.left2right.remove(left).map(|right_rc| {
+    pub fn remove_by_left<Q>(&mut self, left: &Q) -> Option<(L, R)>
+    where
+        L: Borrow<Q>,
+        Q: Ord + ?Sized,
+    {
+        self.left2right.remove(Wrapper::wrap(left)).map(|right_rc| {
             // unwrap is safe because we know right2left contains the key (it's a bimap)
             let left_rc = self.right2left.remove(&right_rc).unwrap();
             // at this point we can safely unwrap because the other pointers are gone
             (
-                Rc::try_unwrap(left_rc).ok().unwrap(),
-                Rc::try_unwrap(right_rc).ok().unwrap(),
+                Rc::try_unwrap(left_rc.0).ok().unwrap(),
+                Rc::try_unwrap(right_rc.0).ok().unwrap(),
             )
         })
     }
@@ -276,6 +320,10 @@ where
     ///
     /// Returns the previous left-right pair if the map contained the right
     /// value and `None` otherwise.
+    ///
+    /// The input may be any borrowed form of the bimap's right type, but the
+    /// ordering on the borrowed form *must* match the ordering on the right
+    /// type.
     ///
     /// # Examples
     ///
@@ -290,14 +338,18 @@ where
     /// assert_eq!(bimap.remove_by_right(&2), Some(('b', 2)));
     /// assert_eq!(bimap.remove_by_right(&2), None);
     /// ```
-    pub fn remove_by_right(&mut self, right: &R) -> Option<(L, R)> {
-        self.right2left.remove(right).map(|left_rc| {
+    pub fn remove_by_right<Q>(&mut self, right: &Q) -> Option<(L, R)>
+    where
+        R: Borrow<Q>,
+        Q: Ord + ?Sized,
+    {
+        self.right2left.remove(Wrapper::wrap(right)).map(|left_rc| {
             // unwrap is safe because we know left2right contains the key (it's a bimap)
             let right_rc = self.left2right.remove(&left_rc).unwrap();
             // at this point we can safely unwrap because the other pointers are gone
             (
-                Rc::try_unwrap(left_rc).ok().unwrap(),
-                Rc::try_unwrap(right_rc).ok().unwrap(),
+                Rc::try_unwrap(left_rc.0).ok().unwrap(),
+                Rc::try_unwrap(right_rc.0).ok().unwrap(),
             )
         })
     }
@@ -400,16 +452,20 @@ where
     /// Inserts the given left-right pair into the bimap without checking if the
     /// pair already exists.
     fn insert_unchecked(&mut self, left: L, right: R) {
-        let left_rc = Rc::new(left);
-        let right_rc = Rc::new(right);
-        self.left2right.insert(left_rc.clone(), right_rc.clone());
-        self.right2left.insert(right_rc, left_rc);
+        let left = Ref(Rc::new(left));
+        let right_rc = Ref(Rc::new(right));
+        self.left2right.insert(left.clone(), right_rc.clone());
+        self.right2left.insert(right_rc, left);
     }
 
     /// Creates an iterator over the left-right pairs lying within a range of
     /// left values in the bimap in ascending order by left.
     ///
     /// The iterator element type is `(&L, &R)`.
+    ///
+    /// The range bounds may be any borrowed form of the bimap's left type, but
+    /// the ordering on the borrowed form *must* match the ordering on the left
+    /// type.
     ///
     /// # Examples
     ///
@@ -426,12 +482,16 @@ where
     ///     println!("({}, {})", left, right);
     /// }
     /// ```
-    pub fn left_range<A>(&self, range: A) -> LeftRange<'_, L, R>
+    pub fn left_range<T, A>(&self, range: A) -> LeftRange<'_, L, R>
     where
-        A: RangeBounds<L>,
+        L: Borrow<T>,
+        A: RangeBounds<T>,
+        T: Ord + ?Sized,
     {
+        let start = Wrapper::wrap_bound(range.start_bound());
+        let end = Wrapper::wrap_bound(range.end_bound());
         LeftRange {
-            inner: self.left2right.range(range),
+            inner: self.left2right.range::<Wrapper<_>, _>((start, end)),
         }
     }
 
@@ -439,6 +499,10 @@ where
     /// right values in the bimap in ascending order by right.
     ///
     /// The iterator element type is `(&L, &R)`.
+    ///
+    /// The range bounds may be any borrowed form of the bimap's right type, but
+    /// the ordering on the borrowed form *must* match the ordering on the right
+    /// type.
     ///
     /// # Examples
     ///
@@ -455,12 +519,16 @@ where
     ///     println!("({}, {})", left, right);
     /// }
     /// ```
-    pub fn right_range<A>(&self, range: A) -> RightRange<'_, L, R>
+    pub fn right_range<T, A>(&self, range: A) -> RightRange<'_, L, R>
     where
-        A: RangeBounds<R>,
+        R: Borrow<T>,
+        A: RangeBounds<T>,
+        T: Ord + ?Sized,
     {
+        let start = Wrapper::wrap_bound(range.start_bound());
+        let end = Wrapper::wrap_bound(range.end_bound());
         RightRange {
-            inner: self.right2left.range(range),
+            inner: self.right2left.range::<Wrapper<_>, _>((start, end)),
         }
     }
 }
@@ -610,7 +678,7 @@ where
 
 /// An owning iterator over the left-right pairs in a `BiBTreeMap`.
 pub struct IntoIter<L, R> {
-    inner: btree_map::IntoIter<Rc<L>, Rc<R>>,
+    inner: btree_map::IntoIter<Ref<L>, Ref<R>>,
 }
 
 impl<L, R> DoubleEndedIterator for IntoIter<L, R> {
@@ -618,8 +686,8 @@ impl<L, R> DoubleEndedIterator for IntoIter<L, R> {
         // unwraps are safe because right2left is gone
         self.inner.next_back().map(|(l, r)| {
             (
-                Rc::try_unwrap(l).ok().unwrap(),
-                Rc::try_unwrap(r).ok().unwrap(),
+                Rc::try_unwrap(l.0).ok().unwrap(),
+                Rc::try_unwrap(r.0).ok().unwrap(),
             )
         })
     }
@@ -636,8 +704,8 @@ impl<L, R> Iterator for IntoIter<L, R> {
         // unwraps are safe because right2left is gone
         self.inner.next().map(|(l, r)| {
             (
-                Rc::try_unwrap(l).ok().unwrap(),
-                Rc::try_unwrap(r).ok().unwrap(),
+                Rc::try_unwrap(l.0).ok().unwrap(),
+                Rc::try_unwrap(r.0).ok().unwrap(),
             )
         })
     }
@@ -653,12 +721,12 @@ impl<L, R> Iterator for IntoIter<L, R> {
 ///
 /// [`iter`]: BiBTreeMap::iter
 pub struct Iter<'a, L, R> {
-    inner: btree_map::Iter<'a, Rc<L>, Rc<R>>,
+    inner: btree_map::Iter<'a, Ref<L>, Ref<R>>,
 }
 
 impl<'a, L, R> DoubleEndedIterator for Iter<'a, L, R> {
     fn next_back(&mut self) -> Option<Self::Item> {
-        self.inner.next_back().map(|(l, r)| (&**l, &**r))
+        self.inner.next_back().map(|(l, r)| (&*l.0, &*r.0))
     }
 }
 
@@ -670,7 +738,7 @@ impl<'a, L, R> Iterator for Iter<'a, L, R> {
     type Item = (&'a L, &'a R);
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.inner.next().map(|(l, r)| (&**l, &**r))
+        self.inner.next().map(|(l, r)| (&*l.0, &*r.0))
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -684,12 +752,12 @@ impl<'a, L, R> Iterator for Iter<'a, L, R> {
 ///
 /// [`left_values`]: BiBTreeMap::left_values
 pub struct LeftValues<'a, L, R> {
-    inner: btree_map::Iter<'a, Rc<L>, Rc<R>>,
+    inner: btree_map::Iter<'a, Ref<L>, Ref<R>>,
 }
 
 impl<'a, L, R> DoubleEndedIterator for LeftValues<'a, L, R> {
     fn next_back(&mut self) -> Option<Self::Item> {
-        self.inner.next_back().map(|(l, _)| &**l)
+        self.inner.next_back().map(|(l, _)| &*l.0)
     }
 }
 
@@ -701,7 +769,7 @@ impl<'a, L, R> Iterator for LeftValues<'a, L, R> {
     type Item = &'a L;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.inner.next().map(|(l, _)| &**l)
+        self.inner.next().map(|(l, _)| &*l.0)
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -715,12 +783,12 @@ impl<'a, L, R> Iterator for LeftValues<'a, L, R> {
 ///
 /// [`right_values`]: BiBTreeMap::right_values
 pub struct RightValues<'a, L, R> {
-    inner: btree_map::Iter<'a, Rc<R>, Rc<L>>,
+    inner: btree_map::Iter<'a, Ref<R>, Ref<L>>,
 }
 
 impl<'a, L, R> DoubleEndedIterator for RightValues<'a, L, R> {
     fn next_back(&mut self) -> Option<Self::Item> {
-        self.inner.next_back().map(|(r, _)| &**r)
+        self.inner.next_back().map(|(r, _)| &*r.0)
     }
 }
 
@@ -732,7 +800,7 @@ impl<'a, L, R> Iterator for RightValues<'a, L, R> {
     type Item = &'a R;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.inner.next().map(|(r, _)| &**r)
+        self.inner.next().map(|(r, _)| &*r.0)
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -747,12 +815,12 @@ impl<'a, L, R> Iterator for RightValues<'a, L, R> {
 /// [`left_range`]: BiBTreeMap::left_range
 #[derive(Debug)]
 pub struct LeftRange<'a, L, R> {
-    inner: btree_map::Range<'a, Rc<L>, Rc<R>>,
+    inner: btree_map::Range<'a, Ref<L>, Ref<R>>,
 }
 
 impl<'a, L, R> DoubleEndedIterator for LeftRange<'a, L, R> {
     fn next_back(&mut self) -> Option<Self::Item> {
-        self.inner.next_back().map(|(l, r)| (&**l, &**r))
+        self.inner.next_back().map(|(l, r)| (&*l.0, &*r.0))
     }
 }
 
@@ -764,7 +832,7 @@ impl<'a, L, R> Iterator for LeftRange<'a, L, R> {
     type Item = (&'a L, &'a R);
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.inner.next().map(|(l, r)| (&**l, &**r))
+        self.inner.next().map(|(l, r)| (&*l.0, &*r.0))
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -779,12 +847,12 @@ impl<'a, L, R> Iterator for LeftRange<'a, L, R> {
 /// [`right_range`]: BiBTreeMap::right_range
 #[derive(Debug)]
 pub struct RightRange<'a, L, R> {
-    inner: btree_map::Range<'a, Rc<R>, Rc<L>>,
+    inner: btree_map::Range<'a, Ref<R>, Ref<L>>,
 }
 
 impl<'a, L, R> DoubleEndedIterator for RightRange<'a, L, R> {
     fn next_back(&mut self) -> Option<Self::Item> {
-        self.inner.next_back().map(|(r, l)| (&**l, &**r))
+        self.inner.next_back().map(|(r, l)| (&*l.0, &*r.0))
     }
 }
 
@@ -796,13 +864,14 @@ impl<'a, L, R> Iterator for RightRange<'a, L, R> {
     type Item = (&'a L, &'a R);
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.inner.next().map(|(r, l)| (&**l, &**r))
+        self.inner.next().map(|(r, l)| (&*l.0, &*r.0))
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
         self.inner.size_hint()
     }
 }
+
 // safe because internal Rcs are not exposed by the api and the reference counts
 // only change in methods with &mut self
 unsafe impl<L, R> Send for BiBTreeMap<L, R>
@@ -811,6 +880,7 @@ where
     R: Send,
 {
 }
+
 unsafe impl<L, R> Sync for BiBTreeMap<L, R>
 where
     L: Sync,

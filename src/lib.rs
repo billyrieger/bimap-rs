@@ -199,6 +199,8 @@
 #[macro_use]
 extern crate alloc;
 
+mod mem;
+
 pub mod btree;
 pub use btree::BiBTreeMap;
 
