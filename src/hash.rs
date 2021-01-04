@@ -1,12 +1,15 @@
 //! A bimap backed by two `HashMap`s.
 
-use crate::Overwritten;
+use crate::{
+    mem::{Ref, Wrapper},
+    Overwritten,
+};
 use std::{
+    borrow::Borrow,
     collections::{hash_map, HashMap},
     fmt,
     hash::{BuildHasher, Hash},
     iter::{Extend, FromIterator, FusedIterator},
-    ops::Deref,
     rc::Rc,
 };
 
@@ -16,8 +19,8 @@ use std::{
 ///
 /// [module-level documentation]: crate
 pub struct BiHashMap<L, R, LS = hash_map::RandomState, RS = hash_map::RandomState> {
-    left2right: HashMap<Rc<L>, Rc<R>, LS>,
-    right2left: HashMap<Rc<R>, Rc<L>, RS>,
+    left2right: HashMap<Ref<L>, Ref<R>, LS>,
+    right2left: HashMap<Ref<R>, Ref<L>, RS>,
 }
 
 impl<L, R> BiHashMap<L, R, hash_map::RandomState, hash_map::RandomState>
@@ -277,8 +280,12 @@ where
     /// assert_eq!(bimap.get_by_left(&'a'), Some(&1));
     /// assert_eq!(bimap.get_by_left(&'z'), None);
     /// ```
-    pub fn get_by_left(&self, left: &L) -> Option<&R> {
-        self.left2right.get(left).map(Deref::deref)
+    pub fn get_by_left<Q>(&self, left: &Q) -> Option<&R>
+    where
+        L: Borrow<Q>,
+        Q: Eq + Hash + ?Sized,
+    {
+        self.left2right.get(Wrapper::wrap(left)).map(|r| &*r.0)
     }
 
     /// Returns a reference to the left value corresponding to the given right
@@ -294,8 +301,12 @@ where
     /// assert_eq!(bimap.get_by_right(&1), Some(&'a'));
     /// assert_eq!(bimap.get_by_right(&2), None);
     /// ```
-    pub fn get_by_right(&self, right: &R) -> Option<&L> {
-        self.right2left.get(right).map(Deref::deref)
+    pub fn get_by_right<Q>(&self, right: &Q) -> Option<&L>
+    where
+        R: Borrow<Q>,
+        Q: Eq + Hash + ?Sized,
+    {
+        self.right2left.get(Wrapper::wrap(right)).map(|l| &*l.0)
     }
 
     /// Returns `true` if the bimap contains the given left value and `false`
@@ -311,8 +322,12 @@ where
     /// assert!(bimap.contains_left(&'a'));
     /// assert!(!bimap.contains_left(&'b'));
     /// ```
-    pub fn contains_left(&self, left: &L) -> bool {
-        self.left2right.contains_key(left)
+    pub fn contains_left<Q>(&self, left: &Q) -> bool
+    where
+        L: Borrow<Q>,
+        Q: Eq + Hash + ?Sized,
+    {
+        self.left2right.contains_key(Wrapper::wrap(left))
     }
 
     /// Returns `true` if the map contains the given right value and `false`
@@ -328,8 +343,12 @@ where
     /// assert!(bimap.contains_right(&1));
     /// assert!(!bimap.contains_right(&2));
     /// ```
-    pub fn contains_right(&self, right: &R) -> bool {
-        self.right2left.contains_key(right)
+    pub fn contains_right<Q>(&self, right: &Q) -> bool
+    where
+        R: Borrow<Q>,
+        Q: Eq + Hash + ?Sized,
+    {
+        self.right2left.contains_key(Wrapper::wrap(right))
     }
 
     /// Removes the left-right pair corresponding to the given left value.
@@ -350,14 +369,18 @@ where
     /// assert_eq!(bimap.remove_by_left(&'b'), Some(('b', 2)));
     /// assert_eq!(bimap.remove_by_left(&'b'), None);
     /// ```
-    pub fn remove_by_left(&mut self, left: &L) -> Option<(L, R)> {
-        self.left2right.remove(left).map(|right_rc| {
+    pub fn remove_by_left<Q>(&mut self, left: &Q) -> Option<(L, R)>
+    where
+        L: Borrow<Q>,
+        Q: Eq + Hash + ?Sized,
+    {
+        self.left2right.remove(Wrapper::wrap(left)).map(|right_rc| {
             // unwrap is safe because we know right2left contains the key (it's a bimap)
             let left_rc = self.right2left.remove(&right_rc).unwrap();
             // at this point we can safely unwrap because the other pointers are gone
             (
-                Rc::try_unwrap(left_rc).ok().unwrap(),
-                Rc::try_unwrap(right_rc).ok().unwrap(),
+                Rc::try_unwrap(left_rc.0).ok().unwrap(),
+                Rc::try_unwrap(right_rc.0).ok().unwrap(),
             )
         })
     }
@@ -380,14 +403,18 @@ where
     /// assert_eq!(bimap.remove_by_right(&2), Some(('b', 2)));
     /// assert_eq!(bimap.remove_by_right(&2), None);
     /// ```
-    pub fn remove_by_right(&mut self, right: &R) -> Option<(L, R)> {
-        self.right2left.remove(right).map(|left_rc| {
+    pub fn remove_by_right<Q>(&mut self, right: &Q) -> Option<(L, R)>
+    where
+        R: Borrow<Q>,
+        Q: Eq + Hash + ?Sized,
+    {
+        self.right2left.remove(Wrapper::wrap(right)).map(|left_rc| {
             // unwrap is safe because we know left2right contains the key (it's a bimap)
             let right_rc = self.left2right.remove(&left_rc).unwrap();
             // at this point we can safely unwrap because the other pointers are gone
             (
-                Rc::try_unwrap(left_rc).ok().unwrap(),
-                Rc::try_unwrap(right_rc).ok().unwrap(),
+                Rc::try_unwrap(left_rc.0).ok().unwrap(),
+                Rc::try_unwrap(right_rc.0).ok().unwrap(),
             )
         })
     }
@@ -514,7 +541,7 @@ where
         let mut f = f;
         let right2left = &mut self.right2left;
         self.left2right.retain(|l, r| {
-            let to_retain = f(l, r);
+            let to_retain = f(&l.0, &r.0);
             if !to_retain {
                 right2left.remove(r);
             }
@@ -525,10 +552,10 @@ where
     /// Inserts the given left-right pair into the bimap without checking if the
     /// pair already exists.
     fn insert_unchecked(&mut self, left: L, right: R) {
-        let left_rc = Rc::new(left);
-        let right_rc = Rc::new(right);
-        self.left2right.insert(left_rc.clone(), right_rc.clone());
-        self.right2left.insert(right_rc, left_rc);
+        let left = Ref(Rc::new(left));
+        let right = Ref(Rc::new(right));
+        self.left2right.insert(left.clone(), right.clone());
+        self.right2left.insert(right, left);
     }
 }
 
@@ -690,7 +717,7 @@ where
 
 /// An owning iterator over the left-right pairs in a `BiHashMap`.
 pub struct IntoIter<L, R> {
-    inner: hash_map::IntoIter<Rc<L>, Rc<R>>,
+    inner: hash_map::IntoIter<Ref<L>, Ref<R>>,
 }
 
 impl<L, R> ExactSizeIterator for IntoIter<L, R> {}
@@ -703,8 +730,8 @@ impl<L, R> Iterator for IntoIter<L, R> {
     fn next(&mut self) -> Option<Self::Item> {
         self.inner.next().map(|(l, r)| {
             (
-                Rc::try_unwrap(l).ok().unwrap(),
-                Rc::try_unwrap(r).ok().unwrap(),
+                Rc::try_unwrap(l.0).ok().unwrap(),
+                Rc::try_unwrap(r.0).ok().unwrap(),
             )
         })
     }
@@ -720,7 +747,7 @@ impl<L, R> Iterator for IntoIter<L, R> {
 ///
 /// [`iter`]: BiHashMap::iter
 pub struct Iter<'a, L, R> {
-    inner: hash_map::Iter<'a, Rc<L>, Rc<R>>,
+    inner: hash_map::Iter<'a, Ref<L>, Ref<R>>,
 }
 
 impl<'a, L, R> ExactSizeIterator for Iter<'a, L, R> {}
@@ -731,9 +758,7 @@ impl<'a, L, R> Iterator for Iter<'a, L, R> {
     type Item = (&'a L, &'a R);
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.inner
-            .next()
-            .map(|(l, r)| (Deref::deref(l), Deref::deref(r)))
+        self.inner.next().map(|(l, r)| (&*l.0, &*r.0))
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -747,7 +772,7 @@ impl<'a, L, R> Iterator for Iter<'a, L, R> {
 ///
 /// [`left_values`]: BiHashMap::left_values
 pub struct LeftValues<'a, L, R> {
-    inner: hash_map::Iter<'a, Rc<L>, Rc<R>>,
+    inner: hash_map::Iter<'a, Ref<L>, Ref<R>>,
 }
 
 impl<'a, L, R> ExactSizeIterator for LeftValues<'a, L, R> {}
@@ -758,7 +783,7 @@ impl<'a, L, R> Iterator for LeftValues<'a, L, R> {
     type Item = &'a L;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.inner.next().map(|(l, _)| Deref::deref(l))
+        self.inner.next().map(|(l, _)| &*l.0)
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -772,7 +797,7 @@ impl<'a, L, R> Iterator for LeftValues<'a, L, R> {
 ///
 /// [`right_values`]: BiHashMap::right_values
 pub struct RightValues<'a, L, R> {
-    inner: hash_map::Iter<'a, Rc<R>, Rc<L>>,
+    inner: hash_map::Iter<'a, Ref<R>, Ref<L>>,
 }
 
 impl<'a, L, R> ExactSizeIterator for RightValues<'a, L, R> {}
@@ -783,7 +808,7 @@ impl<'a, L, R> Iterator for RightValues<'a, L, R> {
     type Item = &'a R;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.inner.next().map(|(r, _)| Deref::deref(r))
+        self.inner.next().map(|(r, _)| &*r.0)
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
