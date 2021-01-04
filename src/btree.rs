@@ -181,6 +181,10 @@ where
     /// Returns a reference to the right value corresponding to the given left
     /// value.
     ///
+    /// The input may be any borrowed form of the bimap's left type, but the
+    /// ordering on the borrowed form *must* match the ordering on the left
+    /// type.
+    ///
     /// # Examples
     ///
     /// ```
@@ -201,6 +205,10 @@ where
 
     /// Returns a reference to the left value corresponding to the given right
     /// value.
+    ///
+    /// The input may be any borrowed form of the bimap's right type, but the
+    /// ordering on the borrowed form *must* match the ordering on the right
+    /// type.
     ///
     /// # Examples
     ///
@@ -223,6 +231,10 @@ where
     /// Returns `true` if the bimap contains the given left value and `false`
     /// otherwise.
     ///
+    /// The input may be any borrowed form of the bimap's left type, but the
+    /// ordering on the borrowed form *must* match the ordering on the left
+    /// type.
+    ///
     /// # Examples
     ///
     /// ```
@@ -243,6 +255,10 @@ where
 
     /// Returns `true` if the map contains the given right value and `false`
     /// otherwise.
+    ///
+    /// The input may be any borrowed form of the bimap's right type, but the
+    /// ordering on the borrowed form *must* match the ordering on the right
+    /// type.
     ///
     /// # Examples
     ///
@@ -266,6 +282,10 @@ where
     ///
     /// Returns the previous left-right pair if the map contained the left value
     /// and `None` otherwise.
+    ///
+    /// The input may be any borrowed form of the bimap's left type, but the
+    /// ordering on the borrowed form *must* match the ordering on the left
+    /// type.
     ///
     /// # Examples
     ///
@@ -300,6 +320,10 @@ where
     ///
     /// Returns the previous left-right pair if the map contained the right
     /// value and `None` otherwise.
+    ///
+    /// The input may be any borrowed form of the bimap's right type, but the
+    /// ordering on the borrowed form *must* match the ordering on the right
+    /// type.
     ///
     /// # Examples
     ///
@@ -439,6 +463,10 @@ where
     ///
     /// The iterator element type is `(&L, &R)`.
     ///
+    /// The range bounds may be any borrowed form of the bimap's left type, but
+    /// the ordering on the borrowed form *must* match the ordering on the left
+    /// type.
+    ///
     /// # Examples
     ///
     /// ```
@@ -471,6 +499,10 @@ where
     /// right values in the bimap in ascending order by right.
     ///
     /// The iterator element type is `(&L, &R)`.
+    ///
+    /// The range bounds may be any borrowed form of the bimap's right type, but
+    /// the ordering on the borrowed form *must* match the ordering on the right
+    /// type.
     ///
     /// # Examples
     ///
