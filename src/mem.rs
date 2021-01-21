@@ -26,7 +26,7 @@ pub struct Wrapper<T: ?Sized>(pub T);
 impl<T: ?Sized> Wrapper<T> {
     pub fn wrap(value: &T) -> &Self {
         // safe because Wrapper<T> is #[repr(transparent)]
-        unsafe { core::mem::transmute(value) }
+        unsafe { &*(value as *const T as *const Self) }
     }
 
     pub fn wrap_bound(bound: Bound<&T>) -> Bound<&Self> {
