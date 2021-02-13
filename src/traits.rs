@@ -4,19 +4,20 @@ pub trait MapKind<K, V> {
     type Map: Map<Key = K, Value = V>;
 }
 
-pub trait Map: CoreMap + Contains + Get + Remove {}
+pub trait Map: CoreMap + New + Insert + Contains + Get + Remove + MapIterator {}
 
-impl<M> Map for M where M: CoreMap + Contains + Get + Remove {}
+impl<M> Map for M where M: CoreMap + New + Insert + Contains + Get + Remove + MapIterator {}
 
 pub trait CoreMap {
     type Key;
     type Value;
-    type IntoIter<K, V>: Iterator<Item = (Ref<K>, Ref<V>)>;
-    type Iter<'a, K: 'a, V: 'a>: Iterator<Item = (&'a K, &'a V)>;
+}
 
+pub trait New {
     fn new() -> Self;
-    fn iter(&self) -> Self::Iter<'_, Self::Key, Self::Value>;
-    fn into_iter(self) -> Self::IntoIter<Self::Key, Self::Value>;
+}
+
+pub trait Insert: CoreMap {
     fn insert(&mut self, key: Ref<Self::Key>, value: Ref<Self::Value>);
 }
 
@@ -30,4 +31,12 @@ pub trait Get<Q: ?Sized = <Self as CoreMap>::Key>: CoreMap {
 
 pub trait Remove<Q: ?Sized = <Self as CoreMap>::Key>: CoreMap {
     fn remove(&mut self, key: &Q) -> Option<(Ref<Self::Key>, Ref<Self::Value>)>;
+}
+
+pub trait MapIterator: CoreMap {
+    type Iter<'a, K: 'a, V: 'a>: Iterator<Item = (&'a K, &'a V)>;
+    type IntoIter<K, V>: Iterator<Item = (Ref<K>, Ref<V>)>;
+
+    fn iter(&self) -> Self::Iter<'_, Self::Key, Self::Value>;
+    fn into_iter(self) -> Self::IntoIter<Self::Key, Self::Value>;
 }

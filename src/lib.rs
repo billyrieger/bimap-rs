@@ -14,7 +14,7 @@ use maps::BTreeKind;
 use traits::*;
 
 #[doc(inline)]
-pub use bimap::BiMap;
+pub use crate::bimap::BiMap;
 
 pub type Generic<L, R, LKind, RKind> =
     BiMap<<LKind as MapKind<L, R>>::Map, <RKind as MapKind<R, L>>::Map>;

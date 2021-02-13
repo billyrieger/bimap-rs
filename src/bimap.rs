@@ -1,13 +1,16 @@
-use core::borrow::Borrow;
 use core::iter::FusedIterator;
-use core::ops::RangeBounds;
 
-use crate::maps::{btree_map, BTreeMap};
 use crate::mem::Ref;
 use crate::traits::*;
 
+pub enum Overwritten<L, R> {
+    Zero,
+    One((L, R)),
+    Two((L, R), (L, R)),
+}
+
 /// A generic bidirectional map.
-#[derive(Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[derive(Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct BiMap<LMap, RMap> {
     lmap: LMap,
     rmap: RMap,
@@ -25,20 +28,24 @@ where
         }
     }
 
-    pub fn iter_left<'a>(&'a self) -> LMap::Iter<'a, L, R>
+    pub fn iter_left<'a>(&'a self) -> IterLeft<'a, LMap>
     where
         L: 'a,
         R: 'a,
     {
-        self.lmap.iter()
+        IterLeft {
+            inner: self.lmap.iter(),
+        }
     }
 
-    pub fn iter_right<'a>(&'a self) -> Flipped<RMap::Iter<'a, R, L>>
+    pub fn iter_right<'a>(&'a self) -> IterRight<'a, RMap>
     where
         L: 'a,
         R: 'a,
     {
-        Flipped(self.rmap.iter())
+        IterRight {
+            inner: self.rmap.iter(),
+        }
     }
 
     pub fn contains_left<Q: ?Sized>(&self, l: &Q) -> bool
@@ -89,6 +96,18 @@ where
         })
     }
 
+    pub fn insert(&mut self, l: L, r: R) -> Overwritten<L, R> {
+        let overwritten = match (self.remove_left(&l), self.remove_right(&r)) {
+            (None, None) => Overwritten::Zero,
+            (Some(pair), None) | (None, Some(pair)) => Overwritten::One(pair),
+            (Some(lpair), Some(rpair)) => Overwritten::Two(lpair, rpair),
+        };
+        unsafe {
+            self.insert_unchecked(l, r);
+        }
+        overwritten
+    }
+
     pub fn try_insert(&mut self, l: L, r: R) -> Result<(), (L, R)> {
         if self.lmap.contains(&l) || self.rmap.contains(&r) {
             Err((l, r))
@@ -105,34 +124,6 @@ where
         let (r0, r1) = Ref::new(r);
         self.lmap.insert(l0, r0);
         self.rmap.insert(r1, l1);
-    }
-}
-
-impl<L, R, RMap> BiMap<BTreeMap<L, R>, RMap>
-where
-    RMap: Map<Key = R, Value = L>,
-{
-    pub fn range_left<T: ?Sized, A>(&self, range: A) -> btree_map::Range<'_, L, R>
-    where
-        L: Ord + Borrow<T>,
-        A: RangeBounds<T>,
-        T: Ord,
-    {
-        self.lmap.range(range)
-    }
-}
-
-impl<L, R, LMap> BiMap<LMap, BTreeMap<R, L>>
-where
-    LMap: Map<Key = L, Value = R>,
-{
-    pub fn range_right<T: ?Sized, A>(&self, range: A) -> Flipped<btree_map::Range<'_, R, L>>
-    where
-        R: Ord + Borrow<T>,
-        A: RangeBounds<T>,
-        T: Ord,
-    {
-        Flipped(self.rmap.range(range))
     }
 }
 
@@ -157,33 +148,126 @@ where
     }
 }
 
-#[derive(Clone, Debug)]
-pub struct Flipped<I>(I);
+#[derive(Debug)]
+pub struct IterLeft<'a, LMap: Map + 'a> {
+    inner: LMap::Iter<'a, LMap::Key, LMap::Value>,
+}
 
-impl<I, L, R> Iterator for Flipped<I>
+impl<'a, L: 'a, R: 'a, LMap: 'a> Clone for IterLeft<'a, LMap>
 where
-    I: Iterator<Item = (R, L)>,
+    LMap: Map<Key = L, Value = R>,
+    LMap::Iter<'a, L, R>: Clone,
 {
-    type Item = (L, R);
+    fn clone(&self) -> Self {
+        Self {
+            inner: self.inner.clone(),
+        }
+    }
+}
+
+impl<'a, L: 'a, R: 'a, LMap: 'a> Iterator for IterLeft<'a, LMap>
+where
+    LMap: Map<Key = L, Value = R>,
+{
+    type Item = (&'a L, &'a R);
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.0.next().map(|(r, l)| (l, r))
+        self.inner.next()
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
-        self.0.size_hint()
+        self.inner.size_hint()
     }
 }
 
-impl<I, L, R> DoubleEndedIterator for Flipped<I>
+impl<'a, L: 'a, R: 'a, LMap: 'a> DoubleEndedIterator for IterLeft<'a, LMap>
 where
-    I: DoubleEndedIterator<Item = (R, L)>,
+    LMap: Map<Key = L, Value = R>,
+    LMap::Iter<'a, L, R>: DoubleEndedIterator,
 {
     fn next_back(&mut self) -> Option<Self::Item> {
-        self.0.next_back().map(|(r, l)| (l, r))
+        self.inner.next_back()
     }
 }
 
-impl<I, L, R> ExactSizeIterator for Flipped<I> where I: ExactSizeIterator<Item = (R, L)> {}
+impl<'a, L: 'a, R: 'a, LMap: 'a> ExactSizeIterator for IterLeft<'a, LMap>
+where
+    LMap: Map<Key = L, Value = R>,
+    LMap::Iter<'a, L, R>: ExactSizeIterator,
+{
+}
 
-impl<I, L, R> FusedIterator for Flipped<I> where I: FusedIterator<Item = (R, L)> {}
+impl<'a, L: 'a, R: 'a, LMap: 'a> FusedIterator for IterLeft<'a, LMap>
+where
+    LMap: Map<Key = L, Value = R>,
+    LMap::Iter<'a, L, R>: ExactSizeIterator,
+{
+}
+
+#[derive(Clone, Debug)]
+pub struct IterRight<'a, RMap: Map + 'a> {
+    inner: RMap::Iter<'a, RMap::Key, RMap::Value>,
+}
+
+impl<'a, L: 'a, R: 'a, RMap: 'a> Iterator for IterRight<'a, RMap>
+where
+    RMap: Map<Key = R, Value = L>,
+{
+    type Item = (&'a L, &'a R);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.inner.next().map(|(r, l)| (l, r))
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.inner.size_hint()
+    }
+}
+
+impl<'a, L: 'a, R: 'a, RMap: 'a> DoubleEndedIterator for IterRight<'a, RMap>
+where
+    RMap: Map<Key = R, Value = L>,
+    RMap::Iter<'a, R, L>: DoubleEndedIterator,
+{
+    fn next_back(&mut self) -> Option<Self::Item> {
+        self.inner.next_back().map(|(r, l)| (l, r))
+    }
+}
+
+impl<'a, L: 'a, R: 'a, RMap: 'a> ExactSizeIterator for IterRight<'a, RMap>
+where
+    RMap: Map<Key = R, Value = L>,
+    RMap::Iter<'a, R, L>: ExactSizeIterator,
+{
+}
+
+impl<'a, L: 'a, R: 'a, RMap: 'a> FusedIterator for IterRight<'a, RMap>
+where
+    RMap: Map<Key = R, Value = L>,
+    RMap::Iter<'a, R, L>: FusedIterator,
+{
+}
+
+#[cfg(test)]
+mod tests {
+    #![allow(dead_code)]
+
+    use super::*;
+
+    use crate::maps::BTreeMap;
+    use core::iter::FusedIterator;
+    use static_assertions::assert_impl_all;
+
+    type L = u8;
+    type R = char;
+
+    type Bi = crate::BiBTreeMap<L, R>;
+
+    type LMap = BTreeMap<L, R>;
+    type RMap = BTreeMap<R, L>;
+
+    assert_impl_all!(Bi: Clone, Ord);
+
+    assert_impl_all!(IterLeft<'_, LMap>: Iterator, DoubleEndedIterator, ExactSizeIterator, FusedIterator);
+    assert_impl_all!(IterRight<'_, RMap>: Iterator, DoubleEndedIterator, ExactSizeIterator, FusedIterator);
+}

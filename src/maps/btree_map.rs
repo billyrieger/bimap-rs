@@ -16,7 +16,7 @@ where
     type Map = BTreeMap<K, V>;
 }
 
-#[derive(Debug)]
+#[derive(Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub struct BTreeMap<K, V> {
     inner: btree_map::BTreeMap<Ref<K>, Ref<V>>,
 }
@@ -39,20 +39,12 @@ where
     }
 }
 
-impl<K, V> CoreMap for BTreeMap<K, V>
+impl<K, V> MapIterator for BTreeMap<K, V>
 where
     K: Ord,
 {
-    type Key = K;
-    type Value = V;
     type IntoIter<KK, VV> = IntoIter<KK, VV>;
     type Iter<'a, KK: 'a, VV: 'a> = Iter<'a, KK, VV>;
-
-    fn new() -> Self {
-        Self {
-            inner: btree_map::BTreeMap::new(),
-        }
-    }
 
     fn into_iter(self) -> Self::IntoIter<Self::Key, Self::Value> {
         IntoIter {
@@ -65,9 +57,33 @@ where
             inner: self.inner.iter(),
         }
     }
+}
 
-    fn insert(&mut self, k: Ref<K>, v: Ref<V>) {
-        self.inner.insert(k, v);
+impl<K, V> New for BTreeMap<K, V>
+where
+    K: Ord,
+{
+    fn new() -> Self {
+        Self {
+            inner: btree_map::BTreeMap::new(),
+        }
+    }
+}
+
+impl<K, V> CoreMap for BTreeMap<K, V>
+where
+    K: Ord,
+{
+    type Key = K;
+    type Value = V;
+}
+
+impl<K, V> Insert for BTreeMap<K, V>
+where
+    K: Ord,
+{
+    fn insert(&mut self, key: Ref<K>, value: Ref<V>) {
+        self.inner.insert(key, value);
     }
 }
 
