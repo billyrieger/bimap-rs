@@ -1,4 +1,4 @@
-use core::iter::FusedIterator;
+use core::marker::PhantomData;
 
 use crate::mem::Ref;
 use crate::traits::*;
@@ -28,23 +28,17 @@ where
         }
     }
 
-    pub fn iter_left<'a>(&'a self) -> IterLeft<'a, LMap>
-    where
-        L: 'a,
-        R: 'a,
-    {
+    pub fn iter_left<'a>(&'a self) -> IterLeft<'a, LMap::MapIter<'a, L, R>> {
         IterLeft {
-            inner: self.lmap.iter(),
+            iter: self.lmap.map_iter(),
+            marker: PhantomData,
         }
     }
 
-    pub fn iter_right<'a>(&'a self) -> IterRight<'a, RMap>
-    where
-        L: 'a,
-        R: 'a,
-    {
+    pub fn iter_right<'a>(&'a self) -> IterRight<'a, RMap::MapIter<'a, R, L>> {
         IterRight {
-            inner: self.rmap.iter(),
+            iter: self.rmap.map_iter(),
+            marker: PhantomData,
         }
     }
 
@@ -66,14 +60,14 @@ where
     where
         LMap: Get<Q>,
     {
-        self.lmap.get(l)
+        self.lmap.get(l).map(|r| &**r)
     }
 
     pub fn get_right<Q: ?Sized>(&self, r: &Q) -> Option<&L>
     where
         RMap: Get<Q>,
     {
-        self.rmap.get(r)
+        self.rmap.get(r).map(|l| &**l)
     }
 
     pub fn remove_left<Q: ?Sized>(&mut self, l: &Q) -> Option<(L, R)>
@@ -139,135 +133,80 @@ where
             lmap: LMap::new(),
             rmap: RMap::new(),
         };
-        for (l, r) in self.lmap.iter() {
+        for (l, r) in self.lmap.map_iter() {
             unsafe {
-                new.insert_unchecked(l.clone(), r.clone());
+                new.insert_unchecked((*l).clone(), (*r).clone());
             }
         }
         new
     }
 }
 
-#[derive(Debug)]
-pub struct IterLeft<'a, LMap: Map + 'a> {
-    inner: LMap::Iter<'a, LMap::Key, LMap::Value>,
+#[derive(Clone, Debug)]
+pub struct IterLeft<'a, I> {
+    iter: I,
+    marker: PhantomData<&'a ()>,
 }
 
-impl<'a, L: 'a, R: 'a, LMap: 'a> Clone for IterLeft<'a, LMap>
+impl<'a, L: 'a, R: 'a, I> Iterator for IterLeft<'a, I>
 where
-    LMap: Map<Key = L, Value = R>,
-    LMap::Iter<'a, L, R>: Clone,
-{
-    fn clone(&self) -> Self {
-        Self {
-            inner: self.inner.clone(),
-        }
-    }
-}
-
-impl<'a, L: 'a, R: 'a, LMap: 'a> Iterator for IterLeft<'a, LMap>
-where
-    LMap: Map<Key = L, Value = R>,
+    I: Iterator<Item = (&'a L, &'a R)>,
 {
     type Item = (&'a L, &'a R);
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.inner.next()
+        self.iter.next()
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
-        self.inner.size_hint()
+        self.iter.size_hint()
     }
-}
-
-impl<'a, L: 'a, R: 'a, LMap: 'a> DoubleEndedIterator for IterLeft<'a, LMap>
-where
-    LMap: Map<Key = L, Value = R>,
-    LMap::Iter<'a, L, R>: DoubleEndedIterator,
-{
-    fn next_back(&mut self) -> Option<Self::Item> {
-        self.inner.next_back()
-    }
-}
-
-impl<'a, L: 'a, R: 'a, LMap: 'a> ExactSizeIterator for IterLeft<'a, LMap>
-where
-    LMap: Map<Key = L, Value = R>,
-    LMap::Iter<'a, L, R>: ExactSizeIterator,
-{
-}
-
-impl<'a, L: 'a, R: 'a, LMap: 'a> FusedIterator for IterLeft<'a, LMap>
-where
-    LMap: Map<Key = L, Value = R>,
-    LMap::Iter<'a, L, R>: ExactSizeIterator,
-{
 }
 
 #[derive(Clone, Debug)]
-pub struct IterRight<'a, RMap: Map + 'a> {
-    inner: RMap::Iter<'a, RMap::Key, RMap::Value>,
+pub struct IterRight<'a, I> {
+    iter: I,
+    marker: PhantomData<&'a ()>,
 }
 
-impl<'a, L: 'a, R: 'a, RMap: 'a> Iterator for IterRight<'a, RMap>
+impl<'a, L: 'a, R: 'a, I> Iterator for IterRight<'a, I>
 where
-    RMap: Map<Key = R, Value = L>,
+    I: Iterator<Item = (&'a R, &'a L)>,
 {
     type Item = (&'a L, &'a R);
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.inner.next().map(|(r, l)| (l, r))
+        self.iter.next().map(|(r, l)| (l, r))
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
-        self.inner.size_hint()
+        self.iter.size_hint()
     }
-}
-
-impl<'a, L: 'a, R: 'a, RMap: 'a> DoubleEndedIterator for IterRight<'a, RMap>
-where
-    RMap: Map<Key = R, Value = L>,
-    RMap::Iter<'a, R, L>: DoubleEndedIterator,
-{
-    fn next_back(&mut self) -> Option<Self::Item> {
-        self.inner.next_back().map(|(r, l)| (l, r))
-    }
-}
-
-impl<'a, L: 'a, R: 'a, RMap: 'a> ExactSizeIterator for IterRight<'a, RMap>
-where
-    RMap: Map<Key = R, Value = L>,
-    RMap::Iter<'a, R, L>: ExactSizeIterator,
-{
-}
-
-impl<'a, L: 'a, R: 'a, RMap: 'a> FusedIterator for IterRight<'a, RMap>
-where
-    RMap: Map<Key = R, Value = L>,
-    RMap::Iter<'a, R, L>: FusedIterator,
-{
 }
 
 #[cfg(test)]
 mod tests {
-    #![allow(dead_code)]
+    use crate::btree_map::BTreeKind;
+    use crate::hash_map::HashKind;
+    use crate::Generic;
 
-    use super::*;
+    #[test]
+    fn two_kinds() {
+        let mut a = Generic::<_, _, HashKind, BTreeKind>::new();
 
-    use crate::maps::BTreeMap;
-    use core::iter::FusedIterator;
-    use static_assertions::assert_impl_all;
+        a.insert('a', 10);
+        a.insert('b', 5);
+        a.insert('c', 20);
+        a.insert('z', 40);
 
-    type L = u8;
-    type R = char;
+        println!("iterating left");
+        for (l, r) in a.iter_left() {
+            println!("{:?}", (l, r));
+        }
 
-    type Bi = crate::BiBTreeMap<L, R>;
-
-    type LMap = BTreeMap<L, R>;
-    type RMap = BTreeMap<R, L>;
-
-    assert_impl_all!(Bi: Clone, Ord);
-
-    assert_impl_all!(IterLeft<'_, LMap>: Iterator, DoubleEndedIterator, ExactSizeIterator, FusedIterator);
-    assert_impl_all!(IterRight<'_, RMap>: Iterator, DoubleEndedIterator, ExactSizeIterator, FusedIterator);
+        println!("iterating right");
+        for (l, r) in a.iter_right() {
+            println!("{:?}", (l, r));
+        }
+    }
 }

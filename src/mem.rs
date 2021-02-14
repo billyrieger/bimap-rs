@@ -8,12 +8,12 @@ pub struct Ref<T> {
 }
 
 impl<T> Ref<T> {
-    pub(crate) fn new(value: T) -> (Self, Self) {
+    pub fn new(value: T) -> (Self, Self) {
         let ptr = Rc::new(value);
         (Self { ptr: ptr.clone() }, Self { ptr })
     }
 
-    pub(crate) fn join(l: Self, r: Self) -> T {
+    pub fn join(l: Self, r: Self) -> T {
         assert!(Rc::ptr_eq(&l.ptr, &r.ptr));
         drop(r);
         Rc::try_unwrap(l.ptr).ok().unwrap()
@@ -30,15 +30,15 @@ impl<T> Deref for Ref<T> {
 
 #[derive(Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 #[repr(transparent)]
-pub(crate) struct Wrapper<T: ?Sized>(T);
+pub struct Wrapper<T: ?Sized>(T);
 
 impl<T: ?Sized> Wrapper<T> {
-    pub(crate) fn wrap(value: &T) -> &Self {
-        // safe because Wrapper<T> is #[repr(transparent)]
+    pub fn wrap(value: &T) -> &Self {
+        // SAFETY: Wrapper<T> is #[repr(transparent)].
         unsafe { &*(value as *const T as *const Self) }
     }
 
-    pub(crate) fn wrap_bound(bound: Bound<&T>) -> Bound<&Self> {
+    pub fn wrap_bound(bound: Bound<&T>) -> Bound<&Self> {
         match bound {
             Bound::Included(t) => Bound::Included(Self::wrap(t)),
             Bound::Excluded(t) => Bound::Excluded(Self::wrap(t)),

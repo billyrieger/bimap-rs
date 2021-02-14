@@ -13,7 +13,7 @@ pub trait CoreMap {
     type Value;
 }
 
-pub trait New {
+pub trait New: CoreMap {
     fn new() -> Self;
 }
 
@@ -26,7 +26,7 @@ pub trait Contains<Q: ?Sized = <Self as CoreMap>::Key>: CoreMap {
 }
 
 pub trait Get<Q: ?Sized = <Self as CoreMap>::Key>: CoreMap {
-    fn get(&self, key: &Q) -> Option<&Self::Value>;
+    fn get(&self, key: &Q) -> Option<&Ref<Self::Value>>;
 }
 
 pub trait Remove<Q: ?Sized = <Self as CoreMap>::Key>: CoreMap {
@@ -34,9 +34,9 @@ pub trait Remove<Q: ?Sized = <Self as CoreMap>::Key>: CoreMap {
 }
 
 pub trait MapIterator: CoreMap {
-    type Iter<'a, K: 'a, V: 'a>: Iterator<Item = (&'a K, &'a V)>;
-    type IntoIter<K, V>: Iterator<Item = (Ref<K>, Ref<V>)>;
+    type MapIter<'a, K: 'a, V: 'a>: Iterator<Item = (&'a Ref<K>, &'a Ref<V>)>;
+    type MapIntoIter<K, V>: Iterator<Item = (Ref<K>, Ref<V>)>;
 
-    fn iter(&self) -> Self::Iter<'_, Self::Key, Self::Value>;
-    fn into_iter(self) -> Self::IntoIter<Self::Key, Self::Value>;
+    fn map_iter(&self) -> Self::MapIter<'_, Self::Key, Self::Value>;
+    fn map_into_iter(self) -> Self::MapIntoIter<Self::Key, Self::Value>;
 }

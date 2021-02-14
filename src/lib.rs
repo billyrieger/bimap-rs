@@ -6,11 +6,13 @@
 extern crate alloc;
 
 pub mod bimap;
-pub mod maps;
-pub mod mem;
-pub mod traits;
+pub mod btree_map;
+pub mod hash_map;
 
-use maps::BTreeKind;
+mod mem;
+mod traits;
+
+use btree_map::BTreeKind;
 use traits::*;
 
 #[doc(inline)]
