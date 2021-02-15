@@ -203,13 +203,13 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::btree_map::BTreeKind;
-    use crate::hash_map::HashKind;
+    use crate::maps::hash::HashKind;
+    use crate::maps::vec::VecKind;
     use crate::Generic;
 
     #[test]
     fn two_kinds() {
-        let mut a = Generic::<_, _, HashKind, BTreeKind>::new();
+        let mut a = Generic::<_, _, HashKind, VecKind>::new();
 
         a.insert('a', 10);
         a.insert('b', 5);
@@ -225,5 +225,7 @@ mod tests {
         for (l, r) in a.iter_right() {
             println!("{:?}", (l, r));
         }
+
+        dbg!(&a);
     }
 }

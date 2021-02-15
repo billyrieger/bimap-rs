@@ -12,6 +12,7 @@ impl<V> MapKind<usize, V> for VecKind {
     type Map = VecMap<usize, V>;
 }
 
+#[derive(Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct VecMap<K, V> {
     values: Vec<Slot<K, V>>,
 }

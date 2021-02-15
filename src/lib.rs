@@ -8,9 +8,7 @@ extern crate alloc;
 pub mod bimap;
 
 // Modules containing the individual map types.
-pub mod btree_map;
-pub mod hash_map;
-pub mod vec_map;
+pub mod maps;
 
 mod mem;
 mod traits;
@@ -21,10 +19,13 @@ use traits::*;
 pub use crate::bimap::BiMap;
 
 #[doc(inline)]
-pub use crate::btree_map::BTreeKind;
+pub use crate::maps::btree::BTreeKind;
 
 #[doc(inline)]
-pub use crate::hash_map::HashKind;
+pub use crate::maps::hash::HashKind;
+
+#[doc(inline)]
+pub use crate::maps::vec::VecKind;
 
 pub type Generic<L, R, LKind, RKind> =
     BiMap<<LKind as MapKind<L, R>>::Map, <RKind as MapKind<R, L>>::Map>;

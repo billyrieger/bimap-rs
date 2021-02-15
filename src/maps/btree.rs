@@ -19,24 +19,12 @@ pub struct InnerBTreeMap<K, V> {
     inner: BTreeMap<Ref<K>, Ref<V>>,
 }
 
-impl<K, V> MapIterator for InnerBTreeMap<K, V>
+impl<K, V> Core for InnerBTreeMap<K, V>
 where
     K: Ord,
 {
-    type MapIter<'a, KK: 'a, VV: 'a> = Iter<'a, KK, VV>;
-    type MapIntoIter<KK, VV> = IntoIter<KK, VV>;
-
-    fn map_iter(&self) -> Self::MapIter<'_, K, V> {
-        Iter {
-            inner: self.inner.iter(),
-        }
-    }
-
-    fn map_into_iter(self) -> Self::MapIntoIter<K, V> {
-        IntoIter {
-            inner: self.inner.into_iter(),
-        }
-    }
+    type Key = K;
+    type Value = V;
 }
 
 impl<K, V> New for InnerBTreeMap<K, V>
@@ -48,14 +36,6 @@ where
             inner: BTreeMap::new(),
         }
     }
-}
-
-impl<K, V> Core for InnerBTreeMap<K, V>
-where
-    K: Ord,
-{
-    type Key = K;
-    type Value = V;
 }
 
 impl<K, V> Insert for InnerBTreeMap<K, V>
@@ -94,6 +74,26 @@ where
 {
     fn remove(&mut self, k: &Q) -> Option<(Ref<K>, Ref<V>)> {
         self.inner.remove_entry(Wrapper::wrap(k))
+    }
+}
+
+impl<K, V> MapIterator for InnerBTreeMap<K, V>
+where
+    K: Ord,
+{
+    type MapIter<'a, KK: 'a, VV: 'a> = Iter<'a, KK, VV>;
+    type MapIntoIter<KK, VV> = IntoIter<KK, VV>;
+
+    fn map_iter(&self) -> Self::MapIter<'_, K, V> {
+        Iter {
+            inner: self.inner.iter(),
+        }
+    }
+
+    fn map_into_iter(self) -> Self::MapIntoIter<K, V> {
+        IntoIter {
+            inner: self.inner.into_iter(),
+        }
     }
 }
 
