@@ -158,38 +158,3 @@ impl<'a, K, V> DoubleEndedIterator for Iter<'a, K, V> {
 impl<'a, K, V> ExactSizeIterator for Iter<'a, K, V> {}
 
 impl<'a, K, V> FusedIterator for Iter<'a, K, V> {}
-
-#[derive(Debug)]
-pub struct Range<'a, K, V> {
-    inner: btree_map::Range<'a, Ref<K>, Ref<V>>,
-}
-
-impl<'a, K, V> Clone for Range<'a, K, V> {
-    fn clone(&self) -> Self {
-        Self {
-            inner: self.inner.clone(),
-        }
-    }
-}
-
-impl<'a, K, V> Iterator for Range<'a, K, V> {
-    type Item = (&'a K, &'a V);
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.inner.next().map(|(k, v)| (&**k, &**v))
-    }
-
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        self.inner.size_hint()
-    }
-}
-
-impl<'a, K, V> DoubleEndedIterator for Range<'a, K, V> {
-    fn next_back(&mut self) -> Option<Self::Item> {
-        self.inner.next_back().map(|(k, v)| (&**k, &**v))
-    }
-}
-
-impl<'a, K, V> ExactSizeIterator for Range<'a, K, V> {}
-
-impl<'a, K, V> FusedIterator for Range<'a, K, V> {}

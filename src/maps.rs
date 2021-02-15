@@ -1,3 +1,5 @@
 pub mod btree;
-pub mod hash;
 pub mod vec;
+
+#[cfg(feature = "std")]
+pub mod hash;

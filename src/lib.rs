@@ -13,6 +13,9 @@ pub mod maps;
 mod mem;
 mod traits;
 
+#[cfg(feature = "serde")]
+mod serde;
+
 use traits::*;
 
 #[doc(inline)]
@@ -22,6 +25,7 @@ pub use crate::bimap::BiMap;
 pub use crate::maps::btree::BTreeKind;
 
 #[doc(inline)]
+#[cfg(feature = "std")]
 pub use crate::maps::hash::HashKind;
 
 #[doc(inline)]
@@ -34,4 +38,5 @@ pub type Generic<L, R, LKind, RKind> =
 pub type BiBTreeMap<L, R> = Generic<L, R, BTreeKind, BTreeKind>;
 
 /// A bidirectional `HashMap`.
+#[cfg(feature = "std")]
 pub type BiHashMap<L, R> = Generic<L, R, HashKind, HashKind>;

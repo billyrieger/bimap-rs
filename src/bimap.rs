@@ -1,8 +1,11 @@
-use std::iter::FromIterator;
+use core::{fmt, ops::Deref};
+use core::iter::FromIterator;
+use core::marker::PhantomData;
 
-use crate::mem::Ref;
+use crate::mem::{deref_pair, swap_pair, Ref};
 use crate::traits::*;
 
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum Overwritten<L, R> {
     Zero,
     One((L, R)),
@@ -10,7 +13,7 @@ pub enum Overwritten<L, R> {
 }
 
 /// A generic bidirectional map.
-#[derive(Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[derive(Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct BiMap<LMap, RMap> {
     lmap: LMap,
     rmap: RMap,
@@ -26,66 +29,6 @@ where
             lmap: LMap::new(),
             rmap: RMap::new(),
         }
-    }
-
-    pub fn iter_left(&self) -> IterLeft<'_, L, R, LMap> {
-        IterLeft {
-            iter: self.lmap.map_iter(),
-        }
-    }
-
-    pub fn iter_right(&self) -> IterRight<'_, L, R, RMap> {
-        IterRight {
-            iter: self.rmap.map_iter(),
-        }
-    }
-
-    pub fn contains_left<Q: ?Sized>(&self, l: &Q) -> bool
-    where
-        LMap: Contains<Q>,
-    {
-        self.lmap.contains(l)
-    }
-
-    pub fn contains_right<Q: ?Sized>(&self, r: &Q) -> bool
-    where
-        RMap: Contains<Q>,
-    {
-        self.rmap.contains(r)
-    }
-
-    pub fn get_left<Q: ?Sized>(&self, l: &Q) -> Option<&R>
-    where
-        LMap: Get<Q>,
-    {
-        self.lmap.get(l).map(|r| &**r)
-    }
-
-    pub fn get_right<Q: ?Sized>(&self, r: &Q) -> Option<&L>
-    where
-        RMap: Get<Q>,
-    {
-        self.rmap.get(r).map(|l| &**l)
-    }
-
-    pub fn remove_left<Q: ?Sized>(&mut self, l: &Q) -> Option<(L, R)>
-    where
-        LMap: Remove<Q>,
-    {
-        self.lmap.remove(l).map(|(l0, r0)| {
-            let (r1, l1) = self.rmap.remove(&r0).unwrap();
-            (Ref::join(l0, l1), Ref::join(r0, r1))
-        })
-    }
-
-    pub fn remove_right<Q: ?Sized>(&mut self, r: &Q) -> Option<(L, R)>
-    where
-        RMap: Remove<Q>,
-    {
-        self.rmap.remove(r).map(|(r0, l0)| {
-            let (l1, r1) = self.lmap.remove(&l0).unwrap();
-            (Ref::join(l0, l1), Ref::join(r0, r1))
-        })
     }
 
     pub fn insert(&mut self, l: L, r: R) -> Overwritten<L, R> {
@@ -113,6 +56,73 @@ where
         self.lmap.insert(l0, r0);
         self.rmap.insert(r1, l1);
     }
+
+    pub fn contains_left<Q: ?Sized>(&self, l: &Q) -> bool
+    where
+        LMap: Contains<Q>,
+    {
+        self.lmap.contains(l)
+    }
+
+    pub fn contains_right<Q: ?Sized>(&self, r: &Q) -> bool
+    where
+        RMap: Contains<Q>,
+    {
+        self.rmap.contains(r)
+    }
+
+    pub fn get_left<Q: ?Sized>(&self, l: &Q) -> Option<&R>
+    where
+        LMap: Get<Q>,
+    {
+        self.lmap.get(l).map(Deref::deref)
+    }
+
+    pub fn get_right<Q: ?Sized>(&self, r: &Q) -> Option<&L>
+    where
+        RMap: Get<Q>,
+    {
+        self.rmap.get(r).map(Deref::deref)
+    }
+
+    pub fn remove_left<Q: ?Sized>(&mut self, l: &Q) -> Option<(L, R)>
+    where
+        LMap: Remove<Q>,
+    {
+        self.lmap.remove(l).map(|(l0, r0)| {
+            let (r1, l1) = self.rmap.remove(&r0).unwrap();
+            (Ref::join(l0, l1), Ref::join(r0, r1))
+        })
+    }
+
+    pub fn remove_right<Q: ?Sized>(&mut self, r: &Q) -> Option<(L, R)>
+    where
+        RMap: Remove<Q>,
+    {
+        self.rmap.remove(r).map(|(r0, l0)| {
+            let (l1, r1) = self.lmap.remove(&l0).unwrap();
+            (Ref::join(l0, l1), Ref::join(r0, r1))
+        })
+    }
+
+    pub fn iter(&self) -> Iter<'_, L, R, LMap, RMap> {
+        Iter {
+            iter: self.lmap.map_iter(),
+            marker: PhantomData,
+        }
+    }
+
+    pub fn iter_left(&self) -> IterLeft<'_, L, R, LMap> {
+        IterLeft {
+            iter: self.lmap.map_iter(),
+        }
+    }
+
+    pub fn iter_right(&self) -> IterRight<'_, L, R, RMap> {
+        IterRight {
+            iter: self.rmap.map_iter(),
+        }
+    }
 }
 
 impl<L, R, LMap, RMap> Clone for BiMap<LMap, RMap>
@@ -124,10 +134,32 @@ where
 {
     fn clone(&self) -> Self {
         let mut new = Self::new();
-        for (l, r) in self.iter_left() {
+        for (l, r) in self {
             new.insert_unchecked(l.clone(), r.clone());
         }
         new
+    }
+}
+
+impl<L, R, LMap, RMap> Default for BiMap<LMap, RMap>
+where
+    LMap: Map<Key = L, Value = R>,
+    RMap: Map<Key = R, Value = L>,
+{
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl<L, R, LMap, RMap> fmt::Debug for BiMap<LMap, RMap>
+where
+    LMap: Map<Key = L, Value = R>,
+    RMap: Map<Key = R, Value = L>,
+    L: fmt::Debug,
+    R: fmt::Debug,
+{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_set().entries(self.iter_left()).finish()
     }
 }
 
@@ -163,6 +195,40 @@ where
     }
 }
 
+impl<'a, L: 'a, R: 'a, LMap, RMap> IntoIterator for &'a BiMap<LMap, RMap>
+where
+    LMap: Map<Key = L, Value = R>,
+    RMap: Map<Key = R, Value = L>,
+{
+    type Item = (&'a L, &'a R);
+    type IntoIter = Iter<'a, L, R, LMap, RMap>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
+
+pub struct Iter<'a, L: 'a, R: 'a, LMap: Map, RMap: Map> {
+    iter: LMap::MapIter<'a, L, R>,
+    marker: PhantomData<(LMap, RMap)>,
+}
+
+impl<'a, L, R, LMap, RMap> Iterator for Iter<'a, L, R, LMap, RMap>
+where
+    LMap: Map<Key = L, Value = R>,
+    RMap: Map<Key = R, Value = L>,
+{
+    type Item = (&'a L, &'a R);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.iter.next().map(deref_pair)
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.iter.size_hint()
+    }
+}
+
 pub struct IterLeft<'a, L: 'a, R: 'a, LMap: Map> {
     iter: LMap::MapIter<'a, L, R>,
 }
@@ -174,7 +240,7 @@ where
     type Item = (&'a L, &'a R);
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.iter.next().map(|(l, r)| (&**l, &**r))
+        self.iter.next().map(deref_pair)
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -193,7 +259,7 @@ where
     type Item = (&'a L, &'a R);
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.iter.next().map(|(r, l)| (&**l, &**r))
+        self.iter.next().map(deref_pair).map(swap_pair)
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -201,7 +267,7 @@ where
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "std"))]
 mod tests {
     use crate::maps::hash::HashKind;
     use crate::maps::vec::VecKind;
@@ -226,6 +292,13 @@ mod tests {
             println!("{:?}", (l, r));
         }
 
-        dbg!(&a);
+        println!("{:?}", a);
+
+        println!(
+            "{:?}",
+            vec![('f', 2), ('g', 10)]
+                .into_iter()
+                .collect::<std::collections::BTreeMap<_, _>>()
+        );
     }
 }

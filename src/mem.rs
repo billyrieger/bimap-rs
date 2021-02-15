@@ -2,6 +2,19 @@ use alloc::rc::Rc;
 use core::borrow::Borrow;
 use core::ops::{Bound, Deref};
 
+pub fn deref_pair<'l, 'r, L, R>((l, r): (&'l L, &'r R)) -> (&'l L::Target, &'r R::Target)
+where
+    L: Deref,
+    R: Deref,
+{
+    (l.deref(), r.deref())
+}
+
+pub fn swap_pair<L, R>((l, r): (L, R)) -> (R, L)
+{
+    (r, l)
+}
+
 #[derive(Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct Ref<T> {
     ptr: Rc<T>,

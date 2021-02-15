@@ -1,4 +1,4 @@
-use alloc::vec;
+use alloc::vec::{self, Vec};
 use core::slice;
 
 use crate::mem::Ref;
@@ -24,7 +24,7 @@ impl<V> Core for VecMap<usize, V> {
 
 impl<V> New for VecMap<usize, V> {
     fn new() -> Self {
-        Self { values: vec![] }
+        Self { values: Vec::new() }
     }
 }
 
@@ -38,22 +38,19 @@ impl<V> Insert for VecMap<usize, V> {
     }
 }
 
-impl<V> Contains<usize> for VecMap<usize, V> {
+impl<V> Contains for VecMap<usize, V> {
     fn contains(&self, key: &usize) -> bool {
         self.values.get(*key).is_some()
     }
 }
 
-impl<V> Get<usize> for VecMap<usize, V> {
+impl<V> Get for VecMap<usize, V> {
     fn get(&self, key: &usize) -> Option<&Ref<V>> {
-        self.values
-            .get(*key)
-            .and_then(|slot| slot.as_ref())
-            .map(|(_, v)| v)
+        Some(&self.values.get(*key)?.as_ref()?.1)
     }
 }
 
-impl<V> Remove<usize> for VecMap<usize, V> {
+impl<V> Remove for VecMap<usize, V> {
     fn remove(&mut self, key: &usize) -> Option<(Ref<usize>, Ref<V>)> {
         self.values.get_mut(*key).and_then(|slot| slot.take())
     }
