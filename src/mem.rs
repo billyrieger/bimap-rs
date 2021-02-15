@@ -34,7 +34,8 @@ pub struct Wrapper<T: ?Sized>(T);
 
 impl<T: ?Sized> Wrapper<T> {
     pub fn wrap(value: &T) -> &Self {
-        // SAFETY: Wrapper<T> is #[repr(transparent)].
+        // SAFETY: Wrapper<T> is #[repr(transparent)] so this pointer cast is
+        // safe.
         unsafe { &*(value as *const T as *const Self) }
     }
 
@@ -53,9 +54,9 @@ where
     Q: ?Sized,
 {
     fn borrow(&self) -> &Wrapper<Q> {
-        // Rc<K>: Borrow<K> from the standard library
+        // Rc<K>: Borrow<K> from the standard library.
         let k: &K = self.ptr.borrow();
-        // K: Borrow<Q> from the impl bounds
+        // K: Borrow<Q> from the impl bounds.
         let q: &Q = k.borrow();
 
         Wrapper::wrap(q)

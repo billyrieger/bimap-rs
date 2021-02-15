@@ -8,7 +8,6 @@ use hash_map::RandomState;
 use crate::mem::{Ref, Wrapper};
 use crate::traits::*;
 
-#[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct HashKind<S = RandomState> {
     marker: PhantomData<S>,
 }
@@ -26,7 +25,7 @@ pub struct InnerHashMap<K, V, S> {
     inner: HashMap<Ref<K>, Ref<V>, S>,
 }
 
-impl<K, V, S> CoreMap for InnerHashMap<K, V, S> {
+impl<K, V, S> Core for InnerHashMap<K, V, S> {
     type Key = K;
     type Value = V;
 }

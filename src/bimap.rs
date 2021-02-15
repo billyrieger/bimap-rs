@@ -1,4 +1,4 @@
-use core::marker::PhantomData;
+use std::iter::FromIterator;
 
 use crate::mem::Ref;
 use crate::traits::*;
@@ -28,17 +28,15 @@ where
         }
     }
 
-    pub fn iter_left<'a>(&'a self) -> IterLeft<'a, LMap::MapIter<'a, L, R>> {
+    pub fn iter_left(&self) -> IterLeft<'_, L, R, LMap> {
         IterLeft {
             iter: self.lmap.map_iter(),
-            marker: PhantomData,
         }
     }
 
-    pub fn iter_right<'a>(&'a self) -> IterRight<'a, RMap::MapIter<'a, R, L>> {
+    pub fn iter_right(&self) -> IterRight<'_, L, R, RMap> {
         IterRight {
             iter: self.rmap.map_iter(),
-            marker: PhantomData,
         }
     }
 
@@ -96,9 +94,7 @@ where
             (Some(pair), None) | (None, Some(pair)) => Overwritten::One(pair),
             (Some(lpair), Some(rpair)) => Overwritten::Two(lpair, rpair),
         };
-        unsafe {
-            self.insert_unchecked(l, r);
-        }
+        self.insert_unchecked(l, r);
         overwritten
     }
 
@@ -106,14 +102,12 @@ where
         if self.lmap.contains(&l) || self.rmap.contains(&r) {
             Err((l, r))
         } else {
-            unsafe {
-                self.insert_unchecked(l, r);
-            }
+            self.insert_unchecked(l, r);
             Ok(())
         }
     }
 
-    pub unsafe fn insert_unchecked(&mut self, l: L, r: R) {
+    fn insert_unchecked(&mut self, l: L, r: R) {
         let (l0, l1) = Ref::new(l);
         let (r0, r1) = Ref::new(r);
         self.lmap.insert(l0, r0);
@@ -129,33 +123,58 @@ where
     R: Clone,
 {
     fn clone(&self) -> Self {
-        let mut new = Self {
-            lmap: LMap::new(),
-            rmap: RMap::new(),
-        };
-        for (l, r) in self.lmap.map_iter() {
-            unsafe {
-                new.insert_unchecked((*l).clone(), (*r).clone());
-            }
+        let mut new = Self::new();
+        for (l, r) in self.iter_left() {
+            new.insert_unchecked(l.clone(), r.clone());
         }
         new
     }
 }
 
-#[derive(Clone, Debug)]
-pub struct IterLeft<'a, I> {
-    iter: I,
-    marker: PhantomData<&'a ()>,
+impl<L, R, LMap, RMap> FromIterator<(L, R)> for BiMap<LMap, RMap>
+where
+    LMap: Map<Key = L, Value = R>,
+    RMap: Map<Key = R, Value = L>,
+{
+    fn from_iter<I>(iter: I) -> Self
+    where
+        I: IntoIterator<Item = (L, R)>,
+    {
+        let mut new = Self::new();
+        for (l, r) in iter {
+            new.insert(l, r);
+        }
+        new
+    }
 }
 
-impl<'a, L: 'a, R: 'a, I> Iterator for IterLeft<'a, I>
+impl<L, R, LMap, RMap> Extend<(L, R)> for BiMap<LMap, RMap>
 where
-    I: Iterator<Item = (&'a L, &'a R)>,
+    LMap: Map<Key = L, Value = R>,
+    RMap: Map<Key = R, Value = L>,
+{
+    fn extend<I>(&mut self, iter: I)
+    where
+        I: IntoIterator<Item = (L, R)>,
+    {
+        for (l, r) in iter {
+            self.insert(l, r);
+        }
+    }
+}
+
+pub struct IterLeft<'a, L: 'a, R: 'a, LMap: Map> {
+    iter: LMap::MapIter<'a, L, R>,
+}
+
+impl<'a, L, R, LMap> Iterator for IterLeft<'a, L, R, LMap>
+where
+    LMap: Map<Key = L, Value = R>,
 {
     type Item = (&'a L, &'a R);
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.iter.next()
+        self.iter.next().map(|(l, r)| (&**l, &**r))
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -163,20 +182,18 @@ where
     }
 }
 
-#[derive(Clone, Debug)]
-pub struct IterRight<'a, I> {
-    iter: I,
-    marker: PhantomData<&'a ()>,
+pub struct IterRight<'a, L: 'a, R: 'a, RMap: Map> {
+    iter: RMap::MapIter<'a, R, L>,
 }
 
-impl<'a, L: 'a, R: 'a, I> Iterator for IterRight<'a, I>
+impl<'a, L: 'a, R: 'a, RMap> Iterator for IterRight<'a, L, R, RMap>
 where
-    I: Iterator<Item = (&'a R, &'a L)>,
+    RMap: Map<Key = R, Value = L>,
 {
     type Item = (&'a L, &'a R);
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.iter.next().map(|(r, l)| (l, r))
+        self.iter.next().map(|(r, l)| (&**l, &**r))
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {

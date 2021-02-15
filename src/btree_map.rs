@@ -1,12 +1,10 @@
 use alloc::collections::{btree_map, BTreeMap};
 use core::borrow::Borrow;
 use core::iter::FusedIterator;
-use core::ops::RangeBounds;
 
 use crate::mem::{Ref, Wrapper};
 use crate::traits::*;
 
-#[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct BTreeKind;
 
 impl<K, V> MapKind<K, V> for BTreeKind
@@ -19,24 +17,6 @@ where
 #[derive(Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub struct InnerBTreeMap<K, V> {
     inner: BTreeMap<Ref<K>, Ref<V>>,
-}
-
-impl<K, V> InnerBTreeMap<K, V>
-where
-    K: Ord,
-{
-    pub fn range<T: ?Sized, R>(&self, range: R) -> Range<'_, K, V>
-    where
-        T: Ord,
-        K: Ord + Borrow<T>,
-        R: RangeBounds<T>,
-    {
-        let (start, end) = (range.start_bound(), range.end_bound());
-        let range = (Wrapper::wrap_bound(start), Wrapper::wrap_bound(end));
-        Range {
-            inner: self.inner.range::<Wrapper<_>, _>(range),
-        }
-    }
 }
 
 impl<K, V> MapIterator for InnerBTreeMap<K, V>
@@ -70,7 +50,7 @@ where
     }
 }
 
-impl<K, V> CoreMap for InnerBTreeMap<K, V>
+impl<K, V> Core for InnerBTreeMap<K, V>
 where
     K: Ord,
 {
