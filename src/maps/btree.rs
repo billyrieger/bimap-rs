@@ -2,17 +2,8 @@ use alloc::collections::{btree_map, BTreeMap};
 use core::borrow::Borrow;
 use core::iter::FusedIterator;
 
-use crate::mem::{Ref, Wrapper};
 use crate::traits::*;
-
-pub struct BTreeKind;
-
-impl<K, V> MapKind<K, V> for BTreeKind
-where
-    K: Ord,
-{
-    type Map = InnerBTreeMap<K, V>;
-}
+use crate::util::{Ref, Wrapper};
 
 #[derive(Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub struct InnerBTreeMap<K, V> {
@@ -35,6 +26,19 @@ where
         Self {
             inner: BTreeMap::new(),
         }
+    }
+}
+
+impl<K, V> Length for InnerBTreeMap<K, V>
+where
+    K: Ord,
+{
+    fn len(&self) -> usize {
+        self.inner.len()
+    }
+
+    fn is_empty(&self) -> bool {
+        self.inner.is_empty()
     }
 }
 
@@ -81,8 +85,8 @@ impl<K, V> MapIterator for InnerBTreeMap<K, V>
 where
     K: Ord,
 {
-    type MapIter<'a, KK: 'a, VV: 'a> = Iter<'a, KK, VV>;
-    type MapIntoIter<KK, VV> = IntoIter<KK, VV>;
+    type MapIter<'a, K_: 'a, V_: 'a> = Iter<'a, K_, V_>;
+    type MapIntoIter<K_, V_> = IntoIter<K_, V_>;
 
     fn map_iter(&self) -> Self::MapIter<'_, K, V> {
         Iter {

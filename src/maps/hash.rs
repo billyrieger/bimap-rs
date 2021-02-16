@@ -1,24 +1,10 @@
 use std::borrow::Borrow;
 use std::collections::{hash_map, HashMap};
 use std::hash::{BuildHasher, Hash};
-use std::marker::PhantomData;
+use std::iter::FusedIterator;
 
-use hash_map::RandomState;
-
-use crate::mem::{Ref, Wrapper};
 use crate::traits::*;
-
-pub struct HashKind<S = RandomState> {
-    marker: PhantomData<S>,
-}
-
-impl<K, V, S> MapKind<K, V> for HashKind<S>
-where
-    K: Eq + Hash,
-    S: BuildHasher + Default,
-{
-    type Map = InnerHashMap<K, V, S>;
-}
+use crate::util::{Ref, Wrapper};
 
 #[derive(Debug)]
 pub struct InnerHashMap<K, V, S> {
@@ -39,6 +25,20 @@ where
         Self {
             inner: HashMap::with_hasher(S::default()),
         }
+    }
+}
+
+impl<K, V, S> Length for InnerHashMap<K, V, S>
+where
+    K: Eq + Hash,
+    S: BuildHasher + Default,
+{
+    fn len(&self) -> usize {
+        self.inner.len()
+    }
+
+    fn is_empty(&self) -> bool {
+        self.inner.is_empty()
     }
 }
 
@@ -80,7 +80,7 @@ where
     Q: Eq + Hash,
     S: BuildHasher + Default,
 {
-    fn remove(&mut self, key: &Q) -> Option<(Ref<Self::Key>, Ref<Self::Value>)> {
+    fn remove(&mut self, key: &Q) -> Option<(Ref<K>, Ref<V>)> {
         self.inner.remove_entry(Wrapper::wrap(key))
     }
 }
@@ -90,35 +90,19 @@ where
     K: Eq + Hash,
     S: BuildHasher + Default,
 {
-    type MapIter<'a, KK: 'a, VV: 'a> = MapIter<'a, KK, VV>;
-    type MapIntoIter<KK, VV> = MapIntoIter<KK, VV>;
-
-    fn map_iter(&self) -> MapIter<'_, K, V> {
-        MapIter {
-            inner: self.inner.iter(),
-        }
-    }
+    type MapIntoIter<K_, V_> = MapIntoIter<K_, V_>;
+    type MapIter<'a, K_: 'a, V_: 'a> = MapIter<'a, K_, V_>;
 
     fn map_into_iter(self) -> MapIntoIter<K, V> {
         MapIntoIter {
             inner: self.inner.into_iter(),
         }
     }
-}
 
-pub struct MapIter<'a, K: 'a, V: 'a> {
-    inner: hash_map::Iter<'a, Ref<K>, Ref<V>>,
-}
-
-impl<'a, K: 'a, V: 'a> Iterator for MapIter<'a, K, V> {
-    type Item = (&'a Ref<K>, &'a Ref<V>);
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.inner.next()
-    }
-
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        self.inner.size_hint()
+    fn map_iter(&self) -> MapIter<'_, K, V> {
+        MapIter {
+            inner: self.inner.iter(),
+        }
     }
 }
 
@@ -137,3 +121,27 @@ impl<K, V> Iterator for MapIntoIter<K, V> {
         self.inner.size_hint()
     }
 }
+
+impl<K, V> ExactSizeIterator for MapIntoIter<K, V> {}
+
+impl<K, V> FusedIterator for MapIntoIter<K, V> {}
+
+pub struct MapIter<'a, K: 'a, V: 'a> {
+    inner: hash_map::Iter<'a, Ref<K>, Ref<V>>,
+}
+
+impl<'a, K: 'a, V: 'a> Iterator for MapIter<'a, K, V> {
+    type Item = (&'a Ref<K>, &'a Ref<V>);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.inner.next()
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.inner.size_hint()
+    }
+}
+
+impl<'a, K, V> ExactSizeIterator for MapIter<'a, K, V> {}
+
+impl<'a, K, V> FusedIterator for MapIter<'a, K, V> {}

@@ -1,3 +1,4 @@
+//! Bidirectional maps.
 #![feature(generic_associated_types)]
 #![allow(incomplete_features)]
 #![cfg_attr(not(feature = "std"), no_std)]
@@ -6,30 +7,58 @@
 extern crate alloc;
 
 pub mod bimap;
-
-// Modules containing the individual map types.
 pub mod maps;
 
-mod mem;
 mod traits;
+mod util;
 
 #[cfg(feature = "serde")]
 mod serde;
 
+#[cfg(feature = "std")]
+use std::{
+    collections::hash_map::RandomState,
+    hash::{BuildHasher, Hash},
+    marker::PhantomData,
+};
+
 use traits::*;
+
+pub trait MapKind<K, V> {
+    type Map: Map<Key = K, Value = V>;
+}
+
+pub struct BTreeKind;
+
+impl<K, V> MapKind<K, V> for BTreeKind
+where
+    K: Ord,
+{
+    type Map = maps::btree::InnerBTreeMap<K, V>;
+}
+
+#[cfg(feature = "std")]
+pub struct HashKind<S = RandomState> {
+    marker: PhantomData<S>,
+}
+
+#[cfg(feature = "std")]
+impl<K, V, S> MapKind<K, V> for HashKind<S>
+where
+    K: Eq + Hash,
+    S: BuildHasher + Default,
+{
+    type Map = maps::hash::InnerHashMap<K, V, S>;
+}
+
+pub struct VecKind;
+
+impl<V> MapKind<usize, V> for VecKind {
+    type Map = maps::vec::VecMap<usize, V>;
+}
 
 #[doc(inline)]
 pub use crate::bimap::BiMap;
-
-#[doc(inline)]
-pub use crate::maps::btree::BTreeKind;
-
-#[doc(inline)]
-#[cfg(feature = "std")]
-pub use crate::maps::hash::HashKind;
-
-#[doc(inline)]
-pub use crate::maps::vec::VecKind;
 
 pub type Generic<L, R, LKind, RKind> =
     BiMap<<LKind as MapKind<L, R>>::Map, <RKind as MapKind<R, L>>::Map>;
@@ -40,3 +69,9 @@ pub type BiBTreeMap<L, R> = Generic<L, R, BTreeKind, BTreeKind>;
 /// A bidirectional `HashMap`.
 #[cfg(feature = "std")]
 pub type BiHashMap<L, R> = Generic<L, R, HashKind, HashKind>;
+
+/// A bidirectional `VecMap`.
+pub type BiVecMap = Generic<usize, usize, VecKind, VecKind>;
+
+#[cfg(test)]
+mod tests {}

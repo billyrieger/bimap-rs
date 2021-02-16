@@ -1,12 +1,14 @@
-use crate::mem::Ref;
+// Since this is a private module, all of the traits here are *sealed*.
+//
+// # See also
+//
+// The [Rust API Guidelines](https://rust-lang.github.io/api-guidelines/future-proofing.html#sealed-traits-protect-against-downstream-implementations-c-sealed)
+// have more information on the usage of sealed traits.
+use crate::util::Ref;
 
-pub trait MapKind<K, V> {
-    type Map: Map<Key = K, Value = V>;
-}
+pub trait Map: Core + New + Length + Insert + Contains + Get + Remove + MapIterator {}
 
-pub trait Map: Core + New + Insert + Contains + Get + Remove + MapIterator {}
-
-impl<M> Map for M where M: Core + New + Insert + Contains + Get + Remove + MapIterator {}
+impl<M> Map for M where M: Core + New + Length + Insert + Contains + Get + Remove + MapIterator {}
 
 pub trait Core {
     type Key;
@@ -15,6 +17,14 @@ pub trait Core {
 
 pub trait New: Core {
     fn new() -> Self;
+}
+
+pub trait Length: Core {
+    fn len(&self) -> usize;
+
+    fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
 }
 
 pub trait Insert: Core {

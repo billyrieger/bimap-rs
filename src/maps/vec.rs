@@ -1,15 +1,36 @@
 use alloc::vec::{self, Vec};
 use core::slice;
 
-use crate::mem::Ref;
 use crate::traits::*;
+use crate::util::Ref;
 
-type Slot<K, V> = Option<(Ref<K>, Ref<V>)>;
+#[derive(Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+enum Slot<K, V> {
+    Full((Ref<K>, Ref<V>)),
+    Empty,
+}
 
-pub struct VecKind;
+impl<K, V> Slot<K, V> {
+    fn is_full(&self) -> bool {
+        match self {
+            Slot::Full(_) => true,
+            Slot::Empty => false,
+        }
+    }
 
-impl<V> MapKind<usize, V> for VecKind {
-    type Map = VecMap<usize, V>;
+    fn is_empty(&self) -> bool {
+        match self {
+            Slot::Full(_) => false,
+            Slot::Empty => true,
+        }
+    }
+
+    fn take(&mut self) -> Option<(Ref<K>, Ref<V>)> {
+        match core::mem::replace(self, Slot::Empty) {
+            Slot::Empty => None,
+            Slot::Full(pair) => Some(pair),
+        }
+    }
 }
 
 #[derive(Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
@@ -28,13 +49,23 @@ impl<V> New for VecMap<usize, V> {
     }
 }
 
+impl<V> Length for VecMap<usize, V> {
+    fn len(&self) -> usize {
+        self.values.iter().filter(|slot| slot.is_full()).count()
+    }
+
+    fn is_empty(&self) -> bool {
+        self.values.iter().all(|slot| slot.is_empty())
+    }
+}
+
 impl<V> Insert for VecMap<usize, V> {
     fn insert(&mut self, key: Ref<usize>, value: Ref<V>) {
         let index: usize = *key;
         if index + 1 > self.values.len() {
-            self.values.resize_with(index + 1, || None);
+            self.values.resize_with(index + 1, || Slot::Empty);
         }
-        self.values[index] = Some((key, value));
+        self.values[index] = Slot::Full((key, value));
     }
 }
 
@@ -46,7 +77,10 @@ impl<V> Contains for VecMap<usize, V> {
 
 impl<V> Get for VecMap<usize, V> {
     fn get(&self, key: &usize) -> Option<&Ref<V>> {
-        Some(&self.values.get(*key)?.as_ref()?.1)
+        match self.values.get(*key)? {
+            Slot::Empty => None,
+            Slot::Full((_, v)) => Some(v),
+        }
     }
 }
 
@@ -57,8 +91,8 @@ impl<V> Remove for VecMap<usize, V> {
 }
 
 impl<V> MapIterator for VecMap<usize, V> {
-    type MapIntoIter<KK, VV> = MapIntoIter<KK, VV>;
-    type MapIter<'a, KK: 'a, VV: 'a> = MapIter<'a, KK, VV>;
+    type MapIntoIter<K_, V_> = MapIntoIter<K_, V_>;
+    type MapIter<'a, K_: 'a, V_: 'a> = MapIter<'a, K_, V_>;
 
     fn map_iter(&self) -> MapIter<'_, usize, V> {
         MapIter {
@@ -83,8 +117,8 @@ impl<'a, K, V> Iterator for MapIter<'a, K, V> {
     fn next(&mut self) -> Option<Self::Item> {
         while let Some(slot) = self.iter.next() {
             match slot {
-                None => continue,
-                Some((k, v)) => {
+                Slot::Empty => continue,
+                Slot::Full((k, v)) => {
                     return Some((k, v));
                 }
             }
@@ -103,9 +137,9 @@ impl<K, V> Iterator for MapIntoIter<K, V> {
     fn next(&mut self) -> Option<Self::Item> {
         while let Some(slot) = self.iter.next() {
             match slot {
-                None => continue,
-                Some(item) => {
-                    return Some(item);
+                Slot::Empty => continue,
+                Slot::Full(pair) => {
+                    return Some(pair);
                 }
             }
         }

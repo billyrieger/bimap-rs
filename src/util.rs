@@ -10,8 +10,7 @@ where
     (l.deref(), r.deref())
 }
 
-pub fn swap_pair<L, R>((l, r): (L, R)) -> (R, L)
-{
+pub fn swap_pair<L, R>((l, r): (L, R)) -> (R, L) {
     (r, l)
 }
 

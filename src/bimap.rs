@@ -1,9 +1,10 @@
-use core::{fmt, ops::Deref};
+use core::fmt;
 use core::iter::FromIterator;
 use core::marker::PhantomData;
+use core::ops::Deref;
 
-use crate::mem::{deref_pair, swap_pair, Ref};
 use crate::traits::*;
+use crate::util::{deref_pair, swap_pair, Ref};
 
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum Overwritten<L, R> {
@@ -12,7 +13,7 @@ pub enum Overwritten<L, R> {
     Two((L, R), (L, R)),
 }
 
-/// A generic bidirectional map.
+/// A generic bidirectional map./
 #[derive(Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct BiMap<LMap, RMap> {
     lmap: LMap,
@@ -85,6 +86,23 @@ where
         self.rmap.get(r).map(Deref::deref)
     }
 
+    /// The left value may be any borrowed form of the map's left key type, but
+    /// the ordering on the borrowed form must match the ordering on the key
+    /// type.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use bimap::BiBTreeMap;
+    ///
+    /// let mut map = BiBTreeMap::new();
+    /// map.insert('a', 1);
+    /// map.insert('b', 2);
+    /// map.insert('c', 3);
+    ///
+    /// assert_eq!(map.remove_left(&'b'), Some(('b', 2)));
+    /// assert_eq!(map.remove_left(&'b'), None);
+    /// ```
     pub fn remove_left<Q: ?Sized>(&mut self, l: &Q) -> Option<(L, R)>
     where
         LMap: Remove<Q>,
@@ -264,41 +282,5 @@ where
 
     fn size_hint(&self) -> (usize, Option<usize>) {
         self.iter.size_hint()
-    }
-}
-
-#[cfg(all(test, feature = "std"))]
-mod tests {
-    use crate::maps::hash::HashKind;
-    use crate::maps::vec::VecKind;
-    use crate::Generic;
-
-    #[test]
-    fn two_kinds() {
-        let mut a = Generic::<_, _, HashKind, VecKind>::new();
-
-        a.insert('a', 10);
-        a.insert('b', 5);
-        a.insert('c', 20);
-        a.insert('z', 40);
-
-        println!("iterating left");
-        for (l, r) in a.iter_left() {
-            println!("{:?}", (l, r));
-        }
-
-        println!("iterating right");
-        for (l, r) in a.iter_right() {
-            println!("{:?}", (l, r));
-        }
-
-        println!("{:?}", a);
-
-        println!(
-            "{:?}",
-            vec![('f', 2), ('g', 10)]
-                .into_iter()
-                .collect::<std::collections::BTreeMap<_, _>>()
-        );
     }
 }
