@@ -85,6 +85,19 @@ where
     }
 }
 
+impl<K, V, S> Retain for InnerHashMap<K, V, S>
+where
+    K: Eq + Hash,
+    S: BuildHasher + Default,
+{
+    fn retain<F>(&mut self, mut f: F)
+    where
+        F: FnMut(&K, &V) -> bool,
+    {
+        self.inner.retain(|k, v| f(k, v))
+    }
+}
+
 impl<K, V, S> MapIterator for InnerHashMap<K, V, S>
 where
     K: Eq + Hash,

@@ -81,6 +81,18 @@ where
     }
 }
 
+impl<K, V> Retain for InnerBTreeMap<K, V>
+where
+    K: Ord,
+{
+    fn retain<F>(&mut self, mut f: F)
+    where
+        F: FnMut(&K, &V) -> bool,
+    {
+        self.inner.retain(|k, v| f(k, v))
+    }
+}
+
 impl<K, V> MapIterator for InnerBTreeMap<K, V>
 where
     K: Ord,

@@ -9,12 +9,10 @@ use crate::util::{deref_pair, swap_pair, Ref};
 
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum Overwritten<L, R> {
-    Zero,
     One((L, R)),
     Two((L, R), (L, R)),
 }
 
-/// A generic bidirectional map./
 #[derive(Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct BiMap<LMap, RMap> {
     lmap: LMap,
@@ -33,11 +31,11 @@ where
         }
     }
 
-    pub fn insert(&mut self, l: L, r: R) -> Overwritten<L, R> {
+    pub fn insert(&mut self, l: L, r: R) -> Option<Overwritten<L, R>> {
         let overwritten = match (self.remove_left(&l), self.remove_right(&r)) {
-            (None, None) => Overwritten::Zero,
-            (Some(pair), None) | (None, Some(pair)) => Overwritten::One(pair),
-            (Some(lpair), Some(rpair)) => Overwritten::Two(lpair, rpair),
+            (None, None) => None,
+            (Some(pair), None) | (None, Some(pair)) => Some(Overwritten::One(pair)),
+            (Some(lpair), Some(rpair)) => Some(Overwritten::Two(lpair, rpair)),
         };
         self.insert_unchecked(l, r);
         overwritten
@@ -87,23 +85,6 @@ where
         self.rmap.get(r).map(Deref::deref)
     }
 
-    /// The left value may be any borrowed form of the map's left key type, but
-    /// the ordering on the borrowed form must match the ordering on the key
-    /// type.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use bimap::BiBTreeMap;
-    ///
-    /// let mut map = BiBTreeMap::new();
-    /// map.insert('a', 1);
-    /// map.insert('b', 2);
-    /// map.insert('c', 3);
-    ///
-    /// assert_eq!(map.remove_left(&'b'), Some(('b', 2)));
-    /// assert_eq!(map.remove_left(&'b'), None);
-    /// ```
     pub fn remove_left<Q: ?Sized>(&mut self, l: &Q) -> Option<(L, R)>
     where
         LMap: Remove<Q>,
@@ -121,6 +102,26 @@ where
         self.rmap.remove(r).map(|(r0, l0)| {
             let (l1, r1) = self.lmap.remove(&l0).unwrap();
             (Ref::join(l0, l1), Ref::join(r0, r1))
+        })
+    }
+
+    pub fn retain<F>(&mut self, f: F)
+    where
+        F: FnMut(&L, &R) -> bool,
+    {
+        Self::retain_helper(&mut self.lmap, &mut self.rmap, f);
+    }
+
+    fn retain_helper<F>(lmap: &mut LMap, rmap: &mut RMap, mut f: F)
+    where
+        F: FnMut(&L, &R) -> bool,
+    {
+        lmap.retain(|l, r| {
+            let keep = f(l, r);
+            if !keep {
+                rmap.remove(&r);
+            }
+            keep
         })
     }
 
@@ -196,7 +197,7 @@ where
     R: fmt::Debug,
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.debug_set().entries(self.iter_left()).finish()
+        f.debug_set().entries(self.iter()).finish()
     }
 }
 
@@ -231,6 +232,19 @@ where
         }
     }
 }
+
+// impl<L, R, LMap, RMap> IntoIterator for BiMap<LMap, RMap>
+// where
+//     LMap: Map<Key = L, Value = R>,
+//     RMap: Map<Key = R, Value = L>,
+// {
+//     type Item = (L, R);
+//     type IntoIter = IntoIter<L, R, LMap, RMap>;
+
+//     fn into_iter(self) -> Self::IntoIter {
+//         self.into_iter()
+//     }
+// }
 
 impl<'a, L: 'a, R: 'a, LMap, RMap> IntoIterator for &'a BiMap<LMap, RMap>
 where

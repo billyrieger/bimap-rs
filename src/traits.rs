@@ -6,9 +6,15 @@
 // have more information on the usage of sealed traits.
 use crate::util::Ref;
 
-pub trait Map: Core + New + Length + Insert + Contains + Get + Remove + MapIterator {}
+pub trait Map:
+    Core + New + Length + Insert + Contains + Get + Remove + Retain + MapIterator
+{
+}
 
-impl<M> Map for M where M: Core + New + Length + Insert + Contains + Get + Remove + MapIterator {}
+impl<M> Map for M where
+    M: Core + New + Length + Insert + Contains + Get + Remove + Retain + MapIterator
+{
+}
 
 pub trait Core {
     type Key;
@@ -41,6 +47,12 @@ pub trait Get<Q: ?Sized = <Self as Core>::Key>: Core {
 
 pub trait Remove<Q: ?Sized = <Self as Core>::Key>: Core {
     fn remove(&mut self, key: &Q) -> Option<(Ref<Self::Key>, Ref<Self::Value>)>;
+}
+
+pub trait Retain: Core {
+    fn retain<F>(&mut self, f: F)
+    where
+        F: FnMut(&Self::Key, &Self::Value) -> bool;
 }
 
 pub trait MapIterator: Core {
