@@ -3,6 +3,7 @@ use core::iter::FromIterator;
 use core::marker::PhantomData;
 use core::ops::Deref;
 
+use crate::maps::btree::InnerBTreeMap;
 use crate::traits::*;
 use crate::util::{deref_pair, swap_pair, Ref};
 
@@ -140,6 +141,24 @@ where
         IterRight {
             iter: self.rmap.map_iter(),
         }
+    }
+}
+
+impl<L, R, RMap> BiMap<InnerBTreeMap<L, R>, RMap>
+where
+    RMap: Map<Key = R, Value = L>,
+{
+    pub fn left_range(&self) -> () {
+        todo!()
+    }
+}
+
+impl<L, R, LMap> BiMap<LMap, InnerBTreeMap<R, L>>
+where
+    LMap: Map<Key = L, Value = R>,
+{
+    pub fn right_range(&self) -> () {
+        todo!()
     }
 }
 
