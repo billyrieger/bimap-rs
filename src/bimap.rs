@@ -16,7 +16,7 @@ pub enum Overwritten<L, R> {
 }
 
 /// A bidirectional map.
-#[derive(Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[derive(Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct BiMap<LMap, RMap> {
     lmap: LMap,
     rmap: RMap,
@@ -119,6 +119,13 @@ where
             iter: self.lmap.map_iter(),
         }
     }
+
+    pub fn into_iter_left(self) -> IntoIterLeft<L, R, LMap, RMap> {
+        IntoIterLeft {
+            iter: self.lmap.map_into_iter(),
+            remaining: self.rmap,
+        }
+    }
 }
 
 /// # Map methods on the right map
@@ -156,29 +163,36 @@ where
             iter: self.rmap.map_iter(),
         }
     }
+
+    pub fn into_iter_right(self) -> IntoIterRight<L, R, LMap, RMap> {
+        IntoIterRight {
+            iter: self.rmap.map_into_iter(),
+            remaining: self.lmap,
+        }
+    }
 }
 
 impl<L, R, RMap> BiMap<maps::btree::InnerMap<L, R>, RMap> {
-    pub fn left_range<T: ?Sized, A>(&self, range: A) -> LeftRange<'_, L, R>
+    pub fn range_left<T: ?Sized, A>(&self, range: A) -> RangeLeft<'_, L, R>
     where
         L: Ord + Borrow<T>,
         T: Ord,
         A: RangeBounds<T>,
     {
-        LeftRange {
+        RangeLeft {
             iter: self.lmap.range(range),
         }
     }
 }
 
 impl<L, R, LMap> BiMap<LMap, maps::btree::InnerMap<R, L>> {
-    pub fn right_range<T: ?Sized, A>(&self, range: A) -> RightRange<'_, L, R>
+    pub fn range_right<T: ?Sized, A>(&self, range: A) -> RangeRight<'_, L, R>
     where
         R: Ord + Borrow<T>,
         T: Ord,
         A: RangeBounds<T>,
     {
-        RightRange {
+        RangeRight {
             iter: self.rmap.range(range),
         }
     }
@@ -207,18 +221,6 @@ where
 {
     fn default() -> Self {
         Self::new()
-    }
-}
-
-impl<L, R, LMap, RMap> fmt::Debug for BiMap<LMap, RMap>
-where
-    LMap: Map<Key = L, Value = R>,
-    RMap: Map<Key = R, Value = L>,
-    L: fmt::Debug,
-    R: fmt::Debug,
-{
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.debug_set().entries(self).finish()
     }
 }
 
@@ -254,18 +256,20 @@ where
     }
 }
 
-// impl<L, R, LMap, RMap> IntoIterator for BiMap<LMap, RMap>
-// where
-//     LMap: Map<Key = L, Value = R>,
-//     RMap: Map<Key = R, Value = L>,
-// {
-//     type Item = (L, R);
-//     type IntoIter = IntoIter<L, R, LMap, RMap>;
+impl<L, R, LMap, RMap> IntoIterator for BiMap<LMap, RMap>
+where
+    LMap: Map<Key = L, Value = R>,
+    RMap: Map<Key = R, Value = L>,
+{
+    type Item = (L, R);
+    type IntoIter = IntoIter<L, R, LMap, RMap>;
 
-//     fn into_iter(self) -> Self::IntoIter {
-//         self.into_iter()
-//     }
-// }
+    fn into_iter(self) -> Self::IntoIter {
+        IntoIter {
+            inner: self.into_iter_left(),
+        }
+    }
+}
 
 impl<'a, L: 'a, R: 'a, LMap, RMap> IntoIterator for &'a BiMap<LMap, RMap>
 where
@@ -278,6 +282,179 @@ where
     fn into_iter(self) -> Self::IntoIter {
         self.iter()
     }
+}
+
+pub struct IntoIter<L, R, LMap: Map, RMap: Map> {
+    inner: IntoIterLeft<L, R, LMap, RMap>,
+}
+
+impl<L, R, LMap, RMap> Iterator for IntoIter<L, R, LMap, RMap>
+where
+    LMap: Map<Key = L, Value = R>,
+    RMap: Map<Key = R, Value = L>,
+{
+    type Item = (L, R);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.inner.next()
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.inner.size_hint()
+    }
+}
+
+impl<L, R, LMap, RMap> DoubleEndedIterator for IntoIter<L, R, LMap, RMap>
+where
+    LMap: Map<Key = L, Value = R>,
+    RMap: Map<Key = R, Value = L>,
+    LMap::MapIntoIter<L, R>: DoubleEndedIterator,
+    RMap::MapIntoIter<R, L>: DoubleEndedIterator,
+{
+    fn next_back(&mut self) -> Option<Self::Item> {
+        self.inner.next_back()
+    }
+}
+
+impl<L, R, LMap, RMap> ExactSizeIterator for IntoIter<L, R, LMap, RMap>
+where
+    LMap: Map<Key = L, Value = R>,
+    RMap: Map<Key = R, Value = L>,
+    LMap::MapIntoIter<L, R>: ExactSizeIterator,
+    RMap::MapIntoIter<R, L>: ExactSizeIterator,
+{
+}
+
+impl<L, R, LMap, RMap> FusedIterator for IntoIter<L, R, LMap, RMap>
+where
+    LMap: Map<Key = L, Value = R>,
+    RMap: Map<Key = R, Value = L>,
+    LMap::MapIntoIter<L, R>: FusedIterator,
+    RMap::MapIntoIter<R, L>: FusedIterator,
+{
+}
+
+pub struct IntoIterLeft<L, R, LMap: Map, RMap: Map> {
+    iter: LMap::MapIntoIter<L, R>,
+    remaining: RMap,
+}
+
+impl<L, R, LMap, RMap> fmt::Debug for IntoIterLeft<L, R, LMap, RMap>
+where
+    LMap: Map<Key = L, Value = R>,
+    RMap: Map<Key = R, Value = L> + fmt::Debug,
+    LMap::MapIntoIter<L, R>: fmt::Debug,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("IntoIterLeft")
+            .field("iter", &self.iter)
+            .field("remaining", &self.remaining)
+            .finish()
+    }
+}
+
+impl<L, R, LMap, RMap> Iterator for IntoIterLeft<L, R, LMap, RMap>
+where
+    LMap: Map<Key = L, Value = R>,
+    RMap: Map<Key = R, Value = L>,
+{
+    type Item = (L, R);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.iter.next().map(|(l0, r0)| {
+            let (r1, l1) = self.remaining.remove(&r0).unwrap();
+            (Ref::join(l0, l1), Ref::join(r0, r1))
+        })
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.iter.size_hint()
+    }
+}
+
+impl<L, R, LMap, RMap> DoubleEndedIterator for IntoIterLeft<L, R, LMap, RMap>
+where
+    LMap: Map<Key = L, Value = R>,
+    RMap: Map<Key = R, Value = L>,
+    LMap::MapIntoIter<L, R>: DoubleEndedIterator,
+{
+    fn next_back(&mut self) -> Option<Self::Item> {
+        self.iter.next_back().map(|(l0, r0)| {
+            let (r1, l1) = self.remaining.remove(&r0).unwrap();
+            (Ref::join(l0, l1), Ref::join(r0, r1))
+        })
+    }
+}
+
+impl<L, R, LMap, RMap> ExactSizeIterator for IntoIterLeft<L, R, LMap, RMap>
+where
+    LMap: Map<Key = L, Value = R>,
+    RMap: Map<Key = R, Value = L>,
+    LMap::MapIntoIter<L, R>: ExactSizeIterator,
+{
+}
+
+impl<L, R, LMap, RMap> FusedIterator for IntoIterLeft<L, R, LMap, RMap>
+where
+    LMap: Map<Key = L, Value = R>,
+    RMap: Map<Key = R, Value = L>,
+    LMap::MapIntoIter<L, R>: FusedIterator,
+{
+}
+
+#[derive(Debug)]
+pub struct IntoIterRight<L, R, LMap: Map, RMap: Map> {
+    iter: RMap::MapIntoIter<R, L>,
+    remaining: LMap,
+}
+
+impl<L, R, LMap, RMap> Iterator for IntoIterRight<L, R, LMap, RMap>
+where
+    LMap: Map<Key = L, Value = R>,
+    RMap: Map<Key = R, Value = L>,
+{
+    type Item = (L, R);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.iter.next().map(|(r0, l0)| {
+            let (l1, r1) = self.remaining.remove(&l0).unwrap();
+            (Ref::join(l0, l1), Ref::join(r0, r1))
+        })
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.iter.size_hint()
+    }
+}
+
+impl<L, R, LMap, RMap> DoubleEndedIterator for IntoIterRight<L, R, LMap, RMap>
+where
+    LMap: Map<Key = L, Value = R>,
+    RMap: Map<Key = R, Value = L>,
+    RMap::MapIntoIter<R, L>: DoubleEndedIterator,
+{
+    fn next_back(&mut self) -> Option<Self::Item> {
+        self.iter.next_back().map(|(r0, l0)| {
+            let (l1, r1) = self.remaining.remove(&l0).unwrap();
+            (Ref::join(l0, l1), Ref::join(r0, r1))
+        })
+    }
+}
+
+impl<L, R, LMap, RMap> ExactSizeIterator for IntoIterRight<L, R, LMap, RMap>
+where
+    LMap: Map<Key = L, Value = R>,
+    RMap: Map<Key = R, Value = L>,
+    RMap::MapIntoIter<R, L>: DoubleEndedIterator,
+{
+}
+
+impl<L, R, LMap, RMap> FusedIterator for IntoIterRight<L, R, LMap, RMap>
+where
+    LMap: Map<Key = L, Value = R>,
+    RMap: Map<Key = R, Value = L>,
+    RMap::MapIntoIter<R, L>: DoubleEndedIterator,
+{
 }
 
 pub struct Iter<'a, L: 'a, R: 'a, LMap: Map, RMap: Map> {
@@ -299,6 +476,32 @@ where
     fn size_hint(&self) -> (usize, Option<usize>) {
         self.iter.size_hint()
     }
+}
+
+impl<'a, L, R, LMap, RMap> DoubleEndedIterator for Iter<'a, L, R, LMap, RMap>
+where
+    LMap: Map<Key = L, Value = R>,
+    RMap: Map<Key = R, Value = L>,
+    LMap::MapIter<'a, L, R>: DoubleEndedIterator,
+    RMap::MapIter<'a, R, L>: DoubleEndedIterator,
+{
+    fn next_back(&mut self) -> Option<Self::Item> {
+        self.iter.next_back().map(deref_pair)
+    }
+}
+
+impl<'a, L, R, LMap> ExactSizeIterator for IterLeft<'a, L, R, LMap>
+where
+    LMap: Map<Key = L, Value = R>,
+    LMap::MapIter<'a, L, R>: ExactSizeIterator,
+{
+}
+
+impl<'a, L, R, LMap> FusedIterator for IterLeft<'a, L, R, LMap>
+where
+    LMap: Map<Key = L, Value = R>,
+    LMap::MapIter<'a, L, R>: FusedIterator,
+{
 }
 
 pub struct IterLeft<'a, L: 'a, R: 'a, LMap: Map> {
@@ -330,17 +533,21 @@ where
     }
 }
 
-impl<'a, L, R, LMap> ExactSizeIterator for IterLeft<'a, L, R, LMap>
+impl<'a, L, R, LMap, RMap> ExactSizeIterator for Iter<'a, L, R, LMap, RMap>
 where
     LMap: Map<Key = L, Value = R>,
+    RMap: Map<Key = R, Value = L>,
     LMap::MapIter<'a, L, R>: ExactSizeIterator,
+    RMap::MapIter<'a, R, L>: ExactSizeIterator,
 {
 }
 
-impl<'a, L, R, LMap> FusedIterator for IterLeft<'a, L, R, LMap>
+impl<'a, L, R, LMap, RMap> FusedIterator for Iter<'a, L, R, LMap, RMap>
 where
     LMap: Map<Key = L, Value = R>,
+    RMap: Map<Key = R, Value = L>,
     LMap::MapIter<'a, L, R>: FusedIterator,
+    RMap::MapIter<'a, R, L>: FusedIterator,
 {
 }
 
@@ -363,11 +570,44 @@ where
     }
 }
 
-pub struct LeftRange<'a, L: 'a, R: 'a> {
+impl<'a, L: 'a, R: 'a, RMap> DoubleEndedIterator for IterRight<'a, L, R, RMap>
+where
+    RMap: Map<Key = R, Value = L>,
+    RMap::MapIter<'a, R, L>: DoubleEndedIterator,
+{
+    fn next_back(&mut self) -> Option<Self::Item> {
+        self.iter.next_back().map(deref_pair).map(swap_pair)
+    }
+}
+
+impl<'a, L: 'a, R: 'a, RMap> ExactSizeIterator for IterRight<'a, L, R, RMap>
+where
+    RMap: Map<Key = R, Value = L>,
+    RMap::MapIter<'a, R, L>: ExactSizeIterator,
+{
+}
+
+impl<'a, L: 'a, R: 'a, RMap> FusedIterator for IterRight<'a, L, R, RMap>
+where
+    RMap: Map<Key = R, Value = L>,
+    RMap::MapIter<'a, R, L>: FusedIterator,
+{
+}
+
+#[derive(Debug)]
+pub struct RangeLeft<'a, L: 'a, R: 'a> {
     iter: maps::btree::Range<'a, L, R>,
 }
 
-impl<'a, L, R> Iterator for LeftRange<'a, L, R> {
+impl<'a, L, R> Clone for RangeLeft<'a, L, R> {
+    fn clone(&self) -> Self {
+        Self {
+            iter: self.iter.clone(),
+        }
+    }
+}
+
+impl<'a, L, R> Iterator for RangeLeft<'a, L, R> {
     type Item = (&'a L, &'a R);
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -379,11 +619,28 @@ impl<'a, L, R> Iterator for LeftRange<'a, L, R> {
     }
 }
 
-pub struct RightRange<'a, L: 'a, R: 'a> {
+impl<'a, L, R> DoubleEndedIterator for RangeLeft<'a, L, R> {
+    fn next_back(&mut self) -> Option<Self::Item> {
+        self.iter.next_back().map(deref_pair)
+    }
+}
+
+impl<'a, L, R> FusedIterator for RangeLeft<'a, L, R> {}
+
+#[derive(Debug)]
+pub struct RangeRight<'a, L: 'a, R: 'a> {
     iter: maps::btree::Range<'a, R, L>,
 }
 
-impl<'a, L, R> Iterator for RightRange<'a, L, R> {
+impl<'a, L, R> Clone for RangeRight<'a, L, R> {
+    fn clone(&self) -> Self {
+        Self {
+            iter: self.iter.clone(),
+        }
+    }
+}
+
+impl<'a, L, R> Iterator for RangeRight<'a, L, R> {
     type Item = (&'a L, &'a R);
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -394,3 +651,11 @@ impl<'a, L, R> Iterator for RightRange<'a, L, R> {
         self.iter.size_hint()
     }
 }
+
+impl<'a, L, R> DoubleEndedIterator for RangeRight<'a, L, R> {
+    fn next_back(&mut self) -> Option<Self::Item> {
+        self.iter.next_back().map(deref_pair).map(swap_pair)
+    }
+}
+
+impl<'a, L, R> FusedIterator for RangeRight<'a, L, R> {}

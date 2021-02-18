@@ -1,4 +1,4 @@
-//! Bidirectional maps.
+//! Generic bidirectional maps.
 #![feature(btree_retain, generic_associated_types)]
 #![allow(incomplete_features)]
 #![cfg_attr(not(feature = "std"), no_std)]
@@ -14,6 +14,7 @@ mod util;
 
 #[cfg(feature = "serde")]
 mod serde;
+
 #[cfg(feature = "std")]
 use std::{
     collections::hash_map::RandomState,
@@ -68,9 +69,6 @@ pub type BiBTreeMap<L, R> = Generic<L, R, BTreeKind, BTreeKind>;
 /// A bidirectional `HashMap`.
 #[cfg(feature = "std")]
 pub type BiHashMap<L, R> = Generic<L, R, HashKind, HashKind>;
-
-/// A bidirectional `VecMap`.
-pub type BiVecMap = Generic<usize, usize, VecKind, VecKind>;
 
 #[cfg(test)]
 mod tests {}

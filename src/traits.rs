@@ -11,10 +11,7 @@ type RefPair<L, R> = (Ref<L>, Ref<R>);
 
 pub trait Map: Core + New + Length + Insert + Contains + Get + Remove + MapIterator {}
 
-impl<M> Map for M where
-    M: Core + New + Length + Insert + Contains + Get + Remove + MapIterator
-{
-}
+impl<M> Map for M where M: Core + New + Length + Insert + Contains + Get + Remove + MapIterator {}
 
 pub trait Core {
     type Key;

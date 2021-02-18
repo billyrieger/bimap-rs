@@ -210,6 +210,4 @@ impl<'a, K, V> DoubleEndedIterator for Range<'a, K, V> {
     }
 }
 
-impl<'a, K, V> ExactSizeIterator for Range<'a, K, V> {}
-
 impl<'a, K, V> FusedIterator for Range<'a, K, V> {}
