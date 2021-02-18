@@ -1,9 +1,8 @@
 use core::borrow::Borrow;
 use core::fmt;
-use core::iter::FromIterator;
+use core::iter::{FromIterator, FusedIterator};
 use core::marker::PhantomData;
 use core::ops::{Deref, RangeBounds};
-use core::iter::FusedIterator;
 
 use crate::maps;
 use crate::traits::*;

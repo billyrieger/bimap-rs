@@ -70,7 +70,6 @@ pub type BiBTreeMap<L, R> = Generic<L, R, BTreeKind, BTreeKind>;
 #[cfg(feature = "std")]
 pub type BiHashMap<L, R> = Generic<L, R, HashKind, HashKind>;
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
