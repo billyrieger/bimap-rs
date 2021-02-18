@@ -3,7 +3,7 @@ use core::fmt;
 use core::iter::FromIterator;
 use core::marker::PhantomData;
 use core::ops::{Deref, RangeBounds};
-use std::iter::FusedIterator;
+use core::iter::FusedIterator;
 
 use crate::maps;
 use crate::traits::*;

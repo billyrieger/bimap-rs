@@ -2,7 +2,7 @@ name: Test suite
 on:
   push:
     branches:
-      - master
+      - nightly
   pull_request:
 
 jobs:
@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -18,13 +19,14 @@ jobs:
           toolchain: nightly
           override: true
           components: rustfmt
+
       - uses: actions-rs/cargo@v1
         with:
           command: fmt
           args: -- --check
+
   test:
-    name: Run tests
-    needs: style
+    name: Test suite
     strategy:
       matrix:
         os:
@@ -32,25 +34,24 @@ jobs:
           - macos-latest
           - windows-latest
         rust:
-          - stable
-          - beta
           - nightly
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
+
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
           toolchain: ${{ matrix.rust }}
           override: true
+          components: rustfmt, clippy
+
       - uses: actions-rs/cargo@v1
         with:
-          command: test
+          command: install
+          args: cargo-hack
+
       - uses: actions-rs/cargo@v1
         with:
-          command: test
-          args: --all-features
-      - uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --no-default-features
+          command: hack
+          args: test --feature-powerset

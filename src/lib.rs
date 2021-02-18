@@ -70,5 +70,17 @@ pub type BiBTreeMap<L, R> = Generic<L, R, BTreeKind, BTreeKind>;
 #[cfg(feature = "std")]
 pub type BiHashMap<L, R> = Generic<L, R, HashKind, HashKind>;
 
+
 #[cfg(test)]
-mod tests {}
+mod tests {
+    use super::*;
+
+    #[test]
+    fn do_it() {
+        let mut a = BiBTreeMap::new();
+        a.insert('a', 3);
+        a.insert('b', 1);
+        a.insert('c', 2);
+        assert_eq!(a.len(), 3);
+    }
+}
