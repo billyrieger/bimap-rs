@@ -34,22 +34,22 @@ impl<K, V> Slot<K, V> {
 }
 
 #[derive(Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub struct VecMap<K, V> {
+pub struct InnerMap<K, V> {
     values: Vec<Slot<K, V>>,
 }
 
-impl<V> Core for VecMap<usize, V> {
+impl<V> Core for InnerMap<usize, V> {
     type Key = usize;
     type Value = V;
 }
 
-impl<V> New for VecMap<usize, V> {
+impl<V> New for InnerMap<usize, V> {
     fn new() -> Self {
         Self { values: Vec::new() }
     }
 }
 
-impl<V> Length for VecMap<usize, V> {
+impl<V> Length for InnerMap<usize, V> {
     fn len(&self) -> usize {
         self.values.iter().filter(|slot| slot.is_full()).count()
     }
@@ -59,8 +59,8 @@ impl<V> Length for VecMap<usize, V> {
     }
 }
 
-impl<V> Insert for VecMap<usize, V> {
-    fn insert(&mut self, key: Ref<usize>, value: Ref<V>) {
+impl<V> Insert for InnerMap<usize, V> {
+    fn insert(&mut self, (key, value): (Ref<usize>, Ref<V>)) {
         let index: usize = *key;
         if index + 1 > self.values.len() {
             self.values.resize_with(index + 1, || Slot::Empty);
@@ -69,13 +69,13 @@ impl<V> Insert for VecMap<usize, V> {
     }
 }
 
-impl<V> Contains for VecMap<usize, V> {
+impl<V> Contains for InnerMap<usize, V> {
     fn contains(&self, key: &usize) -> bool {
         self.values.get(*key).is_some()
     }
 }
 
-impl<V> Get for VecMap<usize, V> {
+impl<V> Get for InnerMap<usize, V> {
     fn get(&self, key: &usize) -> Option<&Ref<V>> {
         match self.values.get(*key)? {
             Slot::Empty => None,
@@ -84,13 +84,13 @@ impl<V> Get for VecMap<usize, V> {
     }
 }
 
-impl<V> Remove for VecMap<usize, V> {
+impl<V> Remove for InnerMap<usize, V> {
     fn remove(&mut self, key: &usize) -> Option<(Ref<usize>, Ref<V>)> {
         self.values.get_mut(*key).and_then(|slot| slot.take())
     }
 }
 
-impl<V> MapIterator for VecMap<usize, V> {
+impl<V> MapIterator for InnerMap<usize, V> {
     type MapIntoIter<K_, V_> = MapIntoIter<K_, V_>;
     type MapIter<'a, K_: 'a, V_: 'a> = MapIter<'a, K_, V_>;
 

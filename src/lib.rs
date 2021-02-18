@@ -14,7 +14,6 @@ mod util;
 
 #[cfg(feature = "serde")]
 mod serde;
-
 #[cfg(feature = "std")]
 use std::{
     collections::hash_map::RandomState,
@@ -34,7 +33,13 @@ impl<K, V> MapKind<K, V> for BTreeKind
 where
     K: Ord,
 {
-    type Map = maps::btree::InnerBTreeMap<K, V>;
+    type Map = maps::btree::InnerMap<K, V>;
+}
+
+pub struct VecKind;
+
+impl<V> MapKind<usize, V> for VecKind {
+    type Map = maps::vec::InnerMap<usize, V>;
 }
 
 #[cfg(feature = "std")]
@@ -48,13 +53,7 @@ where
     K: Eq + Hash,
     S: BuildHasher + Default,
 {
-    type Map = maps::hash::InnerHashMap<K, V, S>;
-}
-
-pub struct VecKind;
-
-impl<V> MapKind<usize, V> for VecKind {
-    type Map = maps::vec::VecMap<usize, V>;
+    type Map = maps::hash::InnerMap<K, V, S>;
 }
 
 #[doc(inline)]

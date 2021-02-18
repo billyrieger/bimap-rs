@@ -7,85 +7,89 @@ use crate::traits::*;
 use crate::util::{Ref, Wrapper};
 
 #[derive(Debug)]
-pub struct InnerHashMap<K, V, S> {
-    inner: HashMap<Ref<K>, Ref<V>, S>,
+pub struct InnerMap<K, V, S> {
+    map: HashMap<Ref<K>, Ref<V>, S>,
 }
 
-impl<K, V, S> Core for InnerHashMap<K, V, S> {
+impl<K, V, S> Core for InnerMap<K, V, S>
+where
+    K: Eq + Hash,
+    S: BuildHasher + Default,
+{
     type Key = K;
     type Value = V;
 }
 
-impl<K, V, S> New for InnerHashMap<K, V, S>
+impl<K, V, S> New for InnerMap<K, V, S>
 where
     K: Eq + Hash,
     S: BuildHasher + Default,
 {
     fn new() -> Self {
         Self {
-            inner: HashMap::with_hasher(S::default()),
+            map: HashMap::with_hasher(S::default()),
         }
     }
 }
 
-impl<K, V, S> Length for InnerHashMap<K, V, S>
+impl<K, V, S> Length for InnerMap<K, V, S>
 where
     K: Eq + Hash,
     S: BuildHasher + Default,
 {
     fn len(&self) -> usize {
-        self.inner.len()
+        self.map.len()
     }
 
     fn is_empty(&self) -> bool {
-        self.inner.is_empty()
+        self.map.is_empty()
     }
 }
 
-impl<K, V, S> Insert for InnerHashMap<K, V, S>
+impl<K, V, S> Insert for InnerMap<K, V, S>
 where
     K: Eq + Hash,
     S: BuildHasher + Default,
 {
-    fn insert(&mut self, key: Ref<K>, value: Ref<V>) {
-        self.inner.insert(key, value);
+    fn insert(&mut self, (key, value): (Ref<K>, Ref<V>)) {
+        self.map.insert(key, value);
     }
 }
 
-impl<K, V, S, Q: ?Sized> Contains<Q> for InnerHashMap<K, V, S>
+impl<K, V, S, Q: ?Sized> Contains<Q> for InnerMap<K, V, S>
 where
     K: Eq + Hash + Borrow<Q>,
     Q: Eq + Hash,
     S: BuildHasher + Default,
 {
     fn contains(&self, key: &Q) -> bool {
-        self.inner.contains_key(Wrapper::wrap(key))
+        self.map.contains_key(Wrapper::wrap(key))
     }
 }
 
-impl<K, V, S, Q: ?Sized> Get<Q> for InnerHashMap<K, V, S>
+impl<K, V, S, Q: ?Sized> Get<Q> for InnerMap<K, V, S>
 where
     K: Eq + Hash + Borrow<Q>,
     Q: Eq + Hash,
     S: BuildHasher + Default,
 {
     fn get(&self, key: &Q) -> Option<&Ref<V>> {
-        self.inner.get(Wrapper::wrap(key))
+        self.map.get(Wrapper::wrap(key))
     }
 }
 
-impl<K, V, S, Q: ?Sized> Remove<Q> for InnerHashMap<K, V, S>
+impl<K, V, S, Q: ?Sized> Remove<Q> for InnerMap<K, V, S>
 where
     K: Eq + Hash + Borrow<Q>,
     Q: Eq + Hash,
     S: BuildHasher + Default,
 {
     fn remove(&mut self, key: &Q) -> Option<(Ref<K>, Ref<V>)> {
-        self.inner.remove_entry(Wrapper::wrap(key))
+        self.map.remove_entry(Wrapper::wrap(key))
     }
 }
 
-impl<K, V, S> MapIterator for InnerHashMap<K, V, S>
+impl<K, V, S> MapIterator for InnerMap<K, V, S>
 where
     K: Eq + Hash,
     S: BuildHasher + Default,
@@ -95,13 +99,13 @@ where
 
     fn map_into_iter(self) -> MapIntoIter<K, V> {
         MapIntoIter {
-            inner: self.inner.into_iter(),
+            inner: self.map.into_iter(),
         }
     }
 
     fn map_iter(&self) -> MapIter<'_, K, V> {
         MapIter {
-            inner: self.inner.iter(),
+            inner: self.map.iter(),
         }
     }
 }

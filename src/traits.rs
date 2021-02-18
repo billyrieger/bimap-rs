@@ -6,6 +6,9 @@
 // have more information on the usage of sealed traits.
 use crate::util::Ref;
 
+// This makes some of the method arguments and return types less unwieldy.
+type RefPair<L, R> = (Ref<L>, Ref<R>);
+
 pub trait Map: Core + New + Length + Insert + Contains + Get + Remove + MapIterator {}
 
 impl<M> Map for M where M: Core + New + Length + Insert + Contains + Get + Remove + MapIterator {}
@@ -27,8 +30,12 @@ pub trait Length: Core {
     }
 }
 
+pub trait Clear: Core {
+    fn clear(&mut self);
+}
+
 pub trait Insert: Core {
-    fn insert(&mut self, key: Ref<Self::Key>, value: Ref<Self::Value>);
+    fn insert(&mut self, pair: RefPair<Self::Key, Self::Value>);
 }
 
 pub trait Contains<Q: ?Sized = <Self as Core>::Key>: Core {
@@ -40,7 +47,7 @@ pub trait Get<Q: ?Sized = <Self as Core>::Key>: Core {
 }
 
 pub trait Remove<Q: ?Sized = <Self as Core>::Key>: Core {
-    fn remove(&mut self, key: &Q) -> Option<(Ref<Self::Key>, Ref<Self::Value>)>;
+    fn remove(&mut self, key: &Q) -> Option<RefPair<Self::Key, Self::Value>>;
 }
 
 pub trait MapIterator: Core {

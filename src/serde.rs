@@ -58,20 +58,3 @@ where
         })
     }
 }
-
-// #[cfg(all(test, feature = "serde"))]
-// mod tests {
-//     use crate::BiBTreeMap;
-
-//     #[test]
-//     fn serde_hash() {
-//         let mut bimap = BiBTreeMap::new();
-//         bimap.insert('a', 1);
-//         bimap.insert('b', 2);
-//         bimap.insert('c', 3);
-
-//         let json = serde_json::to_string(&bimap).unwrap();
-//         let bimap2 = serde_json::from_str(&json).unwrap();
-//         assert_eq!(bimap, bimap2);
-//     }
-// }
