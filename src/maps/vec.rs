@@ -6,21 +6,21 @@ use crate::util::Ref;
 
 #[derive(Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 enum Slot<K, V> {
-    Full((Ref<K>, Ref<V>)),
+    Full(Ref<K>, Ref<V>),
     Empty,
 }
 
 impl<K, V> Slot<K, V> {
     fn is_full(&self) -> bool {
         match self {
-            Slot::Full(_) => true,
+            Slot::Full(_, _) => true,
             Slot::Empty => false,
         }
     }
 
     fn is_empty(&self) -> bool {
         match self {
-            Slot::Full(_) => false,
+            Slot::Full(_, _) => false,
             Slot::Empty => true,
         }
     }
@@ -28,7 +28,7 @@ impl<K, V> Slot<K, V> {
     fn take(&mut self) -> Option<(Ref<K>, Ref<V>)> {
         match core::mem::replace(self, Slot::Empty) {
             Slot::Empty => None,
-            Slot::Full(pair) => Some(pair),
+            Slot::Full(k, v) => Some((k, v)),
         }
     }
 }
@@ -65,7 +65,7 @@ impl<V> Insert for InnerMap<usize, V> {
         if index + 1 > self.values.len() {
             self.values.resize_with(index + 1, || Slot::Empty);
         }
-        self.values[index] = Slot::Full((key, value));
+        self.values[index] = Slot::Full(key, value);
     }
 }
 
@@ -79,7 +79,7 @@ impl<V> Get for InnerMap<usize, V> {
     fn get(&self, key: &usize) -> Option<&Ref<V>> {
         match self.values.get(*key)? {
             Slot::Empty => None,
-            Slot::Full((_, v)) => Some(v),
+            Slot::Full(_, v) => Some(v),
         }
     }
 }
@@ -118,7 +118,7 @@ impl<'a, K, V> Iterator for MapIter<'a, K, V> {
         while let Some(slot) = self.iter.next() {
             match slot {
                 Slot::Empty => continue,
-                Slot::Full((k, v)) => {
+                Slot::Full(k, v) => {
                     return Some((k, v));
                 }
             }
@@ -138,8 +138,8 @@ impl<K, V> Iterator for MapIntoIter<K, V> {
         while let Some(slot) = self.iter.next() {
             match slot {
                 Slot::Empty => continue,
-                Slot::Full(pair) => {
-                    return Some(pair);
+                Slot::Full(k, v) => {
+                    return Some((k, v));
                 }
             }
         }

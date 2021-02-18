@@ -254,6 +254,19 @@ where
     }
 }
 
+// impl<L, R, LMap, RMap> IntoIterator for BiMap<LMap, RMap>
+// where
+//     LMap: Map<Key = L, Value = R>,
+//     RMap: Map<Key = R, Value = L>,
+// {
+//     type Item = (L, R);
+//     type IntoIter = IntoIter<L, R, LMap, RMap>;
+
+//     fn into_iter(self) -> Self::IntoIter {
+//         self.into_iter()
+//     }
+// }
+
 impl<'a, L: 'a, R: 'a, LMap, RMap> IntoIterator for &'a BiMap<LMap, RMap>
 where
     LMap: Map<Key = L, Value = R>,

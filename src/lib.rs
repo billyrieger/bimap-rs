@@ -1,5 +1,5 @@
 //! Bidirectional maps.
-#![feature(generic_associated_types)]
+#![feature(btree_retain, generic_associated_types)]
 #![allow(incomplete_features)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
