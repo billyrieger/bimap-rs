@@ -1,3 +1,5 @@
+//! Crate-wide helper utilities.
+
 use alloc::rc::Rc;
 use core::borrow::Borrow;
 use core::ops::{Bound, Deref};

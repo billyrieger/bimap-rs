@@ -1,8 +1,8 @@
-use core::fmt;
-use core::marker::PhantomData;
-
 use crate::traits::*;
 use crate::BiMap;
+
+use core::fmt;
+use core::marker::PhantomData;
 
 use serde::de::{MapAccess, Visitor};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};

@@ -32,23 +32,15 @@ where
 {
     type Key = K;
     type Value = V;
-}
+    type MapIter<'a, K_: 'a, V_: 'a> = MapIter<'a, K_, V_>;
+    type MapIntoIter<K_, V_> = MapIntoIter<K_, V_>;
 
-impl<K, V> New for InnerMap<K, V>
-where
-    K: Ord,
-{
     fn new() -> Self {
         Self {
             map: BTreeMap::new(),
         }
     }
-}
 
-impl<K, V> Length for InnerMap<K, V>
-where
-    K: Ord,
-{
     fn len(&self) -> usize {
         self.map.len()
     }
@@ -56,14 +48,25 @@ where
     fn is_empty(&self) -> bool {
         self.map.is_empty()
     }
-}
 
-impl<K, V> Insert for InnerMap<K, V>
-where
-    K: Ord,
-{
+    fn clear(&mut self) {
+        self.map.clear()
+    }
+
     fn insert(&mut self, (key, value): (Ref<K>, Ref<V>)) {
         self.map.insert(key, value);
+    }
+
+    fn map_iter(&self) -> MapIter<'_, K, V> {
+        MapIter {
+            inner: self.map.iter(),
+        }
+    }
+
+    fn map_into_iter(self) -> MapIntoIter<K, V> {
+        MapIntoIter {
+            inner: self.map.into_iter(),
+        }
     }
 }
 
@@ -97,32 +100,12 @@ where
     }
 }
 
-impl<K, V> MapIterator for InnerMap<K, V>
-where
-    K: Ord,
-{
-    type MapIter<'a, K_: 'a, V_: 'a> = Iter<'a, K_, V_>;
-    type MapIntoIter<K_, V_> = IntoIter<K_, V_>;
-
-    fn map_iter(&self) -> Self::MapIter<'_, K, V> {
-        Iter {
-            inner: self.map.iter(),
-        }
-    }
-
-    fn map_into_iter(self) -> Self::MapIntoIter<K, V> {
-        IntoIter {
-            inner: self.map.into_iter(),
-        }
-    }
-}
-
 #[derive(Debug)]
-pub struct IntoIter<K, V> {
+pub struct MapIntoIter<K, V> {
     inner: btree_map::IntoIter<Ref<K>, Ref<V>>,
 }
 
-impl<K, V> Iterator for IntoIter<K, V> {
+impl<K, V> Iterator for MapIntoIter<K, V> {
     type Item = (Ref<K>, Ref<V>);
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -134,22 +117,22 @@ impl<K, V> Iterator for IntoIter<K, V> {
     }
 }
 
-impl<K, V> DoubleEndedIterator for IntoIter<K, V> {
+impl<K, V> DoubleEndedIterator for MapIntoIter<K, V> {
     fn next_back(&mut self) -> Option<Self::Item> {
         self.inner.next_back()
     }
 }
 
-impl<K, V> ExactSizeIterator for IntoIter<K, V> {}
+impl<K, V> ExactSizeIterator for MapIntoIter<K, V> {}
 
-impl<K, V> FusedIterator for IntoIter<K, V> {}
+impl<K, V> FusedIterator for MapIntoIter<K, V> {}
 
 #[derive(Debug)]
-pub struct Iter<'a, K, V> {
+pub struct MapIter<'a, K, V> {
     inner: btree_map::Iter<'a, Ref<K>, Ref<V>>,
 }
 
-impl<'a, K, V> Clone for Iter<'a, K, V> {
+impl<'a, K, V> Clone for MapIter<'a, K, V> {
     fn clone(&self) -> Self {
         Self {
             inner: self.inner.clone(),
@@ -157,7 +140,7 @@ impl<'a, K, V> Clone for Iter<'a, K, V> {
     }
 }
 
-impl<'a, K, V> Iterator for Iter<'a, K, V> {
+impl<'a, K, V> Iterator for MapIter<'a, K, V> {
     type Item = (&'a Ref<K>, &'a Ref<V>);
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -169,18 +152,18 @@ impl<'a, K, V> Iterator for Iter<'a, K, V> {
     }
 }
 
-impl<'a, K, V> DoubleEndedIterator for Iter<'a, K, V> {
+impl<'a, K, V> DoubleEndedIterator for MapIter<'a, K, V> {
     fn next_back(&mut self) -> Option<Self::Item> {
         self.inner.next_back()
     }
 }
 
-impl<'a, K, V> ExactSizeIterator for Iter<'a, K, V> {}
+impl<'a, K, V> ExactSizeIterator for MapIter<'a, K, V> {}
 
-impl<'a, K, V> FusedIterator for Iter<'a, K, V> {}
+impl<'a, K, V> FusedIterator for MapIter<'a, K, V> {}
 
 #[derive(Debug)]
-pub struct Range<'a, K, V> {
+pub(crate) struct Range<'a, K, V> {
     inner: btree_map::Range<'a, Ref<K>, Ref<V>>,
 }
 

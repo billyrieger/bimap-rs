@@ -41,19 +41,15 @@ where
         self.lmap.is_empty()
     }
 
+    pub fn clear(&mut self) {
+        self.lmap.clear();
+        self.rmap.clear();
+    }
+
     pub fn iter(&self) -> Iter<'_, L, R, LMap, RMap> {
         Iter {
             iter: self.lmap.map_iter(),
             marker: PhantomData,
-        }
-    }
-
-    pub fn try_insert(&mut self, l: L, r: R) -> Result<(), (L, R)> {
-        if self.lmap.contains(&l) || self.rmap.contains(&r) {
-            Err((l, r))
-        } else {
-            self.insert_unchecked(l, r);
-            Ok(())
         }
     }
 
@@ -65,6 +61,15 @@ where
         };
         self.insert_unchecked(l, r);
         overwritten
+    }
+
+    pub fn try_insert(&mut self, l: L, r: R) -> Result<(), (L, R)> {
+        if self.lmap.contains(&l) || self.rmap.contains(&r) {
+            Err((l, r))
+        } else {
+            self.insert_unchecked(l, r);
+            Ok(())
+        }
     }
 
     fn insert_unchecked(&mut self, l: L, r: R) {

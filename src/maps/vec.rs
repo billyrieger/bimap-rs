@@ -41,15 +41,13 @@ pub struct InnerMap<K, V> {
 impl<V> Core for InnerMap<usize, V> {
     type Key = usize;
     type Value = V;
-}
+    type MapIntoIter<K_, V_> = MapIntoIter<K_, V_>;
+    type MapIter<'a, K_: 'a, V_: 'a> = MapIter<'a, K_, V_>;
 
-impl<V> New for InnerMap<usize, V> {
     fn new() -> Self {
         Self { values: Vec::new() }
     }
-}
 
-impl<V> Length for InnerMap<usize, V> {
     fn len(&self) -> usize {
         self.values.iter().filter(|slot| slot.is_full()).count()
     }
@@ -57,15 +55,29 @@ impl<V> Length for InnerMap<usize, V> {
     fn is_empty(&self) -> bool {
         self.values.iter().all(|slot| slot.is_empty())
     }
-}
 
-impl<V> Insert for InnerMap<usize, V> {
+    fn clear(&mut self) {
+        self.values.clear()
+    }
+
     fn insert(&mut self, (key, value): (Ref<usize>, Ref<V>)) {
         let index: usize = *key;
         if index + 1 > self.values.len() {
             self.values.resize_with(index + 1, || Slot::Empty);
         }
         self.values[index] = Slot::Full(key, value);
+    }
+
+    fn map_iter(&self) -> MapIter<'_, usize, V> {
+        MapIter {
+            iter: self.values.iter(),
+        }
+    }
+
+    fn map_into_iter(self) -> MapIntoIter<usize, V> {
+        MapIntoIter {
+            iter: self.values.into_iter(),
+        }
     }
 }
 
@@ -87,23 +99,6 @@ impl<V> Get for InnerMap<usize, V> {
 impl<V> Remove for InnerMap<usize, V> {
     fn remove(&mut self, key: &usize) -> Option<(Ref<usize>, Ref<V>)> {
         self.values.get_mut(*key).and_then(|slot| slot.take())
-    }
-}
-
-impl<V> MapIterator for InnerMap<usize, V> {
-    type MapIntoIter<K_, V_> = MapIntoIter<K_, V_>;
-    type MapIter<'a, K_: 'a, V_: 'a> = MapIter<'a, K_, V_>;
-
-    fn map_iter(&self) -> MapIter<'_, usize, V> {
-        MapIter {
-            iter: self.values.iter(),
-        }
-    }
-
-    fn map_into_iter(self) -> MapIntoIter<usize, V> {
-        MapIntoIter {
-            iter: self.values.into_iter(),
-        }
     }
 }
 
