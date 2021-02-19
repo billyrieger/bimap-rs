@@ -1,10 +1,13 @@
 # `bimap-rs`
 
 <!-- badges -->
-[![version][version badge]][lib.rs]
-[![documentation][documentation badge]][docs.rs]
-[![license][license badge]](#license)
 
+<!--
+[![version](https://img.shields.io/crates/v/bimap)][crates.io]
+[![license](https://img.shields.io/crates/l/bimap)](#license)
+[![dependency status](https://deps.rs/crate/bimap/0.6.0/status.svg)](https://deps.rs/crate/bimap/0.6.0)
+[![documentation](https://img.shields.io/docsrs/bimap)][docs.rs]
+-->
 
 `bimap-rs` is a pure Rust library for dealing with bijective maps, aiming to
 feel like an extension of the standard library's data structures whenever
@@ -47,7 +50,7 @@ fn main() {
 ## Feature flags
 
 | Flag name | Description                        | Enabled by default? |
-| ---       | ---                                | ---                 |
+| --------- | ---------------------------------- | ------------------- |
 | `std`     | Standard library usage (`HashMap`) | yes                 |
 | `serde`   | (De)serialization using [Serde]    | no                  |
 
@@ -81,24 +84,20 @@ opening a pull request.
 
 ## License
 
-`bimap-rs` is dual-licensed under the [Apache License] and the [MIT License].
+`bimap-rs` is dual-licensed under the [Apache License](LICENSE_APACHE)
+and the [MIT License](LICENSE_MIT).
 As a library user, this means that you are free to choose either license when
 using `bimap-rs`. As a library contributor, this means that any work you
 contribute to `bimap-rs` will be similarly dual-licensed.
 
 <!-- external links -->
+
+[crates.io]: https://crates.io/crates/bimap
 [docs.rs]: https://docs.rs/bimap/
-[lib.rs]: https://lib.rs/crates/bimap
 [`no_std`]: https://rust-embedded.github.io/book/intro/no-std.html
-[Serde]: https://serde.rs/
+[serde]: https://serde.rs/
 
 <!-- local files -->
-[Apache License]: LICENSE_APACHE
+
 [code of conduct]: CODE_OF_CONDUCT.md
 [contributing guidelines]: CONTRIBUTING.md
-[MIT License]: LICENSE_MIT
-
-<!-- static badge images (all purple) -->
-[documentation badge]: https://img.shields.io/static/v1?label=documentation&message=docs.rs&color=blueviolet
-[license badge]: https://img.shields.io/static/v1?label=license&message=Apache-2.0/MIT&color=blueviolet
-[version badge]: https://img.shields.io/static/v1?label=latest%20version&message=lib.rs&color=blueviolet
