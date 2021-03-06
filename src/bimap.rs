@@ -144,9 +144,9 @@ where
     {
         lmap.retain(|l, r| {
             if f(l, r) {
-                rmap.remove(&r);
                 true
             } else {
+                rmap.remove(&r);
                 false
             }
         })
@@ -209,9 +209,9 @@ where
     {
         rmap.retain(|r, l| {
             if f(l, r) {
-                lmap.remove(&l);
                 true
             } else {
+                lmap.remove(&l);
                 false
             }
         })
