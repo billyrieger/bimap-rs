@@ -86,7 +86,7 @@ impl<V> Retain for InnerMap<usize, V> {
     {
         self.values.iter_mut().for_each(|slot| {
             if let Slot::Full(k, v) = slot {
-                if f(k, v) {
+                if !f(k, v) {
                     slot.take();
                 }
             }
