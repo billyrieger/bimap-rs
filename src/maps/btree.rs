@@ -35,28 +35,6 @@ where
     type MapIter<'a, K_: 'a, V_: 'a> = MapIter<'a, K_, V_>;
     type MapIntoIter<K_, V_> = MapIntoIter<K_, V_>;
 
-    fn new() -> Self {
-        Self {
-            map: BTreeMap::new(),
-        }
-    }
-
-    fn len(&self) -> usize {
-        self.map.len()
-    }
-
-    fn is_empty(&self) -> bool {
-        self.map.is_empty()
-    }
-
-    fn clear(&mut self) {
-        self.map.clear()
-    }
-
-    fn insert(&mut self, (key, value): (Ref<K>, Ref<V>)) {
-        self.map.insert(key, value);
-    }
-
     fn map_iter(&self) -> MapIter<'_, K, V> {
         MapIter {
             inner: self.map.iter(),
@@ -67,6 +45,56 @@ where
         MapIntoIter {
             inner: self.map.into_iter(),
         }
+    }
+}
+
+impl<K, V> New for InnerMap<K, V>
+where
+    K: Ord,
+{
+    fn new() -> Self {
+        Self {
+            map: BTreeMap::new(),
+        }
+    }
+}
+
+impl<K, V> Length for InnerMap<K, V>
+where
+    K: Ord,
+{
+    fn len(&self) -> usize {
+        self.map.len()
+    }
+
+    fn is_empty(&self) -> bool {
+        self.map.is_empty()
+    }
+}
+
+impl<K, V> Clear for InnerMap<K, V>
+where
+    K: Ord,
+{
+    fn clear(&mut self) {
+        self.map.clear()
+    }
+}
+
+impl<K, V> Retain for InnerMap<K, V> where K: Ord {
+    fn retain<F>(&mut self, mut f: F)
+    where
+        F: FnMut(&Self::Key, &Self::Value) -> bool {
+            self.map.retain(|k, v| f(k, v));
+    }
+}
+
+impl<K, V> Insert for InnerMap<K, V>
+where
+    K: Ord,
+{
+    fn insert(&mut self, key: Ref<K>, value: Ref<V>) {
+        self.map.insert(key, value);
     }
 }
 

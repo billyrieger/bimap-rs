@@ -44,30 +44,6 @@ impl<V> Core for InnerMap<usize, V> {
     type MapIntoIter<K_, V_> = MapIntoIter<K_, V_>;
     type MapIter<'a, K_: 'a, V_: 'a> = MapIter<'a, K_, V_>;
 
-    fn new() -> Self {
-        Self { values: Vec::new() }
-    }
-
-    fn len(&self) -> usize {
-        self.values.iter().filter(|slot| slot.is_full()).count()
-    }
-
-    fn is_empty(&self) -> bool {
-        self.values.iter().all(|slot| slot.is_empty())
-    }
-
-    fn clear(&mut self) {
-        self.values.clear()
-    }
-
-    fn insert(&mut self, (key, value): (Ref<usize>, Ref<V>)) {
-        let index: usize = *key;
-        if index + 1 > self.values.len() {
-            self.values.resize_with(index + 1, || Slot::Empty);
-        }
-        self.values[index] = Slot::Full(key, value);
-    }
-
     fn map_iter(&self) -> MapIter<'_, usize, V> {
         MapIter {
             iter: self.values.iter(),
@@ -78,6 +54,53 @@ impl<V> Core for InnerMap<usize, V> {
         MapIntoIter {
             iter: self.values.into_iter(),
         }
+    }
+}
+
+impl<V> New for InnerMap<usize, V> {
+    fn new() -> Self {
+        Self { values: Vec::new() }
+    }
+}
+
+impl<V> Length for InnerMap<usize, V> {
+    fn len(&self) -> usize {
+        self.values.iter().filter(|slot| slot.is_full()).count()
+    }
+
+    fn is_empty(&self) -> bool {
+        self.values.iter().all(|slot| slot.is_empty())
+    }
+}
+
+impl<V> Clear for InnerMap<usize, V> {
+    fn clear(&mut self) {
+        self.values.clear()
+    }
+}
+
+impl<V> Retain for InnerMap<usize, V> {
+    fn retain<F>(&mut self, mut f: F)
+    where
+        F: FnMut(&Self::Key, &Self::Value) -> bool,
+    {
+        self.values.iter_mut().for_each(|slot| {
+            if let Slot::Full(k, v) = slot {
+                if f(k, v) {
+                    slot.take();
+                }
+            }
+        })
+    }
+}
+
+impl<V> Insert for InnerMap<usize, V> {
+    fn insert(&mut self, key: Ref<usize>, value: Ref<V>) {
+        let index: usize = *key;
+        if index + 1 > self.values.len() {
+            self.values.resize_with(index + 1, || Slot::Empty);
+        }
+        self.values[index] = Slot::Full(key, value);
     }
 }
 

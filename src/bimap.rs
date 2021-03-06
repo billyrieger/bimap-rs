@@ -75,8 +75,8 @@ where
     fn insert_unchecked(&mut self, l: L, r: R) {
         let (l0, l1) = Ref::new(l);
         let (r0, r1) = Ref::new(r);
-        self.lmap.insert((l0, r0));
-        self.rmap.insert((r1, l1));
+        self.lmap.insert(l0, r0);
+        self.rmap.insert(r1, l1);
     }
 
     pub fn contains_pair(&self, l: &LMap::Key, r: &RMap::Key) -> bool
@@ -130,6 +130,27 @@ where
             remaining: self.rmap,
         }
     }
+
+    pub fn retain_left<F>(&mut self, f: F)
+    where
+        F: FnMut(&L, &R) -> bool,
+    {
+        Self::_retain_left_helper(&mut self.lmap, &mut self.rmap, f);
+    }
+
+    fn _retain_left_helper<F>(lmap: &mut LMap, rmap: &mut RMap, mut f: F)
+    where
+        F: FnMut(&L, &R) -> bool,
+    {
+        lmap.retain(|l, r| {
+            if f(l, r) {
+                rmap.remove(&r);
+                true
+            } else {
+                false
+            }
+        })
+    }
 }
 
 /// # Map methods on the right map
@@ -173,6 +194,27 @@ where
             iter: self.rmap.map_into_iter(),
             remaining: self.lmap,
         }
+    }
+
+    pub fn retain_right<F>(&mut self, f: F)
+    where
+        F: FnMut(&L, &R) -> bool,
+    {
+        Self::_retain_right_helper(&mut self.lmap, &mut self.rmap, f);
+    }
+
+    fn _retain_right_helper<F>(lmap: &mut LMap, rmap: &mut RMap, mut f: F)
+    where
+        F: FnMut(&L, &R) -> bool,
+    {
+        rmap.retain(|r, l| {
+            if f(l, r) {
+                lmap.remove(&l);
+                true
+            } else {
+                false
+            }
+        })
     }
 }
 

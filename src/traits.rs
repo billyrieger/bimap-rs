@@ -6,12 +6,9 @@
 // have more information on the usage of sealed traits.
 use crate::util::Ref;
 
-// This makes some of the method arguments and return types less unwieldy.
-type RefPair<L, R> = (Ref<L>, Ref<R>);
+pub trait Map: Core + New + Length + Clear + Retain + Insert + Contains + Get + Remove {}
 
-pub trait Map: Core + Contains + Get + Remove {}
-
-impl<M> Map for M where M: Core + Contains + Get + Remove {}
+impl<M> Map for M where M: Core + New + Length + Clear + Retain + Insert + Contains + Get + Remove {}
 
 pub trait Core {
     type Key;
@@ -19,13 +16,31 @@ pub trait Core {
     type MapIter<'a, K: 'a, V: 'a>: Iterator<Item = (&'a Ref<K>, &'a Ref<V>)>;
     type MapIntoIter<K, V>: Iterator<Item = (Ref<K>, Ref<V>)>;
 
-    fn new() -> Self;
-    fn len(&self) -> usize;
-    fn is_empty(&self) -> bool;
-    fn clear(&mut self);
-    fn insert(&mut self, pair: RefPair<Self::Key, Self::Value>);
     fn map_iter(&self) -> Self::MapIter<'_, Self::Key, Self::Value>;
     fn map_into_iter(self) -> Self::MapIntoIter<Self::Key, Self::Value>;
+}
+
+pub trait New: Core {
+    fn new() -> Self;
+}
+
+pub trait Length: Core {
+    fn len(&self) -> usize;
+    fn is_empty(&self) -> bool;
+}
+
+pub trait Clear: Core {
+    fn clear(&mut self);
+}
+
+pub trait Retain: Core {
+    fn retain<F>(&mut self, f: F)
+    where
+        F: FnMut(&Self::Key, &Self::Value) -> bool;
+}
+
+pub trait Insert: Core {
+    fn insert(&mut self, key: Ref<Self::Key>, value: Ref<Self::Value>);
 }
 
 pub trait Contains<Q: ?Sized = <Self as Core>::Key>: Core {
@@ -37,5 +52,5 @@ pub trait Get<Q: ?Sized = <Self as Core>::Key>: Core {
 }
 
 pub trait Remove<Q: ?Sized = <Self as Core>::Key>: Core {
-    fn remove(&mut self, key: &Q) -> Option<RefPair<Self::Key, Self::Value>>;
+    fn remove(&mut self, key: &Q) -> Option<(Ref<Self::Key>, Ref<Self::Value>)>;
 }

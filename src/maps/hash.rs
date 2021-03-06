@@ -21,28 +21,6 @@ where
     type MapIntoIter<K_, V_> = MapIntoIter<K_, V_>;
     type MapIter<'a, K_: 'a, V_: 'a> = MapIter<'a, K_, V_>;
 
-    fn new() -> Self {
-        Self {
-            map: HashMap::with_hasher(S::default()),
-        }
-    }
-
-    fn len(&self) -> usize {
-        self.map.len()
-    }
-
-    fn is_empty(&self) -> bool {
-        self.map.is_empty()
-    }
-
-    fn clear(&mut self) {
-        self.map.clear()
-    }
-
-    fn insert(&mut self, (key, value): (Ref<K>, Ref<V>)) {
-        self.map.insert(key, value);
-    }
-
     fn map_into_iter(self) -> MapIntoIter<K, V> {
         MapIntoIter {
             inner: self.map.into_iter(),
@@ -53,6 +31,64 @@ where
         MapIter {
             inner: self.map.iter(),
         }
+    }
+}
+
+impl<K, V, S> New for InnerMap<K, V, S>
+where
+    K: Eq + Hash,
+    S: BuildHasher + Default,
+{
+    fn new() -> Self {
+        Self {
+            map: HashMap::with_hasher(S::default()),
+        }
+    }
+}
+
+impl<K, V, S> Length for InnerMap<K, V, S>
+where
+    K: Eq + Hash,
+    S: BuildHasher + Default,
+{
+    fn len(&self) -> usize {
+        self.map.len()
+    }
+
+    fn is_empty(&self) -> bool {
+        self.map.is_empty()
+    }
+}
+
+impl<K, V, S> Clear for InnerMap<K, V, S>
+where
+    K: Eq + Hash,
+    S: BuildHasher + Default,
+{
+    fn clear(&mut self) {
+        self.map.clear()
+    }
+}
+
+impl<K, V, S> Retain for InnerMap<K, V, S>
+where
+    K: Eq + Hash,
+    S: BuildHasher + Default,
+{
+    fn retain<F>(&mut self, mut f: F)
+    where
+        F: FnMut(&Self::Key, &Self::Value) -> bool {
+            self.map.retain(|k, v| f(k, v))
+    }
+}
+
+impl<K, V, S> Insert for InnerMap<K, V, S>
+where
+    K: Eq + Hash,
+    S: BuildHasher + Default,
+{
+    fn insert(&mut self, key: Ref<K>, value: Ref<V>) {
+        self.map.insert(key, value);
     }
 }
 
