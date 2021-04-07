@@ -157,12 +157,12 @@ use std::{
 };
 
 /// Serializer for `BiHashMap`
-impl<L, R, LH, RH> Serialize for BiHashMap<L, R, BuildHasherDefault<LH>, BuildHasherDefault<RH>>
+impl<L, R, LS, RS> Serialize for BiHashMap<L, R, LS, RS>
 where
     L: Serialize + Eq + Hash,
     R: Serialize + Eq + Hash,
-    LH: Hasher + Default,
-    RH: Hasher + Default,
+    LS: HashBuilder + Default,
+    RS: HashBuilder + Default,
 {
     fn serialize<S: Serializer>(&self, ser: S) -> Result<S::Ok, S::Error> {
         ser.collect_map(self.iter())
