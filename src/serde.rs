@@ -157,7 +157,7 @@ use std::{
 };
 
 /// Serializer for `BiHashMap`
-impl<L, R> Serialize for BiHashMap<L, R>
+impl<L, R, LS, RS> Serialize for BiHashMap<L, R, LS, RS>
 where
     L: Serialize + Eq + Hash,
     R: Serialize + Eq + Hash,
@@ -168,11 +168,11 @@ where
 }
 
 /// Visitor to construct `BiHashMap` from serialized map entries
-struct BiHashMapVisitor<L, R> {
-    marker: PhantomData<BiHashMap<L, R>>,
+struct BiHashMapVisitor<L, R, LS, RS> {
+    marker: PhantomData<BiHashMap<L, R, LS, RS>>,
 }
 
-impl<'de, L, R> Visitor<'de> for BiHashMapVisitor<L, R>
+impl<'de, L, R, LS, RS> Visitor<'de> for BiHashMapVisitor<L, R, LS, RS>
 where
     L: Deserialize<'de> + Eq + Hash,
     R: Deserialize<'de> + Eq + Hash,
@@ -181,7 +181,7 @@ where
         write!(f, "a map")
     }
 
-    type Value = BiHashMap<L, R>;
+    type Value = BiHashMap<L, R, LS, RS>;
     fn visit_map<A: MapAccess<'de>>(self, mut entries: A) -> Result<Self::Value, A::Error> {
         let mut map = match entries.size_hint() {
             Some(s) => BiHashMap::with_capacity(s),
@@ -195,7 +195,7 @@ where
 }
 
 /// Deserializer for `BiHashMap`
-impl<'de, L, R> Deserialize<'de> for BiHashMap<L, R>
+impl<'de, L, R, LS, RS> Deserialize<'de> for BiHashMap<L, R, LS, RS>
 where
     L: Deserialize<'de> + Eq + Hash,
     R: Deserialize<'de> + Eq + Hash,
