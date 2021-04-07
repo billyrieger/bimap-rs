@@ -161,25 +161,13 @@ impl<L, R, LS, RS> Serialize for BiHashMap<L, R, LS, RS>
 where
     L: Serialize + Eq + Hash,
     R: Serialize + Eq + Hash,
-    LS: HashBuilder + Default,
-    RS: HashBuilder + Default,
+    LS: BuildHasher + Default,
+    RS: BuildHasher + Default,
 {
     fn serialize<S: Serializer>(&self, ser: S) -> Result<S::Ok, S::Error> {
         ser.collect_map(self.iter())
     }
 }
-
-/// Serializer for `BiHashMap`
-impl<L, R> Serialize for BiHashMap<L, R>
-where
-    L: Serialize + Eq + Hash,
-    R: Serialize + Eq + Hash,
-{
-    fn serialize<S: Serializer>(&self, ser: S) -> Result<S::Ok, S::Error> {
-        ser.collect_map(self.iter())
-    }
-}
-
 
 /// Visitor to construct `BiHashMap` from serialized map entries
 struct BiHashMapVisitor<L, R, LS, RS> {
@@ -300,7 +288,7 @@ mod tests {
     }
 
     #[test]
-    fn serde_hash_w_hasher() {
+    fn serde_hash_w_fnv_hasher() {
         let hasher_builder = BuildHasherDefault::<fnv::FnvHasher>::default();
         let mut bimap = BiHashMap::<char, u8, BuildHasherDefault<fnv::FnvHasher>,BuildHasherDefault<fnv::FnvHasher>>::with_capacity_and_hashers(4, hasher_builder.clone(), hasher_builder.clone());
         bimap.insert('f', 1);
@@ -312,6 +300,21 @@ mod tests {
 
         assert_eq!(bimap, bimap2);
     }
+
+    #[test]
+    fn serde_hash_w_hashbrown_hasher() {
+        let hasher_builder = hashbrown::hash_map::DefaultHashBuilder::default();
+        let mut bimap = BiHashMap::<char, u8, hashbrown::hash_map::DefaultHashBuilder, hashbrown::hash_map::DefaultHashBuilder>::with_capacity_and_hashers(4, hasher_builder.clone(), hasher_builder.clone());
+        bimap.insert('x', 1);
+        bimap.insert('y', 2);
+        bimap.insert('z', 3);
+
+        let json = serde_json::to_string(&bimap).unwrap();
+        let bimap2 = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(bimap, bimap2);
+    }
+
 
     #[test]
     fn serde_btree() {
