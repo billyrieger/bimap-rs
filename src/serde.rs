@@ -152,15 +152,17 @@ use serde::{
 use std::{
     default::Default,
     fmt::{Formatter, Result as FmtResult},
-    hash::Hash,
+    hash::{BuildHasherDefault, Hasher, Hash, BuildHasher},
     marker::PhantomData,
 };
 
 /// Serializer for `BiHashMap`
-impl<L, R> Serialize for BiHashMap<L, R>
+impl<L, R, LS, RS> Serialize for BiHashMap<L, R, LS, RS>
 where
     L: Serialize + Eq + Hash,
     R: Serialize + Eq + Hash,
+    LS: BuildHasher + Default,
+    RS: BuildHasher + Default,
 {
     fn serialize<S: Serializer>(&self, ser: S) -> Result<S::Ok, S::Error> {
         ser.collect_map(self.iter())
@@ -168,24 +170,34 @@ where
 }
 
 /// Visitor to construct `BiHashMap` from serialized map entries
-struct BiHashMapVisitor<L, R> {
-    marker: PhantomData<BiHashMap<L, R>>,
+struct BiHashMapVisitor<L, R, LS, RS> {
+    marker: PhantomData<BiHashMap<L, R, LS, RS>>,
 }
 
-impl<'de, L, R> Visitor<'de> for BiHashMapVisitor<L, R>
+impl<'de, L, R, LS, RS> Visitor<'de> for BiHashMapVisitor<L, R, LS, RS>
 where
     L: Deserialize<'de> + Eq + Hash,
     R: Deserialize<'de> + Eq + Hash,
+    LS: BuildHasher + Default,
+    RS: BuildHasher + Default,
 {
     fn expecting(&self, f: &mut Formatter) -> FmtResult {
         write!(f, "a map")
     }
 
-    type Value = BiHashMap<L, R>;
+    type Value = BiHashMap<L, R, LS, RS>;
     fn visit_map<A: MapAccess<'de>>(self, mut entries: A) -> Result<Self::Value, A::Error> {
+
         let mut map = match entries.size_hint() {
-            Some(s) => BiHashMap::with_capacity(s),
-            None => BiHashMap::new(),
+            Some(s) => BiHashMap::<L, R, LS, RS>::with_capacity_and_hashers(
+                s,
+                LS::default(),
+                RS::default(),
+            ),
+            None => BiHashMap::<L, R, LS, RS>::with_hashers(
+                LS::default(),
+                RS::default(),
+            ),
         };
         while let Some((l, r)) = entries.next_entry()? {
             map.insert(l, r);
@@ -195,13 +207,15 @@ where
 }
 
 /// Deserializer for `BiHashMap`
-impl<'de, L, R> Deserialize<'de> for BiHashMap<L, R>
+impl<'de, L, R, LS, RS> Deserialize<'de> for BiHashMap<L, R, LS, RS>
 where
     L: Deserialize<'de> + Eq + Hash,
     R: Deserialize<'de> + Eq + Hash,
+    LS: BuildHasher + Default,
+    RS: BuildHasher + Default,
 {
     fn deserialize<D: Deserializer<'de>>(de: D) -> Result<Self, D::Error> {
-        de.deserialize_map(BiHashMapVisitor {
+        de.deserialize_map(BiHashMapVisitor::<L,R,LS,RS> {
             marker: PhantomData::default(),
         })
     }
@@ -274,6 +288,35 @@ mod tests {
     }
 
     #[test]
+    fn serde_hash_w_fnv_hasher() {
+        let hasher_builder = BuildHasherDefault::<fnv::FnvHasher>::default();
+        let mut bimap = BiHashMap::<char, u8, BuildHasherDefault<fnv::FnvHasher>,BuildHasherDefault<fnv::FnvHasher>>::with_capacity_and_hashers(4, hasher_builder.clone(), hasher_builder.clone());
+        bimap.insert('f', 1);
+        bimap.insert('g', 2);
+        bimap.insert('h', 3);
+
+        let json = serde_json::to_string(&bimap).unwrap();
+        let bimap2 = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(bimap, bimap2);
+    }
+
+    #[test]
+    fn serde_hash_w_hashbrown_hasher() {
+        let hasher_builder = hashbrown::hash_map::DefaultHashBuilder::default();
+        let mut bimap = BiHashMap::<char, u8, hashbrown::hash_map::DefaultHashBuilder, hashbrown::hash_map::DefaultHashBuilder>::with_capacity_and_hashers(4, hasher_builder.clone(), hasher_builder.clone());
+        bimap.insert('x', 1);
+        bimap.insert('y', 2);
+        bimap.insert('z', 3);
+
+        let json = serde_json::to_string(&bimap).unwrap();
+        let bimap2 = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(bimap, bimap2);
+    }
+
+
+    #[test]
     fn serde_btree() {
         let mut bimap = BiBTreeMap::new();
         bimap.insert('a', 1);
@@ -292,7 +335,7 @@ mod tests {
             marker: PhantomData::<BiBTreeMap<char, i32>>,
         };
         let error_str = format!("{:?}", visitor.visit_bool::<Error>(true));
-        let expected = "Err(Error { err: \"invalid type: boolean `true`, expected a map\" })";
+        let expected = "Err(Error(\"invalid type: boolean `true`, expected a map\"))";
         assert_eq!(error_str, expected);
     }
 
@@ -302,7 +345,8 @@ mod tests {
             marker: PhantomData::<BiHashMap<char, i32>>,
         };
         let error_str = format!("{:?}", visitor.visit_bool::<Error>(true));
-        let expected = "Err(Error { err: \"invalid type: boolean `true`, expected a map\" })";
+        let expected = "Err(Error(\"invalid type: boolean `true`, expected a map\"))";
         assert_eq!(error_str, expected);
     }
+
 }
