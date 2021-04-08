@@ -152,7 +152,7 @@ use serde::{
 use std::{
     default::Default,
     fmt::{Formatter, Result as FmtResult},
-    hash::{BuildHasherDefault, Hasher, Hash, BuildHasher},
+    hash::{BuildHasher, BuildHasherDefault, Hash, Hasher},
     marker::PhantomData,
 };
 
@@ -187,17 +187,13 @@ where
 
     type Value = BiHashMap<L, R, LS, RS>;
     fn visit_map<A: MapAccess<'de>>(self, mut entries: A) -> Result<Self::Value, A::Error> {
-
         let mut map = match entries.size_hint() {
             Some(s) => BiHashMap::<L, R, LS, RS>::with_capacity_and_hashers(
                 s,
                 LS::default(),
                 RS::default(),
             ),
-            None => BiHashMap::<L, R, LS, RS>::with_hashers(
-                LS::default(),
-                RS::default(),
-            ),
+            None => BiHashMap::<L, R, LS, RS>::with_hashers(LS::default(), RS::default()),
         };
         while let Some((l, r)) = entries.next_entry()? {
             map.insert(l, r);
@@ -215,7 +211,7 @@ where
     RS: BuildHasher + Default,
 {
     fn deserialize<D: Deserializer<'de>>(de: D) -> Result<Self, D::Error> {
-        de.deserialize_map(BiHashMapVisitor::<L,R,LS,RS> {
+        de.deserialize_map(BiHashMapVisitor::<L, R, LS, RS> {
             marker: PhantomData::default(),
         })
     }
@@ -290,7 +286,14 @@ mod tests {
     #[test]
     fn serde_hash_w_fnv_hasher() {
         let hasher_builder = BuildHasherDefault::<fnv::FnvHasher>::default();
-        let mut bimap = BiHashMap::<char, u8, BuildHasherDefault<fnv::FnvHasher>,BuildHasherDefault<fnv::FnvHasher>>::with_capacity_and_hashers(4, hasher_builder.clone(), hasher_builder.clone());
+        let mut bimap = BiHashMap::<
+            char,
+            u8,
+            BuildHasherDefault<fnv::FnvHasher>,
+            BuildHasherDefault<fnv::FnvHasher>,
+        >::with_capacity_and_hashers(
+            4, hasher_builder.clone(), hasher_builder.clone()
+        );
         bimap.insert('f', 1);
         bimap.insert('g', 2);
         bimap.insert('h', 3);
@@ -304,7 +307,14 @@ mod tests {
     #[test]
     fn serde_hash_w_hashbrown_hasher() {
         let hasher_builder = hashbrown::hash_map::DefaultHashBuilder::default();
-        let mut bimap = BiHashMap::<char, u8, hashbrown::hash_map::DefaultHashBuilder, hashbrown::hash_map::DefaultHashBuilder>::with_capacity_and_hashers(4, hasher_builder.clone(), hasher_builder.clone());
+        let mut bimap = BiHashMap::<
+            char,
+            u8,
+            hashbrown::hash_map::DefaultHashBuilder,
+            hashbrown::hash_map::DefaultHashBuilder,
+        >::with_capacity_and_hashers(
+            4, hasher_builder.clone(), hasher_builder.clone()
+        );
         bimap.insert('x', 1);
         bimap.insert('y', 2);
         bimap.insert('z', 3);
@@ -314,7 +324,6 @@ mod tests {
 
         assert_eq!(bimap, bimap2);
     }
-
 
     #[test]
     fn serde_btree() {
@@ -348,5 +357,4 @@ mod tests {
         let expected = "Err(Error(\"invalid type: boolean `true`, expected a map\"))";
         assert_eq!(error_str, expected);
     }
-
 }
