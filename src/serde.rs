@@ -152,7 +152,7 @@ use serde::{
 use std::{
     default::Default,
     fmt::{Formatter, Result as FmtResult},
-    hash::{BuildHasher, BuildHasherDefault, Hash, Hasher},
+    hash::{BuildHasher, Hash},
     marker::PhantomData,
 };
 
@@ -269,6 +269,7 @@ where
 mod tests {
     use super::*;
     use serde::de::value::Error;
+    use std::hash::BuildHasherDefault;
 
     #[test]
     fn serde_hash() {
