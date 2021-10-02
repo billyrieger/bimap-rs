@@ -354,6 +354,42 @@ where
         })
     }
 
+    /// Retains only elements specified by a predicate
+    ///
+    /// In other words, remove all left-right pairs `(l, r)` such that `f(&l,
+    /// &r)` returns `false`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use bimap::BiBTreeMap;
+    ///
+    /// let mut bimap = BiBTreeMap::new();
+    /// bimap.insert('a', 1);
+    /// bimap.insert('b', 2);
+    /// bimap.insert('c', 3);
+    ///
+    /// bimap.retain(|&l, _| l != 'b');
+    /// assert_eq!(bimap.len(), 2);
+    /// assert_eq!(bimap.get_by_right(&1), Some(&'a'));
+    /// assert_eq!(bimap.get_by_right(&2), None);
+    /// assert_eq!(bimap.get_by_right(&3), Some(&'c'));
+    /// ```
+    pub fn retain<F>(&mut self, f: F)
+    where
+        F: FnMut(&L, &R) -> bool,
+    {
+        let mut f = f;
+        let right2left = &mut self.right2left;
+        self.left2right.retain(|l, r| {
+            let to_retain = f(&l.0, &r.0);
+            if !to_retain {
+                right2left.remove(r);
+            }
+            to_retain
+        })
+    }
+
     /// Inserts the given left-right pair into the bimap.
     ///
     /// Returns an enum `Overwritten` representing any left-right pairs that
