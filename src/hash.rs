@@ -267,6 +267,75 @@ where
         }
     }
 
+    /// Reserves capacity for at least `additional` more elements to be inserted
+    /// in the `BiHashMap`. The collection may reserve more space to avoid
+    /// frequent reallocations.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the new allocation size overflows [`usize`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use bimap::BiHashMap;
+    ///
+    /// let mut bimap = BiHashMap::<char, i32>::new();
+    /// bimap.reserve(10);
+    /// assert!(bimap.capacity() >= 10);
+    /// ```
+    pub fn reserve(&mut self, additional: usize) {
+        self.left2right.reserve(additional);
+        self.right2left.reserve(additional);
+    }
+
+    /// Shrinks the capacity of the bimap as much as possible. It will drop
+    /// down as much as possible while maintaining the internal rules
+    /// and possibly leaving some space in accordance with the resize policy.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use bimap::BiHashMap;
+    ///
+    /// let mut bimap = BiHashMap::<char, i32>::with_capacity(100);
+    /// bimap.insert('a', 1);
+    /// bimap.insert('b', 2);
+    /// assert!(bimap.capacity() >= 100);
+    /// bimap.shrink_to_fit();
+    /// assert!(bimap.capacity() >= 2);
+    /// ```
+    pub fn shrink_to_fit(&mut self) {
+        self.left2right.shrink_to_fit();
+        self.right2left.shrink_to_fit();
+    }
+
+    /// Shrinks the capacity of the bimap with a lower limit. It will drop
+    /// down no lower than the supplied limit while maintaining the internal
+    /// rules and possibly leaving some space in accordance with the resize
+    /// policy.
+    ///
+    /// If the current capacity is less than the lower limit, this is a no-op.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use bimap::BiHashMap;
+    ///
+    /// let mut bimap = BiHashMap::<char, i32>::with_capacity(100);
+    /// bimap.insert('a', 1);
+    /// bimap.insert('b', 2);
+    /// assert!(bimap.capacity() >= 100);
+    /// bimap.shrink_to(10);
+    /// assert!(bimap.capacity() >= 10);
+    /// bimap.shrink_to(0);
+    /// assert!(bimap.capacity() >= 2);
+    /// ```
+    pub fn shrink_to(&mut self, min_capacity: usize) {
+        self.left2right.shrink_to(min_capacity);
+        self.right2left.shrink_to(min_capacity);
+    }
+
     /// Returns a reference to the right value corresponding to the given left
     /// value.
     ///
@@ -1017,6 +1086,62 @@ mod tests {
         bimap.insert('a', 42);
         assert_eq!(Some(&'a'), bimap.get_by_right(&42));
         assert_eq!(Some(&42), bimap.get_by_left(&'a'));
+    }
+
+    #[test]
+    fn reserve() {
+        let mut bimap = BiHashMap::<char, i32>::new();
+        assert!(bimap.is_empty());
+        assert_eq!(bimap.len(), 0);
+        assert_eq!(bimap.capacity(), 0);
+
+        bimap.reserve(10);
+        assert!(bimap.is_empty());
+        assert_eq!(bimap.len(), 0);
+        assert!(bimap.capacity() >= 10);
+    }
+
+    #[test]
+    fn shrink_to_fit() {
+        let mut bimap = BiHashMap::<char, i32>::with_capacity(100);
+        assert!(bimap.is_empty());
+        assert_eq!(bimap.len(), 0);
+        assert!(bimap.capacity() >= 100);
+
+        bimap.insert('a', 1);
+        bimap.insert('b', 2);
+        assert!(!bimap.is_empty());
+        assert_eq!(bimap.len(), 2);
+        assert!(bimap.capacity() >= 100);
+
+        bimap.shrink_to_fit();
+        assert!(!bimap.is_empty());
+        assert_eq!(bimap.len(), 2);
+        assert!(bimap.capacity() >= 2);
+    }
+
+    #[test]
+    fn shrink_to() {
+        let mut bimap = BiHashMap::<char, i32>::with_capacity(100);
+        assert!(bimap.is_empty());
+        assert_eq!(bimap.len(), 0);
+        assert!(bimap.capacity() >= 100);
+
+        bimap.insert('a', 1);
+        bimap.insert('b', 2);
+        assert!(!bimap.is_empty());
+        assert_eq!(bimap.len(), 2);
+        assert!(bimap.capacity() >= 100);
+
+        bimap.shrink_to(10);
+        assert!(!bimap.is_empty());
+        assert_eq!(bimap.len(), 2);
+        assert!(bimap.capacity() >= 10);
+
+        bimap.shrink_to(0);
+        assert!(!bimap.is_empty());
+        assert_eq!(bimap.len(), 2);
+        assert!(bimap.capacity() >= 2);
     }
 
     #[test]
