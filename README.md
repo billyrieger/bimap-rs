@@ -16,6 +16,7 @@ possible. There are no external dependencies by default but [Serde] and
 1. [Documentation](#documentation)
 1. [Contributing](#contributing)
 1. [Semantic versioning](#semantic-versioning)
+1. [Minimum supported Rust version](#minimum-supported-rust-version)
 1. [License](#license)
 
 ## Quick start
@@ -78,6 +79,19 @@ opening a pull request.
 ## Semantic versioning
 
 `bimap-rs` adheres to the de-facto Rust variety of Semantic Versioning.
+
+## Minimum supported Rust version
+
+| `bimap` | MSRV   |
+| ---     | ---    |
+| v0.6.2  | 1.56.1 |
+| v0.6.1  | 1.42.0 |
+| v0.6.0  | 1.38.0 |
+| v0.5.3  | 1.38.0 |
+| v0.5.2  | 1.38.0 |
+| v0.5.1  | 1.38.0 |
+| v0.5.0  | 1.38.0 |
+| v0.4.0  | 1.38.0 |
 
 ## License
 
