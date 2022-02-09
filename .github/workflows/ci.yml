@@ -2,7 +2,7 @@ name: Test suite
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
 
 jobs:
@@ -33,7 +33,6 @@ jobs:
           - windows-latest
         rust:
           - stable
-          - beta
           - nightly
     runs-on: ${{ matrix.os }}
     steps:
