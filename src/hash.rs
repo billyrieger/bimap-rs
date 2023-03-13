@@ -833,6 +833,7 @@ impl<L, R> Iterator for IntoIter<L, R> {
 /// This struct is created by the [`iter`] method of `BiHashMap`.
 ///
 /// [`iter`]: BiHashMap::iter
+#[derive(Debug, Clone)]
 pub struct Iter<'a, L, R> {
     inner: hash_map::Iter<'a, Ref<L>, Ref<R>>,
 }
@@ -858,6 +859,7 @@ impl<'a, L, R> Iterator for Iter<'a, L, R> {
 /// This struct is created by the [`left_values`] method of `BiHashMap`.
 ///
 /// [`left_values`]: BiHashMap::left_values
+#[derive(Debug, Clone)]
 pub struct LeftValues<'a, L, R> {
     inner: hash_map::Iter<'a, Ref<L>, Ref<R>>,
 }
@@ -883,6 +885,7 @@ impl<'a, L, R> Iterator for LeftValues<'a, L, R> {
 /// This struct is created by the [`right_values`] method of `BiHashMap`.
 ///
 /// [`right_values`]: BiHashMap::right_values
+#[derive(Debug, Clone)]
 pub struct RightValues<'a, L, R> {
     inner: hash_map::Iter<'a, Ref<R>, Ref<L>>,
 }
