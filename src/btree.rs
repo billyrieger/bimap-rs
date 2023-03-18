@@ -756,6 +756,7 @@ impl<L, R> Iterator for IntoIter<L, R> {
 /// This struct is created by the [`iter`] method of `BiBTreeMap`.
 ///
 /// [`iter`]: BiBTreeMap::iter
+#[derive(Debug, Clone)]
 pub struct Iter<'a, L, R> {
     inner: btree_map::Iter<'a, Ref<L>, Ref<R>>,
 }
@@ -787,6 +788,7 @@ impl<'a, L, R> Iterator for Iter<'a, L, R> {
 /// This struct is created by the [`left_values`] method of `BiBTreeMap`.
 ///
 /// [`left_values`]: BiBTreeMap::left_values
+#[derive(Debug, Clone)]
 pub struct LeftValues<'a, L, R> {
     inner: btree_map::Iter<'a, Ref<L>, Ref<R>>,
 }
@@ -818,6 +820,7 @@ impl<'a, L, R> Iterator for LeftValues<'a, L, R> {
 /// This struct is created by the [`right_values`] method of `BiBTreeMap`.
 ///
 /// [`right_values`]: BiBTreeMap::right_values
+#[derive(Debug, Clone)]
 pub struct RightValues<'a, L, R> {
     inner: btree_map::Iter<'a, Ref<R>, Ref<L>>,
 }
@@ -849,7 +852,7 @@ impl<'a, L, R> Iterator for RightValues<'a, L, R> {
 /// This struct is created by the [`left_range`] method of `BiBTreeMap`.
 ///
 /// [`left_range`]: BiBTreeMap::left_range
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct LeftRange<'a, L, R> {
     inner: btree_map::Range<'a, Ref<L>, Ref<R>>,
 }
@@ -881,7 +884,7 @@ impl<'a, L, R> Iterator for LeftRange<'a, L, R> {
 /// This struct is created by the [`right_range`] method of `BiBTreeMap`.
 ///
 /// [`right_range`]: BiBTreeMap::right_range
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct RightRange<'a, L, R> {
     inner: btree_map::Range<'a, Ref<R>, Ref<L>>,
 }
