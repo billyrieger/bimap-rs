@@ -26,7 +26,7 @@ your project's `Cargo.toml` file:
 
 ```toml
 [dependencies]
-bimap = "0.6.2"
+bimap = "0.6.3"
 ```
 
 You can now run the `bimap-rs` Hello World!
@@ -57,13 +57,13 @@ This `Cargo.toml` shows how these features can be enabled and disabled.
 ```toml
 [dependencies]
 # I just want to use `bimap-rs`.
-bimap = "0.6.2"
+bimap = "0.6.3"
 
 # I want to use `bimap-rs` without the Rust standard library.
-bimap = { version = "0.6.2", default-features = false }
+bimap = { version = "0.6.3", default-features = false }
 
 # I want to use `bimap-rs` with Serde support.
-bimap = { version = "0.6.2", features = ["serde"] }
+bimap = { version = "0.6.3", features = ["serde"] }
 ```
 
 ## Documentation
@@ -84,6 +84,7 @@ opening a pull request.
 
 | `bimap` | MSRV   |
 | ---     | ---    |
+| v0.6.3  | 1.56.1 |
 | v0.6.2  | 1.56.1 |
 | v0.6.1  | 1.42.0 |
 | v0.6.0  | 1.38.0 |
