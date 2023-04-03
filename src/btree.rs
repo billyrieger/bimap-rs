@@ -585,13 +585,28 @@ where
     R: fmt::Debug + Ord,
 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{{")?;
-        for (i, (left, right)) in self.left2right.iter().enumerate() {
-            let comma = if i == 0 { "" } else { ", " };
-            write!(f, "{}{:?} <> {:?}", comma, left, right)?;
+        struct EntryDebugger<'a, L, R> {
+            left: &'a L,
+            right: &'a R,
         }
-        write!(f, "}}")?;
-        Ok(())
+        impl<'a, L, R> fmt::Debug for EntryDebugger<'a, L, R>
+        where
+            L: fmt::Debug,
+            R: fmt::Debug,
+        {
+            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                self.left.fmt(f)?;
+                write!(f, " <> ")?;
+                self.right.fmt(f)
+            }
+        }
+        f.debug_set()
+            .entries(
+                self.left2right
+                    .iter()
+                    .map(|(left, right)| EntryDebugger { left, right }),
+            )
+            .finish()
     }
 }
 
