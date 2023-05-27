@@ -567,6 +567,30 @@ where
             inner: self.right2left.range::<Wrapper<_>, _>((start, end)),
         }
     }
+
+    /// Swaps the left side and the right side of the bimap.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::iter::FromIterator;
+    /// use bimap::BiBTreeMap;
+    ///
+    /// let int_char = BiBTreeMap::from_iter([(0, '0'), (1, '1')]);
+    /// let char_int = BiBTreeMap::from_iter([('0', 0), ('1', 1)]);
+    /// assert_eq!(int_char.clone().flip(), char_int);
+    /// assert_eq!(int_char, char_int.flip());
+    /// ```
+    pub fn flip(self) -> BiBTreeMap<R, L> {
+        let BiBTreeMap {
+            left2right,
+            right2left,
+        } = self;
+        BiBTreeMap {
+            left2right: right2left,
+            right2left: left2right,
+        }
+    }
 }
 
 impl<L, R> Clone for BiBTreeMap<L, R>
