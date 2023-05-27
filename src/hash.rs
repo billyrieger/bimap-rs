@@ -211,6 +211,30 @@ where
             inner: self.right2left.iter(),
         }
     }
+
+    /// Swaps the left side and the right side of the bimap.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::iter::FromIterator;
+    /// use bimap::BiHashMap;
+    ///
+    /// let int_char = BiHashMap::<_, _>::from_iter([(0, '0'), (1, '1')]);
+    /// let char_int = BiHashMap::<_, _>::from_iter([('0', 0), ('1', 1)]);
+    /// assert_eq!(int_char.clone().flip(), char_int);
+    /// assert_eq!(int_char, char_int.flip());
+    /// ```
+    pub fn flip(self) -> BiHashMap<R, L, RS, LS> {
+        let BiHashMap {
+            left2right,
+            right2left,
+        } = self;
+        BiHashMap {
+            left2right: right2left,
+            right2left: left2right,
+        }
+    }
 }
 
 impl<L, R, LS, RS> BiHashMap<L, R, LS, RS>
