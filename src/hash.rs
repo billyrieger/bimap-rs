@@ -177,11 +177,11 @@ where
     /// bimap.insert('b', 2);
     /// bimap.insert('c', 3);
     ///
-    /// for char_value in bimap.left_values() {
+    /// for char_value in bimap.values_left() {
     ///     println!("{}", char_value);
     /// }
     /// ```
-    pub fn left_values(&self) -> LeftValues<'_, L, R> {
+    pub fn values_left(&self) -> LeftValues<'_, L, R> {
         LeftValues {
             inner: self.left2right.iter(),
         }
@@ -202,11 +202,11 @@ where
     /// bimap.insert('b', 2);
     /// bimap.insert('c', 3);
     ///
-    /// for int_value in bimap.right_values() {
+    /// for int_value in bimap.values_right() {
     ///     println!("{}", int_value);
     /// }
     /// ```
-    pub fn right_values(&self) -> RightValues<'_, L, R> {
+    pub fn values_right(&self) -> RightValues<'_, L, R> {
         RightValues {
             inner: self.right2left.iter(),
         }
@@ -856,9 +856,9 @@ impl<'a, L, R> Iterator for Iter<'a, L, R> {
 
 /// An iterator over the left values in a `BiHashMap`.
 ///
-/// This struct is created by the [`left_values`] method of `BiHashMap`.
+/// This struct is created by the [`values_left`] method of `BiHashMap`.
 ///
-/// [`left_values`]: BiHashMap::left_values
+/// [`values_left`]: BiHashMap::values_left
 #[derive(Debug, Clone)]
 pub struct LeftValues<'a, L, R> {
     inner: hash_map::Iter<'a, Ref<L>, Ref<R>>,
@@ -882,9 +882,9 @@ impl<'a, L, R> Iterator for LeftValues<'a, L, R> {
 
 /// An iterator over the right values in a `BiHashMap`.
 ///
-/// This struct is created by the [`right_values`] method of `BiHashMap`.
+/// This struct is created by the [`values_right`] method of `BiHashMap`.
 ///
-/// [`right_values`]: BiHashMap::right_values
+/// [`values_right`]: BiHashMap::values_right
 #[derive(Debug, Clone)]
 pub struct RightValues<'a, L, R> {
     inner: hash_map::Iter<'a, Ref<R>, Ref<L>>,
@@ -1054,25 +1054,25 @@ mod tests {
     }
 
     #[test]
-    fn left_values() {
+    fn values_left() {
         let mut bimap = BiHashMap::new();
         bimap.insert('a', 3);
         bimap.insert('b', 2);
         bimap.insert('c', 1);
-        let mut left_values = bimap.left_values().cloned().collect::<Vec<_>>();
-        left_values.sort();
-        assert_eq!(left_values, vec!['a', 'b', 'c'])
+        let mut values_left = bimap.values_left().cloned().collect::<Vec<_>>();
+        values_left.sort();
+        assert_eq!(values_left, vec!['a', 'b', 'c'])
     }
 
     #[test]
-    fn right_values() {
+    fn values_right() {
         let mut bimap = BiHashMap::new();
         bimap.insert('a', 3);
         bimap.insert('b', 2);
         bimap.insert('c', 1);
-        let mut right_values = bimap.right_values().cloned().collect::<Vec<_>>();
-        right_values.sort();
-        assert_eq!(right_values, vec![1, 2, 3])
+        let mut values_right = bimap.values_right().cloned().collect::<Vec<_>>();
+        values_right.sort();
+        assert_eq!(values_right, vec![1, 2, 3])
     }
 
     #[test]
