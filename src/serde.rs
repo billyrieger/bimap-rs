@@ -123,9 +123,9 @@
 //! let mut bimap = BiHashMap::new();
 //!
 //! // insert some pairs
-//! bimap.insert('A', 1);
-//! bimap.insert('B', 2);
-//! bimap.insert('C', 3);
+//! bimap.insert('A', 1).expect_neither();
+//! bimap.insert('B', 2).expect_neither();
+//! bimap.insert('C', 3).expect_neither();
 //!
 //! // serialize the bimap
 //! let json = serde_json::to_string(&bimap).unwrap();
@@ -196,7 +196,7 @@ where
             None => BiHashMap::<L, R, LS, RS>::with_hashers(LS::default(), RS::default()),
         };
         while let Some((l, r)) = entries.next_entry()? {
-            map.insert(l, r);
+            let _ = map.insert(l, r);
         }
         Ok(map)
     }
@@ -246,7 +246,7 @@ where
     fn visit_map<A: MapAccess<'de>>(self, mut entries: A) -> Result<Self::Value, A::Error> {
         let mut map = BiBTreeMap::new();
         while let Some((l, r)) = entries.next_entry()? {
-            map.insert(l, r);
+            map.insert(l, r).expect_neither();
         }
         Ok(map)
     }
@@ -274,9 +274,9 @@ mod tests {
     #[test]
     fn serde_hash() {
         let mut bimap = BiHashMap::new();
-        bimap.insert('a', 1);
-        bimap.insert('b', 2);
-        bimap.insert('c', 3);
+        bimap.insert('a', 1).expect_neither();
+        bimap.insert('b', 2).expect_neither();
+        bimap.insert('c', 3).expect_neither();
 
         let json = serde_json::to_string(&bimap).unwrap();
         let bimap2 = serde_json::from_str(&json).unwrap();
@@ -295,9 +295,9 @@ mod tests {
         >::with_capacity_and_hashers(
             4, hasher_builder.clone(), hasher_builder.clone()
         );
-        bimap.insert('f', 1);
-        bimap.insert('g', 2);
-        bimap.insert('h', 3);
+        bimap.insert('f', 1).expect_neither();
+        bimap.insert('g', 2).expect_neither();
+        bimap.insert('h', 3).expect_neither();
 
         let json = serde_json::to_string(&bimap).unwrap();
         let bimap2 = serde_json::from_str(&json).unwrap();
@@ -316,9 +316,9 @@ mod tests {
         >::with_capacity_and_hashers(
             4, hasher_builder.clone(), hasher_builder.clone()
         );
-        bimap.insert('x', 1);
-        bimap.insert('y', 2);
-        bimap.insert('z', 3);
+        bimap.insert('x', 1).expect_neither();
+        bimap.insert('y', 2).expect_neither();
+        bimap.insert('z', 3).expect_neither();
 
         let json = serde_json::to_string(&bimap).unwrap();
         let bimap2 = serde_json::from_str(&json).unwrap();
@@ -329,9 +329,9 @@ mod tests {
     #[test]
     fn serde_btree() {
         let mut bimap = BiBTreeMap::new();
-        bimap.insert('a', 1);
-        bimap.insert('b', 2);
-        bimap.insert('c', 3);
+        bimap.insert('a', 1).expect_neither();
+        bimap.insert('b', 2).expect_neither();
+        bimap.insert('c', 3).expect_neither();
 
         let json = serde_json::to_string(&bimap).unwrap();
         let bimap2 = serde_json::from_str(&json).unwrap();

@@ -62,8 +62,8 @@
 //! use bimap::BiMap;
 //!
 //! let mut bimap = BiMap::new();
-//! bimap.insert('a', 1);
-//! bimap.insert('b', 1); // what to do here?
+//! bimap.insert('a', 1).expect_neither();
+//! let _ = bimap.insert('b', 1); // what to do here?
 //! ```
 //!
 //! In order to maintain the bijection, the bimap cannot have both left-right
@@ -135,7 +135,7 @@
 //!
 //! // insert both Foos into a bimap
 //! let mut bimap = BiMap::new();
-//! bimap.insert(foo1, 99);
+//! bimap.insert(foo1, 99).expect_neither();
 //! let overwritten = bimap.insert(foo2, 100);
 //!
 //! // foo1 is overwritten and returned
@@ -198,11 +198,14 @@
 #[allow(unused_imports)]
 #[macro_use]
 extern crate alloc;
+extern crate core;
 
 mod mem;
 
 pub mod btree;
+
 pub use btree::BiBTreeMap;
+use core::fmt::Debug;
 
 #[cfg(feature = "std")]
 pub mod hash;
@@ -225,6 +228,7 @@ pub mod serde;
 /// The previous left-right pairs, if any, that were overwritten by a call to
 /// the [`insert`](BiHashMap::insert) method of a bimap.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[must_use = "This `Overwritten` may not be a `Neither` variant, which should be handled"]
 pub enum Overwritten<L, R> {
     /// Neither the left nor the right value previously existed in the bimap.
     Neither,
@@ -265,6 +269,34 @@ impl<L, R> Overwritten<L, R> {
     /// ```
     pub fn did_overwrite(&self) -> bool {
         !matches!(self, Overwritten::Neither)
+    }
+
+    /// Panics if the `Overwritten` variant is not `Neither`.
+    /// This method is useful for consume Overwritten like `unwrap`.
+    ///
+    /// # Examples
+    ///
+    /// ```rust,should_panic
+    /// use bimap::{BiMap, Overwritten};
+    ///
+    /// let mut bimap = BiMap::new();
+    /// bimap.insert('a', 1).expect_neither();
+    /// bimap.insert('a', 2).expect_neither();
+    /// ```
+    pub fn expect_neither(&self) {
+        match self {
+            Overwritten::Neither => (),
+            _ => panic!(
+                "Expected Overwritten::Neither, got {}",
+                match self {
+                    Overwritten::Left(_, _) => "Overwritten::Left",
+                    Overwritten::Right(_, _) => "Overwritten::Right",
+                    Overwritten::Pair(_, _) => "Overwritten::Pair",
+                    Overwritten::Both(_, _) => "Overwritten::Both",
+                    _ => unreachable!(),
+                }
+            ),
+        }
     }
 }
 
