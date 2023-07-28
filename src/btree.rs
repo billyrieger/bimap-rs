@@ -56,9 +56,9 @@ where
     /// use bimap::BiBTreeMap;
     ///
     /// let mut bimap = BiBTreeMap::new();
-    /// bimap.insert('a', 1);
-    /// bimap.insert('b', 2);
-    /// bimap.insert('c', 3);
+    /// bimap.insert('a', 1).expect_neither();
+    /// bimap.insert('b', 2).expect_neither();
+    /// bimap.insert('c', 3).expect_neither();
     /// assert_eq!(bimap.len(), 3);
     /// ```
     pub fn len(&self) -> usize {
@@ -75,7 +75,7 @@ where
     ///
     /// let mut bimap = BiBTreeMap::new();
     /// assert!(bimap.is_empty());
-    /// bimap.insert('a', 1);
+    /// bimap.insert('a', 1).expect_neither();
     /// assert!(!bimap.is_empty());
     /// bimap.remove_by_right(&1);
     /// assert!(bimap.is_empty());
@@ -92,9 +92,9 @@ where
     /// use bimap::BiBTreeMap;
     ///
     /// let mut bimap = BiBTreeMap::new();
-    /// bimap.insert('a', 1);
-    /// bimap.insert('b', 2);
-    /// bimap.insert('c', 3);
+    /// bimap.insert('a', 1).expect_neither();
+    /// bimap.insert('b', 2).expect_neither();
+    /// bimap.insert('c', 3).expect_neither();
     /// bimap.clear();
     /// assert!(bimap.len() == 0);
     /// ```
@@ -114,9 +114,9 @@ where
     /// use bimap::BiBTreeMap;
     ///
     /// let mut bimap = BiBTreeMap::new();
-    /// bimap.insert('a', 1);
-    /// bimap.insert('b', 2);
-    /// bimap.insert('c', 3);
+    /// bimap.insert('a', 1).expect_neither();
+    /// bimap.insert('b', 2).expect_neither();
+    /// bimap.insert('c', 3).expect_neither();
     ///
     /// for (left, right) in bimap.iter() {
     ///     println!("({}, {})", left, right);
@@ -139,9 +139,9 @@ where
     /// use bimap::BiBTreeMap;
     ///
     /// let mut bimap = BiBTreeMap::new();
-    /// bimap.insert('a', 1);
-    /// bimap.insert('b', 2);
-    /// bimap.insert('c', 3);
+    /// bimap.insert('a', 1).expect_neither();
+    /// bimap.insert('b', 2).expect_neither();
+    /// bimap.insert('c', 3).expect_neither();
     ///
     /// for char_value in bimap.left_values() {
     ///     println!("{}", char_value);
@@ -164,9 +164,9 @@ where
     /// use bimap::BiBTreeMap;
     ///
     /// let mut bimap = BiBTreeMap::new();
-    /// bimap.insert('a', 1);
-    /// bimap.insert('b', 2);
-    /// bimap.insert('c', 3);
+    /// bimap.insert('a', 1).expect_neither();
+    /// bimap.insert('b', 2).expect_neither();
+    /// bimap.insert('c', 3).expect_neither();
     ///
     /// for int_value in bimap.right_values() {
     ///     println!("{}", int_value);
@@ -191,7 +191,7 @@ where
     /// use bimap::BiBTreeMap;
     ///
     /// let mut bimap = BiBTreeMap::new();
-    /// bimap.insert('a', 1);
+    /// bimap.insert('a', 1).expect_neither();
     /// assert_eq!(bimap.get_by_left(&'a'), Some(&1));
     /// assert_eq!(bimap.get_by_left(&'z'), None);
     /// ```
@@ -216,7 +216,7 @@ where
     /// use bimap::BiBTreeMap;
     ///
     /// let mut bimap = BiBTreeMap::new();
-    /// bimap.insert('a', 1);
+    /// bimap.insert('a', 1).expect_neither();
     /// assert_eq!(bimap.get_by_right(&1), Some(&'a'));
     /// assert_eq!(bimap.get_by_right(&2), None);
     /// ```
@@ -241,7 +241,7 @@ where
     /// use bimap::BiBTreeMap;
     ///
     /// let mut bimap = BiBTreeMap::new();
-    /// bimap.insert('a', 1);
+    /// bimap.insert('a', 1).expect_neither();
     /// assert!(bimap.contains_left(&'a'));
     /// assert!(!bimap.contains_left(&'b'));
     /// ```
@@ -266,7 +266,7 @@ where
     /// use bimap::BiBTreeMap;
     ///
     /// let mut bimap = BiBTreeMap::new();
-    /// bimap.insert('a', 1);
+    /// bimap.insert('a', 1).expect_neither();
     /// assert!(bimap.contains_right(&1));
     /// assert!(!bimap.contains_right(&2));
     /// ```
@@ -293,9 +293,9 @@ where
     /// use bimap::BiBTreeMap;
     ///
     /// let mut bimap = BiBTreeMap::new();
-    /// bimap.insert('a', 1);
-    /// bimap.insert('b', 2);
-    /// bimap.insert('c', 3);
+    /// bimap.insert('a', 1).expect_neither();
+    /// bimap.insert('b', 2).expect_neither();
+    /// bimap.insert('c', 3).expect_neither();
     ///
     /// assert_eq!(bimap.remove_by_left(&'b'), Some(('b', 2)));
     /// assert_eq!(bimap.remove_by_left(&'b'), None);
@@ -331,9 +331,9 @@ where
     /// use bimap::BiBTreeMap;
     ///
     /// let mut bimap = BiBTreeMap::new();
-    /// bimap.insert('a', 1);
-    /// bimap.insert('b', 2);
-    /// bimap.insert('c', 3);
+    /// bimap.insert('a', 1).expect_neither();
+    /// bimap.insert('b', 2).expect_neither();
+    /// bimap.insert('c', 3).expect_neither();
     ///
     /// assert_eq!(bimap.remove_by_right(&2), Some(('b', 2)));
     /// assert_eq!(bimap.remove_by_right(&2), None);
@@ -365,9 +365,9 @@ where
     /// use bimap::BiBTreeMap;
     ///
     /// let mut bimap = BiBTreeMap::new();
-    /// bimap.insert('a', 1);
-    /// bimap.insert('b', 2);
-    /// bimap.insert('c', 3);
+    /// bimap.insert('a', 1).expect_neither();
+    /// bimap.insert('b', 2).expect_neither();
+    /// bimap.insert('c', 3).expect_neither();
     ///
     /// bimap.retain(|&l, _| l != 'b');
     /// assert_eq!(bimap.len(), 2);
@@ -509,10 +509,10 @@ where
     /// use bimap::BiBTreeMap;
     ///
     /// let mut bimap = BiBTreeMap::new();
-    /// bimap.insert('a', 1);
-    /// bimap.insert('b', 2);
-    /// bimap.insert('c', 3);
-    /// bimap.insert('d', 4);
+    /// bimap.insert('a', 1).expect_neither();
+    /// bimap.insert('b', 2).expect_neither();
+    /// bimap.insert('c', 3).expect_neither();
+    /// bimap.insert('d', 4).expect_neither();
     ///
     /// for (left, right) in bimap.left_range('b'..'d') {
     ///     println!("({}, {})", left, right);
@@ -546,7 +546,7 @@ where
     /// use bimap::BiBTreeMap;
     ///
     /// let mut bimap = BiBTreeMap::new();
-    /// bimap.insert('a', 1);
+    /// bimap.insert('a', 1).expect_neither();
     /// bimap.insert('b', 2);
     /// bimap.insert('c', 3);
     /// bimap.insert('d', 4);
@@ -641,7 +641,7 @@ where
     {
         let mut bimap = BiBTreeMap::new();
         for (left, right) in iter {
-            bimap.insert(left, right);
+            let _ = bimap.insert(left, right);
         }
         bimap
     }
@@ -682,7 +682,7 @@ where
 {
     fn extend<T: IntoIterator<Item = (L, R)>>(&mut self, iter: T) {
         iter.into_iter().for_each(move |(l, r)| {
-            self.insert(l, r);
+            let _ = self.insert(l, r);
         });
     }
 }
@@ -952,8 +952,8 @@ mod tests {
     #[test]
     fn clone() {
         let mut bimap = BiBTreeMap::new();
-        bimap.insert('a', 1);
-        bimap.insert('b', 2);
+        bimap.insert('a', 1).expect_neither();
+        bimap.insert('b', 2).expect_neither();
         let bimap2 = bimap.clone();
         assert_eq!(bimap, bimap2);
     }
@@ -961,13 +961,13 @@ mod tests {
     #[test]
     fn deep_clone() {
         let mut bimap = BiBTreeMap::new();
-        bimap.insert('a', 1);
-        bimap.insert('b', 2);
+        bimap.insert('a', 1).expect_neither();
+        bimap.insert('b', 2).expect_neither();
         let mut bimap2 = bimap.clone();
 
         // would panic if clone() didn't deep clone
-        bimap.insert('b', 5);
-        bimap2.insert('a', 12);
+        assert!(bimap.insert('b', 5).did_overwrite());
+        assert!(bimap2.insert('a', 12).did_overwrite());
         bimap2.remove_by_left(&'a');
         bimap.remove_by_right(&2);
     }
@@ -977,10 +977,10 @@ mod tests {
         let mut bimap = BiBTreeMap::new();
         assert_eq!("{}", format!("{:?}", bimap));
 
-        bimap.insert('a', 1);
+        bimap.insert('a', 1).expect_neither();
         assert_eq!("{'a' <> 1}", format!("{:?}", bimap));
 
-        bimap.insert('b', 2);
+        bimap.insert('b', 2).expect_neither();
         assert_eq!("{'a' <> 1, 'b' <> 2}", format!("{:?}", bimap));
     }
 
@@ -993,18 +993,18 @@ mod tests {
     fn eq() {
         let mut bimap = BiBTreeMap::new();
         assert_eq!(bimap, bimap);
-        bimap.insert('a', 1);
+        bimap.insert('a', 1).expect_neither();
         assert_eq!(bimap, bimap);
-        bimap.insert('b', 2);
+        bimap.insert('b', 2).expect_neither();
         assert_eq!(bimap, bimap);
 
         let mut bimap2 = BiBTreeMap::new();
         assert_ne!(bimap, bimap2);
-        bimap2.insert('a', 1);
+        bimap2.insert('a', 1).expect_neither();
         assert_ne!(bimap, bimap2);
-        bimap2.insert('b', 2);
+        bimap2.insert('b', 2).expect_neither();
         assert_eq!(bimap, bimap2);
-        bimap2.insert('c', 3);
+        bimap2.insert('c', 3).expect_neither();
         assert_ne!(bimap, bimap2);
     }
 
@@ -1019,17 +1019,17 @@ mod tests {
             ('b', 3),
         ]);
         let mut bimap2 = BiBTreeMap::new();
-        bimap2.insert('a', 4);
-        bimap2.insert('b', 3);
+        bimap2.insert('a', 4).expect_neither();
+        bimap2.insert('b', 3).expect_neither();
         assert_eq!(bimap, bimap2);
     }
 
     #[test]
     fn into_iter() {
         let mut bimap = BiBTreeMap::new();
-        bimap.insert('a', 3);
-        bimap.insert('b', 2);
-        bimap.insert('c', 1);
+        bimap.insert('a', 3).expect_neither();
+        bimap.insert('b', 2).expect_neither();
+        bimap.insert('c', 1).expect_neither();
         let pairs = bimap.into_iter().collect::<Vec<_>>();
         assert_eq!(pairs, vec![('a', 3), ('b', 2), ('c', 1)]);
     }
@@ -1037,9 +1037,9 @@ mod tests {
     #[test]
     fn into_iter_ref() {
         let mut bimap = BiBTreeMap::new();
-        bimap.insert('a', 3);
-        bimap.insert('b', 2);
-        bimap.insert('c', 1);
+        bimap.insert('a', 3).expect_neither();
+        bimap.insert('b', 2).expect_neither();
+        bimap.insert('c', 1).expect_neither();
         let pairs = (&bimap).into_iter().collect::<Vec<_>>();
         assert_eq!(pairs, vec![(&'a', &3), (&'b', &2), (&'c', &1)]);
     }
@@ -1047,13 +1047,13 @@ mod tests {
     #[test]
     fn extend() {
         let mut bimap = BiBTreeMap::new();
-        bimap.insert('a', 3);
-        bimap.insert('b', 2);
+        bimap.insert('a', 3).expect_neither();
+        bimap.insert('b', 2).expect_neither();
         bimap.extend(vec![('c', 3), ('b', 1), ('a', 4)]);
         let mut bimap2 = BiBTreeMap::new();
-        bimap2.insert('a', 4);
-        bimap2.insert('b', 1);
-        bimap2.insert('c', 3);
+        bimap2.insert('a', 4).expect_neither();
+        bimap2.insert('b', 1).expect_neither();
+        bimap2.insert('c', 3).expect_neither();
         assert_eq!(bimap, bimap2);
     }
 
@@ -1075,9 +1075,9 @@ mod tests {
     #[test]
     fn iter() {
         let mut bimap = BiBTreeMap::new();
-        bimap.insert('a', 1);
-        bimap.insert('b', 2);
-        bimap.insert('c', 3);
+        bimap.insert('a', 1).expect_neither();
+        bimap.insert('b', 2).expect_neither();
+        bimap.insert('c', 3).expect_neither();
         let pairs = bimap.iter().map(|(c, i)| (*c, *i)).collect::<Vec<_>>();
         assert_eq!(pairs, vec![('a', 1), ('b', 2), ('c', 3)]);
     }
@@ -1085,9 +1085,9 @@ mod tests {
     #[test]
     fn iter_rev() {
         let mut bimap = BiBTreeMap::new();
-        bimap.insert('a', 1);
-        bimap.insert('b', 2);
-        bimap.insert('c', 3);
+        bimap.insert('a', 1).expect_neither();
+        bimap.insert('b', 2).expect_neither();
+        bimap.insert('c', 3).expect_neither();
 
         let mut iter = bimap.iter();
         assert_eq!(iter.next_back(), Some((&'c', &3)));
@@ -1098,9 +1098,9 @@ mod tests {
     #[test]
     fn into_iter_rev() {
         let mut bimap = BiBTreeMap::new();
-        bimap.insert('a', 1);
-        bimap.insert('b', 2);
-        bimap.insert('c', 3);
+        bimap.insert('a', 1).expect_neither();
+        bimap.insert('b', 2).expect_neither();
+        bimap.insert('c', 3).expect_neither();
 
         let mut iter = bimap.into_iter();
         assert_eq!(iter.next_back(), Some(('c', 3)));
@@ -1111,9 +1111,9 @@ mod tests {
     #[test]
     fn left_values() {
         let mut bimap = BiBTreeMap::new();
-        bimap.insert('a', 3);
-        bimap.insert('b', 2);
-        bimap.insert('c', 1);
+        bimap.insert('a', 3).expect_neither();
+        bimap.insert('b', 2).expect_neither();
+        bimap.insert('c', 1).expect_neither();
         let left_values = bimap.left_values().cloned().collect::<Vec<_>>();
         assert_eq!(left_values, vec!['a', 'b', 'c'])
     }
@@ -1121,9 +1121,9 @@ mod tests {
     #[test]
     fn left_values_rev() {
         let mut bimap = BiBTreeMap::new();
-        bimap.insert('a', 3);
-        bimap.insert('b', 2);
-        bimap.insert('c', 1);
+        bimap.insert('a', 3).expect_neither();
+        bimap.insert('b', 2).expect_neither();
+        bimap.insert('c', 1).expect_neither();
 
         let mut iter = bimap.left_values();
         assert_eq!(iter.next_back(), Some(&'c'));
@@ -1134,9 +1134,9 @@ mod tests {
     #[test]
     fn right_values() {
         let mut bimap = BiBTreeMap::new();
-        bimap.insert('a', 3);
-        bimap.insert('b', 2);
-        bimap.insert('c', 1);
+        bimap.insert('a', 3).expect_neither();
+        bimap.insert('b', 2).expect_neither();
+        bimap.insert('c', 1).expect_neither();
         let right_values = bimap.right_values().cloned().collect::<Vec<_>>();
         assert_eq!(right_values, vec![1, 2, 3])
     }
@@ -1144,9 +1144,9 @@ mod tests {
     #[test]
     fn right_values_rev() {
         let mut bimap = BiBTreeMap::new();
-        bimap.insert('a', 3);
-        bimap.insert('b', 2);
-        bimap.insert('c', 1);
+        bimap.insert('a', 3).expect_neither();
+        bimap.insert('b', 2).expect_neither();
+        bimap.insert('c', 1).expect_neither();
 
         let mut iter = bimap.right_values();
         assert_eq!(iter.next_back(), Some(&3));
@@ -1157,10 +1157,10 @@ mod tests {
     #[test]
     fn left_range() {
         let mut bimap = BiBTreeMap::new();
-        bimap.insert('a', 4);
-        bimap.insert('b', 3);
-        bimap.insert('c', 2);
-        bimap.insert('d', 1);
+        bimap.insert('a', 4).expect_neither();
+        bimap.insert('b', 3).expect_neither();
+        bimap.insert('c', 2).expect_neither();
+        bimap.insert('d', 1).expect_neither();
         let left_range = bimap
             .left_range('b'..'d')
             .map(|(l, r)| (*l, *r))
@@ -1171,10 +1171,10 @@ mod tests {
     #[test]
     fn left_range_rev() {
         let mut bimap = BiBTreeMap::new();
-        bimap.insert('a', 4);
-        bimap.insert('b', 3);
-        bimap.insert('c', 2);
-        bimap.insert('d', 1);
+        bimap.insert('a', 4).expect_neither();
+        bimap.insert('b', 3).expect_neither();
+        bimap.insert('c', 2).expect_neither();
+        bimap.insert('d', 1).expect_neither();
         let mut left_range = bimap.left_range('b'..'d');
 
         assert_eq!(left_range.next_back(), Some((&'c', &2)));
@@ -1185,10 +1185,10 @@ mod tests {
     #[test]
     fn right_range() {
         let mut bimap = BiBTreeMap::new();
-        bimap.insert('a', 4);
-        bimap.insert('b', 3);
-        bimap.insert('c', 2);
-        bimap.insert('d', 1);
+        bimap.insert('a', 4).expect_neither();
+        bimap.insert('b', 3).expect_neither();
+        bimap.insert('c', 2).expect_neither();
+        bimap.insert('d', 1).expect_neither();
         let right_range = bimap
             .right_range(2..4)
             .map(|(l, r)| (*l, *r))
@@ -1199,10 +1199,10 @@ mod tests {
     #[test]
     fn right_range_rev() {
         let mut bimap = BiBTreeMap::new();
-        bimap.insert('a', 4);
-        bimap.insert('b', 3);
-        bimap.insert('c', 2);
-        bimap.insert('d', 1);
+        bimap.insert('a', 4).expect_neither();
+        bimap.insert('b', 3).expect_neither();
+        bimap.insert('c', 2).expect_neither();
+        bimap.insert('d', 1).expect_neither();
         let mut right_range = bimap.right_range(2..4);
 
         assert_eq!(right_range.next_back(), Some((&'b', &3)));
