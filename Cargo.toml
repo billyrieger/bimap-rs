@@ -14,9 +14,12 @@ edition = "2018"
 [features]
 default = ["std"]
 std = []
+serde = ["dep:serde", "indexmap?/serde"]
+indexmap = ["dep:indexmap"]
 
 [dependencies]
 serde = { version = "1.0", optional = true }
+indexmap = { version = "2.0", optional = true }
 
 [dev-dependencies]
 serde_json = "1.0"
