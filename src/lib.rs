@@ -204,6 +204,11 @@ mod mem;
 pub mod btree;
 pub use btree::BiBTreeMap;
 
+#[cfg(all(feature = "indexmap", feature = "std"))]
+pub mod index;
+#[cfg(all(feature = "indexmap", feature = "std"))]
+pub use index::BiIndexMap;
+
 #[cfg(feature = "std")]
 pub mod hash;
 #[cfg(feature = "std")]
