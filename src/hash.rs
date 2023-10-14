@@ -23,11 +23,7 @@ pub struct BiHashMap<L, R, LS = hash_map::RandomState, RS = hash_map::RandomStat
     right2left: HashMap<Ref<R>, Ref<L>, RS>,
 }
 
-impl<L, R> BiHashMap<L, R, hash_map::RandomState, hash_map::RandomState>
-where
-    L: Eq + Hash,
-    R: Eq + Hash,
-{
+impl<L, R> BiHashMap<L, R, hash_map::RandomState, hash_map::RandomState> {
     /// Creates an empty `BiHashMap`.
     ///
     /// # Examples
@@ -62,11 +58,7 @@ where
     }
 }
 
-impl<L, R, LS, RS> BiHashMap<L, R, LS, RS>
-where
-    L: Eq + Hash,
-    R: Eq + Hash,
-{
+impl<L, R, LS, RS> BiHashMap<L, R, LS, RS> {
     /// Returns the number of left-right pairs in the bimap.
     ///
     /// # Examples
@@ -213,13 +205,7 @@ where
     }
 }
 
-impl<L, R, LS, RS> BiHashMap<L, R, LS, RS>
-where
-    L: Eq + Hash,
-    R: Eq + Hash,
-    LS: BuildHasher,
-    RS: BuildHasher,
-{
+impl<L, R, LS, RS> BiHashMap<L, R, LS, RS> {
     /// Creates a new empty `BiHashMap` using `hash_builder_left` to hash left
     /// values and `hash_builder_right` to hash right values.
     ///
@@ -266,7 +252,15 @@ where
             right2left: HashMap::with_capacity_and_hasher(capacity, hash_builder_right),
         }
     }
+}
 
+impl<L, R, LS, RS> BiHashMap<L, R, LS, RS>
+where
+    L: Eq + Hash,
+    R: Eq + Hash,
+    LS: BuildHasher,
+    RS: BuildHasher,
+{
     /// Reserves capacity for at least `additional` more elements to be inserted
     /// in the `BiHashMap`. The collection may reserve more space to avoid
     /// frequent reallocations.
@@ -331,11 +325,11 @@ where
     /// bimap.shrink_to(0);
     /// assert!(bimap.capacity() >= 2);
     /// ```
+
     pub fn shrink_to(&mut self, min_capacity: usize) {
         self.left2right.shrink_to(min_capacity);
         self.right2left.shrink_to(min_capacity);
     }
-
     /// Returns a reference to the right value corresponding to the given left
     /// value.
     ///
@@ -699,10 +693,8 @@ where
 
 impl<L, R, LS, RS> Default for BiHashMap<L, R, LS, RS>
 where
-    L: Eq + Hash,
-    R: Eq + Hash,
-    LS: BuildHasher + Default,
-    RS: BuildHasher + Default,
+    LS: Default,
+    RS: Default,
 {
     fn default() -> BiHashMap<L, R, LS, RS> {
         BiHashMap {
@@ -748,11 +740,7 @@ where
     }
 }
 
-impl<'a, L, R, LS, RS> IntoIterator for &'a BiHashMap<L, R, LS, RS>
-where
-    L: Eq + Hash,
-    R: Eq + Hash,
-{
+impl<'a, L, R, LS, RS> IntoIterator for &'a BiHashMap<L, R, LS, RS> {
     type Item = (&'a L, &'a R);
     type IntoIter = Iter<'a, L, R>;
 
@@ -761,11 +749,7 @@ where
     }
 }
 
-impl<L, R, LS, RS> IntoIterator for BiHashMap<L, R, LS, RS>
-where
-    L: Eq + Hash,
-    R: Eq + Hash,
-{
+impl<L, R, LS, RS> IntoIterator for BiHashMap<L, R, LS, RS> {
     type Item = (L, R);
     type IntoIter = IntoIter<L, R>;
 
