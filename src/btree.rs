@@ -27,11 +27,7 @@ pub struct BiBTreeMap<L, R> {
     right2left: BTreeMap<Ref<R>, Ref<L>>,
 }
 
-impl<L, R> BiBTreeMap<L, R>
-where
-    L: Ord,
-    R: Ord,
-{
+impl<L, R> BiBTreeMap<L, R> {
     /// Creates an empty `BiBTreeMap`.
     ///
     /// # Examples
@@ -177,7 +173,13 @@ where
             inner: self.right2left.iter(),
         }
     }
+}
 
+impl<L, R> BiBTreeMap<L, R>
+where
+    L: Ord,
+    R: Ord,
+{
     /// Returns a reference to the right value corresponding to the given left
     /// value.
     ///
@@ -610,11 +612,7 @@ where
     }
 }
 
-impl<L, R> Default for BiBTreeMap<L, R>
-where
-    L: Ord,
-    R: Ord,
-{
+impl<L, R> Default for BiBTreeMap<L, R> {
     fn default() -> BiBTreeMap<L, R> {
         BiBTreeMap {
             left2right: BTreeMap::default(),
@@ -625,8 +623,8 @@ where
 
 impl<L, R> Eq for BiBTreeMap<L, R>
 where
-    L: Ord,
-    R: Ord,
+    L: Eq,
+    R: Eq,
 {
 }
 
@@ -647,11 +645,7 @@ where
     }
 }
 
-impl<'a, L, R> IntoIterator for &'a BiBTreeMap<L, R>
-where
-    L: Ord,
-    R: Ord,
-{
+impl<'a, L, R> IntoIterator for &'a BiBTreeMap<L, R> {
     type Item = (&'a L, &'a R);
     type IntoIter = Iter<'a, L, R>;
 
@@ -660,11 +654,7 @@ where
     }
 }
 
-impl<L, R> IntoIterator for BiBTreeMap<L, R>
-where
-    L: Ord,
-    R: Ord,
-{
+impl<L, R> IntoIterator for BiBTreeMap<L, R> {
     type Item = (L, R);
     type IntoIter = IntoIter<L, R>;
 
@@ -699,8 +689,8 @@ where
 
 impl<L, R> PartialEq for BiBTreeMap<L, R>
 where
-    L: Ord,
-    R: Ord,
+    L: PartialEq,
+    R: PartialEq,
 {
     fn eq(&self, other: &Self) -> bool {
         self.left2right == other.left2right
@@ -709,8 +699,8 @@ where
 
 impl<L, R> PartialOrd for BiBTreeMap<L, R>
 where
-    L: Ord,
-    R: Ord,
+    L: PartialOrd,
+    R: PartialOrd,
 {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         self.left2right.partial_cmp(&other.left2right)
